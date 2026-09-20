@@ -1,0 +1,15 @@
+{
+    "name": "AfriTex - Tissus Africains",
+    "short_name": "AfriTex",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#4A1B0C",
+    "theme_color": "#C8963E",
+    "icons": [
+        {
+            "src": "/favicon.ico",
+            "sizes": "64x64 32x32",
+            "type": "image/x-icon"
+        }
+    ]
+}

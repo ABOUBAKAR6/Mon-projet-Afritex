@@ -8,7 +8,6 @@ APP="$HOME/mon-projet"
 REPO="https://github.com/ABOUBAKAR6/Mon-projet-Afritex.git"
 BRANCH="master"
 
-export PHP_VERSION=8.4
 export NODEJS_VERSION=22
 
 if [ ! -d "$APP/.git" ]; then

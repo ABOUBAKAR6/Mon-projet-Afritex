@@ -25,8 +25,9 @@
                 <x-auth-session-status class="mt-6" :status="session('status')" />
             @endif
 
-            <form method="POST" action="{{ route('espace.connexion.envoyer') }}" class="mt-8 space-y-5">
+            <form method="POST" action="{{ route('espace.connexion.envoyer', request()->query('cle') ? ['cle' => request()->query('cle')] : []) }}" class="mt-8 space-y-5">
                 @csrf
+                <input type="hidden" name="cle" value="{{ request()->query('cle', '') }}">
                 <div>
                     <x-input-label for="email" value="Adresse e-mail" />
                     <x-text-input id="email" type="email" name="email" :value="old('email')" required autofocus autocomplete="username" />

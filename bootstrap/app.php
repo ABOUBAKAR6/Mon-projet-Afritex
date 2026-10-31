@@ -22,13 +22,18 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
+            'cle-espace' => \App\Http\Middleware\CleEspace::class,
         ]);
 
-        // Un visiteur non connecté qui ouvre l'administration est envoyé vers l'espace de gestion,
-        // pas vers la connexion de la boutique.
-        $middleware->redirectGuestsTo(fn (\Illuminate\Http\Request $request) => $request->is('admin', 'admin/*')
-            ? route('espace.connexion')
-            : route('login'));
+        // Un visiteur non connecté qui ouvre l'administration est envoyé vers l'espace de gestion
+        // (avec sa clé secrète, la page reste invisible du public), pas vers la connexion de la boutique.
+        $middleware->redirectGuestsTo(function (\Illuminate\Http\Request $request) {
+            if ($request->is('admin', 'admin/*')) {
+                return route('espace.connexion', ['cle' => config('espace.cle')]);
+            }
+
+            return route('login');
+        });
     })
     ->withExceptions(function (Exceptions $exceptions) {
         // Fichier plus lourd que la limite de PHP (post_max_size) : retour au formulaire avec un message,

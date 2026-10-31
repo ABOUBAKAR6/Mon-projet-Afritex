@@ -148,9 +148,13 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 // Route::post('/produits/{id}/modifier', [AdminController::class, 'modifierProduit'])->name('admin.produits.modifier'); // C'était ici, je le déplace dans le groupe.
 
 
-// ===== ESPACE DE GESTION (connexion séparée, hors de la boutique) =====
-Route::get('/espace-client', [EspaceGestionController::class, 'create'])->name('espace.connexion');
-Route::post('/espace-client', [EspaceGestionController::class, 'store'])->name('espace.connexion.envoyer');
-Route::post('/espace-client/deconnexion', [EspaceGestionController::class, 'destroy'])->middleware('auth')->name('espace.deconnexion');
+// ===== ESPACE DE GESTION (connexion séparée, invisible du public : clé secrète requise) =====
+Route::prefix('espace-client')->middleware('cle-espace')->group(function () {
+    Route::get('/', [EspaceGestionController::class, 'create'])->name('espace.connexion');
+    Route::post('/', [EspaceGestionController::class, 'store'])->name('espace.connexion.envoyer');
+});
+Route::post('/espace-client/deconnexion', [EspaceGestionController::class, 'destroy'])
+    ->middleware('auth')
+    ->name('espace.deconnexion');
 
 require __DIR__.'/auth.php';

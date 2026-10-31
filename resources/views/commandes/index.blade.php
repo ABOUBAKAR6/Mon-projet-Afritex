@@ -1,53 +1,45 @@
 @extends('layouts.app')
-
+@section('title', 'Mes commandes · AfriTex')
 @section('content')
-<div class="max-w-7xl mx-auto px-4 py-10 md:py-16">
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-afri-dark">Mes commandes</h1>
-            <p class="text-sm text-gray-500">Retrouvez l’historique de vos achats et leur évolution.</p>
-        </div>
-        <a href="{{ route('panier') }}" class="inline-flex items-center justify-center rounded-full bg-afri-brown text-white px-5 py-3 text-sm font-semibold">Retour au panier</a>
+
+<div class="conteneur pb-20 pt-10 lg:pb-28 lg:pt-14">
+    <div class="apparition">
+        <h1 class="titre-display text-[2.2rem] sm:text-[2.8rem]">Mes commandes</h1>
+        <p class="mt-1 text-encre-2">L'historique de vos achats et l'avancement de chaque livraison.</p>
     </div>
 
     @if($commandes->isEmpty())
-        <div class="rounded-2xl border border-dashed border-gray-300 bg-white p-10 text-center">
-            <p class="text-lg font-semibold text-afri-dark">Aucune commande pour le moment.</p>
-            <p class="text-sm text-gray-500 mt-2">Passez votre première commande pour voir l’historique ici.</p>
+        <div class="apparition mt-8 grid items-center gap-8 bg-carte p-8 sm:p-12 lg:grid-cols-[1fr_auto]" style="animation-delay: 80ms">
+            <div>
+                <p class="titre-display text-[1.5rem]">Aucune commande pour le moment</p>
+                <p class="mt-2 max-w-[52ch] text-encre-2">Votre première commande apparaîtra ici, avec son suivi de livraison.</p>
+            </div>
+            <a href="{{ route('catalogue') }}" class="btn btn-brun btn-lg">Voir le catalogue <x-icone nom="fleche" /></a>
         </div>
     @else
-        <div class="space-y-4">
+        <ul class="mt-8 space-y-3">
             @foreach($commandes as $commande)
-                <div class="rounded-2xl border border-gray-200 bg-white p-5 shadow-sm">
-                    <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
-                        <div>
-                            <p class="text-sm font-semibold text-afri-dark">Commande #{{ str_pad($commande->id, 4, '0', STR_PAD_LEFT) }}</p>
-                            <p class="text-sm text-gray-500">Passée le {{ $commande->created_at->translatedFormat('d M Y à H:i') }}</p>
+                <li class="revele" style="--delai: {{ min($loop->index, 5) * 60 }}ms">
+                    <a href="{{ route('commandes.show', $commande) }}" class="group filet grid gap-4 bg-carte p-5 transition-colors hover:bg-brun-doux sm:grid-cols-[1fr_auto_auto] sm:items-center sm:gap-8 sm:p-6">
+                        <div class="min-w-0">
+                            <p class="titre-display text-[1.15rem]">Commande n° <span class="chiffres">{{ str_pad($commande->id, 4, '0', STR_PAD_LEFT) }}</span></p>
+                            <p class="mt-0.5 text-[0.95rem] text-encre-2">Passée le {{ $commande->created_at->translatedFormat('j F Y') }}</p>
+                            <p class="mt-2 truncate text-[0.95rem]">
+                                {{ $commande->items->take(3)->map(fn ($i) => $i->produit?->nom ?? 'Produit')->join(', ') }}@if($commande->items->count() > 3), et {{ $commande->items->count() - 3 }} autre(s)@endif
+                            </p>
                         </div>
-                        <div class="flex flex-wrap items-center gap-3">
-                            <span class="rounded-full bg-afri-beige px-3 py-1 text-xs font-semibold text-afri-brown">{{ ucfirst($commande->statut) }}</span>
-                            <span class="text-sm font-semibold text-afri-dark">{{ number_format($commande->total, 0, ',', ' ') }} F</span>
+                        <x-statut-commande :statut="$commande->statut" class="justify-self-start" />
+                        <div class="flex items-center justify-between gap-6 sm:justify-end">
+                            <p class="titre-display chiffres text-[1.3rem]">{{ number_format($commande->total, 0, ',', ' ') }} F</p>
+                            <x-icone nom="chevron-droite" class="size-5 text-brun transition-transform group-hover:translate-x-1" />
                         </div>
-                    </div>
-
-                    <div class="mt-4 border-t border-gray-100 pt-4">
-                        <div class="flex flex-wrap gap-2 text-sm text-gray-600">
-                            @foreach($commande->items->take(3) as $item)
-                                <span class="rounded-full bg-gray-100 px-3 py-1">{{ $item->produit?->nom ?? 'Produit' }}</span>
-                            @endforeach
-                        </div>
-                    </div>
-
-                    <div class="mt-4 flex flex-wrap gap-3">
-                        <a href="{{ route('commandes.show', $commande) }}" class="text-sm font-semibold text-afri-brown hover:underline">Voir le détail</a>
-                    </div>
-                </div>
+                    </a>
+                </li>
             @endforeach
-        </div>
+        </ul>
 
-        <div class="mt-8">
-            {{ $commandes->links() }}
-        </div>
+        <div class="mt-10">{{ $commandes->links() }}</div>
     @endif
 </div>
+
 @endsection

@@ -34,10 +34,8 @@ class AuthenticatedSessionController extends Controller
             app()->make(CartService::class)->mergeGuestCart();
         }
 
-        if (auth()->user()->role === 'admin') {
-            return redirect()->intended(route('admin.dashboard'));
-        }
-
+        // Connexion de la boutique : tout le monde reste côté boutique, administrateurs compris.
+        // L'administration s'ouvre uniquement depuis /espace-client.
         return redirect()->intended('/dashboard');
     }
 

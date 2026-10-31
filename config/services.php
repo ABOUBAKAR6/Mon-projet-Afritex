@@ -50,6 +50,11 @@ return [
         'webhook_secret' => env('STRIPE_WEBHOOK_SECRET'),
     ],
 
+    // Numéro WhatsApp de la boutique, au format international sans « + » (ex. 2250700000000)
+    'whatsapp' => [
+        'numero' => env('WHATSAPP_NUMERO'),
+    ],
+
 
 
 

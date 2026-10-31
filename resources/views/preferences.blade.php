@@ -1,255 +1,155 @@
 @extends('layouts.app')
-
+@section('title', 'Préférences · AfriTex')
 @section('content')
-<div class="max-w-4xl mx-auto px-4 py-12">
-    <div class="flex items-center justify-between mb-8">
-        <h1 class="text-3xl font-bold">⚙️ Paramètres & Préférences</h1>
-        <a href="{{ route('dashboard') }}" class="text-afri-gold hover:text-afri-brown transition">← Retour</a>
+@php
+    $onglet = 'flex min-h-11 items-center gap-2 border-b-2 px-4 text-[0.95rem] font-medium transition-colors';
+    $carte = 'bg-carte p-6 sm:p-8';
+    $option = 'flex min-h-11 cursor-pointer items-center gap-3';
+@endphp
+
+<div class="conteneur max-w-4xl pb-20 pt-10 lg:pb-28 lg:pt-14">
+    <div class="apparition">
+        <h1 class="titre-display text-[2.2rem] sm:text-[2.8rem]">Préférences</h1>
+        <p class="mt-1 text-encre-2">Affichage, notifications et confidentialité de votre compte.</p>
     </div>
 
-    <!-- Tabs Navigation -->
-    <div class="flex gap-2 border-b mb-6">
-        <button id="tabPref" class="px-4 py-2 font-semibold border-b-2 border-afri-gold text-afri-gold transition">
-            💾 Mes Préférences
-        </button>
-        <button id="tabNotif" class="px-4 py-2 font-semibold text-gray-600 hover:text-gray-800 transition">
-            🔔 Notifications
-        </button>
-        <button id="tabSec" class="px-4 py-2 font-semibold text-gray-600 hover:text-gray-800 transition">
-            🔒 Sécurité & Confidentialité
-        </button>
+    <div role="tablist" aria-label="Rubriques" class="defilement-discret mt-8 flex overflow-x-auto border-b border-trait">
+        <button id="tabPref" role="tab" type="button" class="{{ $onglet }} border-brun text-brun-fonce">Affichage</button>
+        <button id="tabNotif" role="tab" type="button" class="{{ $onglet }} border-transparent text-encre-2 hover:text-encre">Notifications</button>
+        <button id="tabSec" role="tab" type="button" class="{{ $onglet }} border-transparent text-encre-2 hover:text-encre">Confidentialité</button>
     </div>
 
-    <!-- Tab 1: Préférences -->
-    <div id="contentPref" class="space-y-6">
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">Langue</h2>
-            <div class="space-y-3">
-                <label class="flex items-center cursor-pointer">
-                    <input type="radio" name="langue" value="fr" checked class="w-4 h-4" />
-                    <span class="ml-3">🇫🇷 Français</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                    <input type="radio" name="langue" value="en" class="w-4 h-4" />
-                    <span class="ml-3">🇬🇧 English</span>
-                </label>
+    {{-- AFFICHAGE --}}
+    <div id="contentPref" role="tabpanel" aria-labelledby="tabPref" class="mt-6 space-y-4">
+        <section class="{{ $carte }}">
+            <h2 class="titre-display text-[1.2rem]">Langue</h2>
+            <div class="mt-4 space-y-1">
+                <label class="{{ $option }}"><input type="radio" name="langue" value="fr" checked class="size-5"> Français</label>
+                <label class="{{ $option }}"><input type="radio" name="langue" value="en" class="size-5"> English</label>
             </div>
-            <button onclick="saveLangPref()" class="mt-4 px-4 py-2 bg-afri-gold text-white rounded-lg font-semibold hover:bg-afri-brown transition">
-                Enregistrer
-            </button>
-        </div>
+            <button type="button" onclick="saveLangPref()" class="btn btn-contour mt-5">Enregistrer la langue</button>
+        </section>
 
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">Thème</h2>
-            <div class="space-y-3">
-                <label class="flex items-center cursor-pointer">
-                    <input type="radio" name="theme" value="light" checked class="w-4 h-4" />
-                    <span class="ml-3">☀️ Clair</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                    <input type="radio" name="theme" value="dark" class="w-4 h-4" />
-                    <span class="ml-3">🌙 Sombre</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                    <input type="radio" name="theme" value="auto" class="w-4 h-4" />
-                    <span class="ml-3">🔄 Automatique (système)</span>
-                </label>
+        <section class="{{ $carte }}">
+            <h2 class="titre-display text-[1.2rem]">Thème</h2>
+            <div class="mt-4 space-y-1">
+                <label class="{{ $option }}"><input type="radio" name="theme" value="light" checked class="size-5"> Clair</label>
+                <label class="{{ $option }}"><input type="radio" name="theme" value="dark" class="size-5"> Sombre</label>
+                <label class="{{ $option }}"><input type="radio" name="theme" value="auto" class="size-5"> Comme mon appareil</label>
             </div>
-            <button onclick="saveThemePref()" class="mt-4 px-4 py-2 bg-afri-gold text-white rounded-lg font-semibold hover:bg-afri-brown transition">
-                Enregistrer
-            </button>
-        </div>
+            <button type="button" onclick="saveThemePref()" class="btn btn-contour mt-5">Enregistrer le thème</button>
+        </section>
 
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">Préférences d'Affichage</h2>
-            <div class="space-y-3">
-                <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" id="showImages" checked class="w-4 h-4" />
-                    <span class="ml-3">Afficher les images des produits</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" id="compactView" class="w-4 h-4" />
-                    <span class="ml-3">Vue compacte du catalogue</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" id="showPrices" checked class="w-4 h-4" />
-                    <span class="ml-3">Afficher les prix</span>
-                </label>
+        <section class="{{ $carte }}">
+            <h2 class="titre-display text-[1.2rem]">Catalogue</h2>
+            <div class="mt-4 space-y-1">
+                <label class="{{ $option }}"><input type="checkbox" id="showImages" checked class="size-5"> Afficher les photos des tissus</label>
+                <label class="{{ $option }}"><input type="checkbox" id="compactView" class="size-5"> Vue compacte</label>
+                <label class="{{ $option }}"><input type="checkbox" id="showPrices" checked class="size-5"> Afficher les prix</label>
             </div>
-            <button onclick="saveDisplayPref()" class="mt-4 px-4 py-2 bg-afri-gold text-white rounded-lg font-semibold hover:bg-afri-brown transition">
-                Enregistrer
-            </button>
-        </div>
+            <button type="button" onclick="saveDisplayPref()" class="btn btn-contour mt-5">Enregistrer l'affichage</button>
+        </section>
 
-        <div class="bg-blue-50 p-4 rounded-lg border border-blue-200">
-            <p class="text-sm text-gray-700">
-                ℹ️ <strong>Vos préférences sont stockées localement</strong> sur votre appareil et synchronisées avec votre compte si connecté.
-            </p>
-        </div>
+        <p class="flex items-start gap-2.5 bg-papier-2 p-4 text-[0.95rem] text-encre-2">
+            <x-icone nom="reglages" class="mt-0.5 size-4 shrink-0 text-brun" />
+            Ces préférences sont gardées sur cet appareil.
+        </p>
     </div>
 
-    <!-- Tab 2: Notifications -->
-    <div id="contentNotif" class="hidden space-y-6">
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">Préférences de Notifications</h2>
-            <div class="space-y-3">
-                <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" id="notifCommande" checked class="w-4 h-4" />
-                    <span class="ml-3">📦 Notifications de commande</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" id="notifPaiement" checked class="w-4 h-4" />
-                    <span class="ml-3">💳 Confirmations de paiement</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" id="notifStock" checked class="w-4 h-4" />
-                    <span class="ml-3">📍 Alertes de stock faible</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" id="notifPromo" class="w-4 h-4" />
-                    <span class="ml-3">🎉 Offres et promotions</span>
-                </label>
-                <label class="flex items-center cursor-pointer">
-                    <input type="checkbox" id="notifNewsletter" class="w-4 h-4" />
-                    <span class="ml-3">📧 Newsletter hebdomadaire</span>
-                </label>
+    {{-- NOTIFICATIONS --}}
+    <div id="contentNotif" role="tabpanel" aria-labelledby="tabNotif" class="mt-6 hidden">
+        <section class="{{ $carte }}">
+            <h2 class="titre-display text-[1.2rem]">Ce que vous souhaitez recevoir</h2>
+            <div class="mt-4 space-y-1">
+                <label class="{{ $option }}"><input type="checkbox" id="notifCommande" checked class="size-5"> Suivi de mes commandes</label>
+                <label class="{{ $option }}"><input type="checkbox" id="notifPaiement" checked class="size-5"> Confirmations de paiement</label>
+                <label class="{{ $option }}"><input type="checkbox" id="notifStock" checked class="size-5"> Alertes de stock</label>
+                <label class="{{ $option }}"><input type="checkbox" id="notifPromo" class="size-5"> Offres et promotions</label>
+                <label class="{{ $option }}"><input type="checkbox" id="notifNewsletter" class="size-5"> Lettre d'information</label>
             </div>
-            <button onclick="saveNotifPref()" class="mt-4 px-4 py-2 bg-afri-gold text-white rounded-lg font-semibold hover:bg-afri-brown transition">
-                Enregistrer
-            </button>
-        </div>
+            <button type="button" onclick="saveNotifPref()" class="btn btn-brun mt-5">Enregistrer</button>
+        </section>
     </div>
 
-    <!-- Tab 3: Sécurité & Confidentialité -->
-    <div id="contentSec" class="hidden space-y-6">
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">🔒 Sécurité du Compte</h2>
-            <div class="space-y-4">
-                <div>
-                    <p class="text-sm text-gray-600 mb-2">Mot de passe actuel</p>
-                    <input type="password" placeholder="Entrez votre mot de passe" class="w-full px-3 py-2 border rounded-lg" />
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600 mb-2">Nouveau mot de passe</p>
-                    <input type="password" placeholder="Nouveau mot de passe" class="w-full px-3 py-2 border rounded-lg" />
-                </div>
-                <div>
-                    <p class="text-sm text-gray-600 mb-2">Confirmer le nouveau mot de passe</p>
-                    <input type="password" placeholder="Confirmer" class="w-full px-3 py-2 border rounded-lg" />
-                </div>
-                <button class="px-4 py-2 bg-afri-gold text-white rounded-lg font-semibold hover:bg-afri-brown transition">
-                    Changer le mot de passe
-                </button>
+    {{-- CONFIDENTIALITÉ --}}
+    <div id="contentSec" role="tabpanel" aria-labelledby="tabSec" class="mt-6 hidden space-y-4">
+        <section class="{{ $carte }}">
+            <h2 class="titre-display text-[1.2rem]">Mot de passe</h2>
+            <div class="mt-4 grid gap-4 sm:max-w-md">
+                <div><label for="mdp-actuel" class="etiquette">Mot de passe actuel</label><input id="mdp-actuel" type="password" autocomplete="current-password" class="champ"></div>
+                <div><label for="mdp-nouveau" class="etiquette">Nouveau mot de passe</label><input id="mdp-nouveau" type="password" autocomplete="new-password" class="champ"></div>
+                <div><label for="mdp-confirmation" class="etiquette">Confirmer le nouveau mot de passe</label><input id="mdp-confirmation" type="password" autocomplete="new-password" class="champ"></div>
             </div>
-        </div>
+            <button type="button" class="btn btn-brun mt-5">Changer le mot de passe</button>
+        </section>
 
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">🍪 Consentement aux Cookies</h2>
-            <p class="text-gray-700 mb-4">Votre consentement actuel :</p>
-            <div id="consentStatus" class="bg-gray-100 p-3 rounded-lg text-sm font-mono mb-4">
-                Chargement...
-            </div>
-            <button onclick="resetCookieConsent()" class="px-4 py-2 bg-red-500 text-white rounded-lg font-semibold hover:bg-red-600 transition">
-                Réinitialiser les cookies
-            </button>
-        </div>
+        <section class="{{ $carte }}">
+            <h2 class="titre-display text-[1.2rem]">Cookies</h2>
+            <p class="mt-2 text-encre-2">Votre choix actuel :</p>
+            <pre id="consentStatus" class="mt-3 overflow-x-auto bg-papier-2 p-4 text-[0.85rem]">Chargement…</pre>
+            <button type="button" onclick="resetCookieConsent()" class="btn btn-contour mt-5">Revoir mon choix</button>
+        </section>
 
-        <div class="bg-white p-6 rounded-lg shadow">
-            <h2 class="text-xl font-bold mb-4">📥 Télécharger mes Données</h2>
-            <p class="text-gray-700 mb-4">
-                Téléchargez une copie de toutes vos données personnelles au format JSON (RGPD).
-            </p>
-            <button onclick="downloadUserData()" class="px-4 py-2 bg-blue-600 text-white rounded-lg font-semibold hover:bg-blue-700 transition">
-                Télécharger mes données
-            </button>
-        </div>
+        <section class="{{ $carte }}">
+            <h2 class="titre-display text-[1.2rem]">Mes données</h2>
+            <p class="mt-2 max-w-[60ch] text-encre-2">Téléchargez une copie des données gardées sur cet appareil (préférences, panier, consentement), au format JSON.</p>
+            <button type="button" onclick="downloadUserData()" class="btn btn-contour mt-5"><x-icone nom="telechargement" /> Télécharger mes données</button>
+        </section>
 
-        <div class="bg-white p-6 rounded-lg shadow border-2 border-red-200">
-            <h2 class="text-xl font-bold mb-4 text-red-600">🗑️ Zone de Danger</h2>
-            <p class="text-gray-700 mb-4">
-                <strong>Attention :</strong> Ces actions sont irréversibles.
-            </p>
-            <button onclick="if(confirm('Êtes-vous sûr ? Cette action est irréversible.')) deleteAccount()" 
-                    class="px-4 py-2 bg-red-600 text-white rounded-lg font-semibold hover:bg-red-700 transition">
-                Supprimer mon compte
-            </button>
-        </div>
+        <section class="border border-[color:color-mix(in_oklch,var(--danger)_30%,transparent)] bg-carte p-6 sm:p-8">
+            <h2 class="titre-display text-[1.2rem] text-danger">Supprimer mon compte</h2>
+            <p class="mt-2 max-w-[60ch] text-encre-2">Votre compte, vos favoris et votre historique seront effacés. Cette action est définitive.</p>
+            <button type="button" onclick="if (confirm('Supprimer définitivement votre compte AfriTex ?')) deleteAccount()" class="btn btn-danger mt-5">Supprimer mon compte</button>
+        </section>
     </div>
 </div>
 
 <script>
-    // Charger les préférences au chargement
     function loadPreferences() {
         const prefs = cookieManager.getPreferences();
-        console.log('Préférences chargées:', prefs);
-        
-        // Langue
         document.querySelector(`input[name="langue"][value="${prefs.langue || 'fr'}"]`).checked = true;
-        
-        // Thème
         document.querySelector(`input[name="theme"][value="${prefs.theme || 'light'}"]`).checked = true;
-        
-        // Affichage
         document.getElementById('showImages').checked = prefs.showImages !== false;
         document.getElementById('compactView').checked = prefs.compactView || false;
         document.getElementById('showPrices').checked = prefs.showPrices !== false;
-        
-        // Notifications
         document.getElementById('notifCommande').checked = prefs.notifications?.commande !== false;
         document.getElementById('notifPaiement').checked = prefs.notifications?.paiement !== false;
         document.getElementById('notifStock').checked = prefs.notifications?.stock !== false;
         document.getElementById('notifPromo').checked = prefs.notifications?.promo || false;
         document.getElementById('notifNewsletter').checked = prefs.notifications?.newsletter || false;
-        
-        // Consentement cookies
         updateConsentStatus();
     }
 
-    // Sauvegarder préférences de langue
     function saveLangPref() {
-        const langue = document.querySelector('input[name="langue"]:checked').value;
         const prefs = cookieManager.getPreferences();
-        prefs.langue = langue;
+        prefs.langue = document.querySelector('input[name="langue"]:checked').value;
         cookieManager.setPreferences(prefs);
-        alert('✅ Langue enregistrée !');
+        alert('Langue enregistrée.');
     }
 
-    // Sauvegarder préférences de thème
     function saveThemePref() {
         const theme = document.querySelector('input[name="theme"]:checked').value;
         const prefs = cookieManager.getPreferences();
         prefs.theme = theme;
         cookieManager.setPreferences(prefs);
         applyTheme(theme);
-        alert('✅ Thème enregistré !');
+        alert('Thème enregistré.');
     }
 
-    // Appliquer le thème
     function applyTheme(theme) {
-        if (theme === 'dark') {
-            document.documentElement.classList.add('dark');
-        } else if (theme === 'light') {
-            document.documentElement.classList.remove('dark');
-        } else if (theme === 'auto') {
-            if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-                document.documentElement.classList.add('dark');
-            } else {
-                document.documentElement.classList.remove('dark');
-            }
-        }
+        const sombre = theme === 'dark' || (theme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+        document.documentElement.classList.toggle('dark', sombre);
     }
 
-    // Sauvegarder préférences d'affichage
     function saveDisplayPref() {
         const prefs = cookieManager.getPreferences();
         prefs.showImages = document.getElementById('showImages').checked;
         prefs.compactView = document.getElementById('compactView').checked;
         prefs.showPrices = document.getElementById('showPrices').checked;
         cookieManager.setPreferences(prefs);
-        alert('✅ Préférences d\'affichage enregistrées !');
+        alert('Préférences d\'affichage enregistrées.');
     }
 
-    // Sauvegarder préférences de notifications
     function saveNotifPref() {
         const prefs = cookieManager.getPreferences();
         prefs.notifications = {
@@ -257,102 +157,71 @@
             paiement: document.getElementById('notifPaiement').checked,
             stock: document.getElementById('notifStock').checked,
             promo: document.getElementById('notifPromo').checked,
-            newsletter: document.getElementById('notifNewsletter').checked
+            newsletter: document.getElementById('notifNewsletter').checked,
         };
         cookieManager.setPreferences(prefs);
-        alert('✅ Préférences de notifications enregistrées !');
+        alert('Préférences de notifications enregistrées.');
     }
 
-    // Afficher le statut de consentement
     function updateConsentStatus() {
         const consent = cookieManager.getConsent();
-        const status = document.getElementById('consentStatus');
-        if (consent) {
-            status.textContent = JSON.stringify(consent, null, 2);
-        } else {
-            status.textContent = 'Aucun consentement enregistré';
-        }
+        document.getElementById('consentStatus').textContent = consent ? JSON.stringify(consent, null, 2) : 'Aucun choix enregistré';
     }
 
-    // Réinitialiser le consentement aux cookies
     function resetCookieConsent() {
-        if (confirm('Les cookies seront réinitialisés. Voulez-vous continuer ?')) {
+        if (confirm('Votre choix sur les cookies sera effacé et le bandeau réapparaîtra. Continuer ?')) {
             localStorage.removeItem('cookieConsent');
             location.reload();
         }
     }
 
-    // Télécharger les données utilisateur
     function downloadUserData() {
         const userData = {
             preferences: cookieManager.getPreferences(),
             panier: cookieManager.getPanier(),
             consent: cookieManager.getConsent(),
-            downloadDate: new Date().toISOString()
+            downloadDate: new Date().toISOString(),
         };
-
-        const dataStr = JSON.stringify(userData, null, 2);
-        const dataBlob = new Blob([dataStr], { type: 'application/json' });
-        const url = URL.createObjectURL(dataBlob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = `mes-donnees-afritex-${new Date().toISOString().split('T')[0]}.json`;
-        link.click();
+        const url = URL.createObjectURL(new Blob([JSON.stringify(userData, null, 2)], { type: 'application/json' }));
+        const lien = document.createElement('a');
+        lien.href = url;
+        lien.download = `mes-donnees-afritex-${new Date().toISOString().split('T')[0]}.json`;
+        lien.click();
         URL.revokeObjectURL(url);
     }
 
-    // Supprimer le compte
     async function deleteAccount() {
         try {
-            const response = await fetch('/api/account/delete', {
+            const reponse = await fetch('/api/account/delete', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content
-                }
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]')?.content },
             });
-
-            if (response.ok) {
-                alert('✅ Votre compte a été supprimé.');
+            if (reponse.ok) {
+                alert('Votre compte a été supprimé.');
                 window.location.href = '/';
             } else {
-                alert('❌ Erreur lors de la suppression du compte.');
+                alert('La suppression a échoué. Réessayez ou contactez-nous.');
             }
-        } catch (error) {
-            console.error('Erreur:', error);
-            alert('❌ Erreur réseau');
+        } catch (erreur) {
+            alert('Connexion impossible. Vérifiez votre réseau et réessayez.');
         }
     }
 
-    // Gestion des onglets
-    document.getElementById('tabPref').addEventListener('click', () => {
-        switchTab('Pref');
-    });
-    document.getElementById('tabNotif').addEventListener('click', () => {
-        switchTab('Notif');
-    });
-    document.getElementById('tabSec').addEventListener('click', () => {
-        switchTab('Sec');
-    });
-
-    function switchTab(tabName) {
-        // Masquer tous les onglets
-        document.getElementById('contentPref').classList.add('hidden');
-        document.getElementById('contentNotif').classList.add('hidden');
-        document.getElementById('contentSec').classList.add('hidden');
-
-        // Afficher l'onglet sélectionné
-        document.getElementById('content' + tabName).classList.remove('hidden');
-
-        // Mettre à jour le bouton actif
-        document.querySelectorAll('[id^="tab"]').forEach(btn => {
-            btn.classList.remove('border-b-2', 'border-afri-gold', 'text-afri-gold');
-            btn.classList.add('text-gray-600', 'hover:text-gray-800');
+    const onglets = ['Pref', 'Notif', 'Sec'];
+    function switchTab(nom) {
+        onglets.forEach((o) => {
+            const actif = o === nom;
+            document.getElementById('content' + o).classList.toggle('hidden', !actif);
+            const bouton = document.getElementById('tab' + o);
+            bouton.setAttribute('aria-selected', actif ? 'true' : 'false');
+            bouton.classList.toggle('border-brun', actif);
+            bouton.classList.toggle('text-brun-fonce', actif);
+            bouton.classList.toggle('border-transparent', !actif);
+            bouton.classList.toggle('text-encre-2', !actif);
         });
-        document.getElementById('tab' + tabName).classList.add('border-b-2', 'border-afri-gold', 'text-afri-gold');
     }
+    onglets.forEach((o) => document.getElementById('tab' + o).addEventListener('click', () => switchTab(o)));
 
-    // Charger au chargement de la page
     document.addEventListener('DOMContentLoaded', loadPreferences);
 </script>
 @endsection

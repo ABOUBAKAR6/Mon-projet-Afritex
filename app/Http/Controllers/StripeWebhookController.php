@@ -106,6 +106,8 @@ class StripeWebhookController extends Controller
             } catch (\Exception $e) {
                 Log::error('Webhook Notification Error: ' . $e->getMessage());
             }
+            // Une seule fois, même si le retour client a déjà envoyé l'e-mail
+            $commande->envoyerConfirmation();
         });
     }
 }

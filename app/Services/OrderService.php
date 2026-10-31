@@ -11,9 +11,9 @@ use Illuminate\Support\Facades\Session;
 
 class OrderService
 {
-    public function createOrder(array $panier, array $coupon, string $adresseLivraison, int $userId): Commande
+    public function createOrder(array $panier, array $coupon, string $adresseLivraison, int $userId, string $modeLivraison = 'domicile'): Commande
     {
-        return DB::transaction(function () use ($panier, $coupon, $adresseLivraison, $userId) {
+        return DB::transaction(function () use ($panier, $coupon, $adresseLivraison, $userId, $modeLivraison) {
             $subtotal = array_sum(array_column($panier, 'sous_total'));
             $discount = $coupon['discount'] ?? 0;
             $total = max(0, $subtotal - $discount);
@@ -23,6 +23,7 @@ class OrderService
                 'total' => $total,
                 'statut' => 'en_attente',
                 'adresse_livraison' => $adresseLivraison,
+                'mode_livraison' => $modeLivraison,
                 'coupon_code' => $coupon['code'] ?? null,
                 'discount_amount' => $discount,
             ]);

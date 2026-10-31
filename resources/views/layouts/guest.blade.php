@@ -1,30 +1,40 @@
 <!DOCTYPE html>
-<html lang="{{ str_replace('_', '-', app()->getLocale()) }}">
-    <head>
-        <meta charset="utf-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
-        <meta name="csrf-token" content="{{ csrf_token() }}">
+<html lang="fr">
+<head>
+    @include('partials.tete')
+</head>
+<body class="boutique">
+    {{-- Connexion et inscription : photo de tissus à gauche, formulaire à droite --}}
+    <div class="grid min-h-svh lg:grid-cols-[1fr_minmax(28rem,36rem)]">
+        <aside class="relative isolate hidden overflow-hidden bg-brun-fonce text-white lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
+            <img src="{{ asset('images/hero-bg.avif') }}" alt="" class="absolute inset-0 -z-10 h-full w-full object-cover">
+            <div aria-hidden="true" class="absolute inset-0 -z-10 bg-[oklch(0.18_0.04_40/0.62)]"></div>
 
-        <title>{{ config('app.name', 'Laravel') }}</title>
+            <a href="{{ route('accueil') }}" class="flex items-center gap-3 self-start">
+                <x-logo taille="size-11" class="bg-or text-xl text-brun-fonce" />
+                <span class="titre-display text-[1.4rem]">AfriTex</span>
+            </a>
 
-        <!-- Fonts -->
-        <link rel="preconnect" href="https://fonts.bunny.net">
-        <link href="https://fonts.bunny.net/css?family=figtree:400,500,600&display=swap" rel="stylesheet" />
-
-        <!-- Scripts -->
-        @vite(['resources/css/app.css', 'resources/js/app.js'])
-    </head>
-    <body class="font-sans text-gray-900 antialiased">
-        <div class="min-h-screen flex flex-col sm:justify-center items-center pt-6 sm:pt-0 bg-gray-100">
-            <div>
-                <a href="/">
-                    <x-application-logo class="w-20 h-20 fill-current text-gray-500" />
-                </a>
+            <div class="max-w-lg">
+                <p class="titre-display text-[2.6rem] leading-[1.1] xl:text-[3.2rem]">Le meilleur tissu, livré chez vous</p>
+                <ul class="mt-8 space-y-3 text-white/85">
+                    <li class="flex items-center gap-3"><x-icone nom="regle" class="size-5 text-or" /> Au mètre, au rouleau ou en confection</li>
+                    <li class="flex items-center gap-3"><x-icone nom="livraison" class="size-5 text-or" /> Livré partout en Côte d'Ivoire sous 24 à 72 h</li>
+                    <li class="flex items-center gap-3"><x-icone nom="mobile" class="size-5 text-or" /> Paiement par Mobile Money ou à la livraison</li>
+                </ul>
             </div>
+        </aside>
 
-            <div class="w-full sm:max-w-md mt-6 px-6 py-4 bg-white shadow-md overflow-hidden sm:rounded-lg">
+        <main id="contenu" class="flex flex-col bg-papier px-5 py-8 sm:px-10 lg:px-14 lg:py-12">
+            <a href="{{ route('accueil') }}" class="flex items-center gap-3 self-start lg:hidden">
+                <x-logo class="bg-brun-fonce text-xl text-or" />
+                <span class="titre-display text-[1.25rem]">AfriTex</span>
+            </a>
+            <div class="apparition mx-auto my-auto w-full max-w-md py-10">
                 {{ $slot }}
             </div>
-        </div>
-    </body>
+            <p class="text-[0.9rem] text-encre-2"><a href="{{ route('accueil') }}" class="hover:text-brun hover:underline">Retour à la boutique</a> · <a href="{{ route('cgu') }}" class="hover:text-brun hover:underline">Conditions générales</a></p>
+        </main>
+    </div>
+</body>
 </html>

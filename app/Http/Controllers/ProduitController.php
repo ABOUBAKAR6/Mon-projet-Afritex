@@ -57,9 +57,14 @@ class ProduitController extends Controller
             ->values()
             ->toArray();
 
-        // Use Scout for the base query if there is a search term
+        // Recherche sur le nom, la description et la catégorie. (Scout plantait : son Builder n'accepte
+        // ni with() ni where('>='), et le moteur database cherchait une colonne « categorie » inexistante.)
         if ($request->recherche) {
-            $query = Produit::search($request->recherche);
+            $terme = '%' . $request->recherche . '%';
+            $query = Produit::query()->where(fn ($q) => $q
+                ->where('nom', 'like', $terme)
+                ->orWhere('description', 'like', $terme)
+                ->orWhereHas('categorie', fn ($c) => $c->where('nom', 'like', $terme)));
         } else {
             $query = Produit::query();
         }
@@ -102,10 +107,16 @@ class ProduitController extends Controller
                 break;
         }
 
-        // Pagination (12 products per page)
-        $produits = $query->with('categorie')->paginate(12)->withQueryString();
+        // Une catégorie s'affiche en rangée défilante : tous ses tissus d'un coup (48 au plus).
+        // Sinon, grille paginée par 12.
+        $produits = $query->with('categorie')->paginate($request->categorie_id ? 48 : 12)->withQueryString();
 
-        return view('catalogue', compact('categories', 'produits', 'allColors'));
+        // Sous la rangée d'une catégorie : des tissus des autres familles
+        $autresProduits = $request->categorie_id
+            ? Produit::with('categorie')->where('categorie_id', '!=', $request->categorie_id)->latest()->take(8)->get()
+            : collect();
+
+        return view('catalogue', compact('categories', 'produits', 'allColors', 'autresProduits'));
     }
 
     public function storeReview(Request $request, $id)

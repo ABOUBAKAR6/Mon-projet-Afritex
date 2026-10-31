@@ -1,79 +1,99 @@
 @extends('layouts.app')
+@section('title', 'Mon panier · AfriTex')
 @section('content')
+@php
+    $formats = [
+        'metre' => 'Au mètre', 'rouleau' => 'Au rouleau', 'pantalon' => 'Pantalon',
+        'chemise_courte' => 'Chemise manches courtes', 'chemise_longue' => 'Chemise manches longues',
+        'tunique_courte' => 'Tunique manches courtes', 'tunique_longue' => 'Tunique manches longues',
+    ];
+@endphp
 
-<div style="padding:40px; max-width:900px; margin:0 auto;">
-    <h2 style="font-family:Georgia,serif; font-size:36px; color:#4A1B0C; margin-bottom:28px;">🛒 Mon Panier</h2>
+<div class="conteneur pb-20 pt-10 lg:pb-28 lg:pt-14">
+    <h1 class="titre-display apparition text-[2.2rem] sm:text-[2.8rem]">Mon panier</h1>
 
     @if(empty($panier))
-    <div style="text-align:center; padding:60px; background:white; border-radius:20px; box-shadow:0 4px 20px rgba(139,69,19,0.08);">
-        <div style="font-size:80px; margin-bottom:20px;">🛒</div>
-        <h3 style="color:#4A1B0C; margin-bottom:12px;">Votre panier est vide</h3>
-        <p style="color:#7a6a5a; margin-bottom:24px;">Découvrez nos tissus et ajoutez-les à votre panier</p>
-        <a href="{{ route('catalogue') }}" style="background:#8B4513; color:white; padding:12px 28px; border-radius:20px; text-decoration:none; font-weight:500;">Voir le catalogue</a>
-    </div>
+        <div class="apparition mt-8 grid items-center gap-8 bg-carte p-8 sm:p-12 lg:grid-cols-[1fr_auto]" style="animation-delay: 80ms">
+            <div>
+                <p class="titre-display text-[1.5rem]">Votre panier est vide</p>
+                <p class="mt-2 max-w-[52ch] text-encre-2">Parcourez nos familles de tissus, choisissez un format (au mètre, au rouleau ou en confection) et ajoutez-le ici.</p>
+            </div>
+            <a href="{{ route('catalogue') }}" class="btn btn-brun btn-lg">Voir le catalogue <x-icone nom="fleche" /></a>
+        </div>
     @else
-    <div style="background:white; border-radius:16px; overflow:hidden; margin-bottom:20px; box-shadow:0 4px 20px rgba(139,69,19,0.08);">
-        @foreach($panier as $index => $item)
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:20px 24px; border-bottom:1px solid #e8ddd3;">
-            <div style="display:flex; align-items:center; gap:16px;">
-                <div style="width:60px; height:60px; border-radius:10px; overflow:hidden; display:flex; align-items:center; justify-content:center;">
-                    @if(!empty($item['image']) && file_exists(public_path($item['image'])))
-                        <img src="{{ asset($item['image']) }}" alt="{{ $item['nom'] }}" style="width:60px; height:60px; object-fit:cover; display:block;">
-                    @else
-                        <div style="width:60px; height:60px; background:linear-gradient(135deg, #F5E6D3, #EDD5B8); display:flex; align-items:center; justify-content:center; font-size:22px;">🧵</div>
+        <p class="apparition mt-2 text-encre-2" style="animation-delay: 60ms">{{ count($panier) }} {{ count($panier) > 1 ? 'articles' : 'article' }}</p>
+
+        <div class="mt-8 grid items-start gap-8 lg:grid-cols-[1fr_24rem] lg:gap-12">
+            {{-- ARTICLES --}}
+            <ul class="divide-y divide-trait bg-carte">
+                @foreach($panier as $index => $item)
+                    <li class="revele grid grid-cols-[5rem_1fr] gap-4 p-4 sm:grid-cols-[6.5rem_1fr_auto] sm:items-center sm:gap-6 sm:p-5" style="--delai: {{ min($index, 5) * 60 }}ms">
+                        <div class="aspect-square overflow-hidden bg-papier-2">
+                            @if(!empty($item['image']) && file_exists(public_path($item['image'])))
+                                <img src="{{ asset($item['image']) }}" alt="" class="h-full w-full object-cover">
+                            @else
+                                <span class="flex h-full w-full items-center justify-center text-brun-trait"><x-icone nom="image" class="size-7" /></span>
+                            @endif
+                        </div>
+                        <div class="min-w-0">
+                            <p class="titre-display text-[1.1rem]">{{ $item['nom'] }}</p>
+                            <p class="mt-1 text-[0.95rem] text-encre-2">
+                                {{ $formats[$item['type_commande']] ?? ucfirst(str_replace('_', ' ', $item['type_commande'])) }}
+                                · <span class="chiffres">{{ $item['quantite'] }}</span> × <span class="chiffres">{{ number_format($item['prix_unitaire'] ?? ($item['sous_total'] / max(1, $item['quantite'])), 0, ',', ' ') }} F</span>
+                            </p>
+                            <p class="chiffres mt-2 font-semibold sm:hidden">{{ number_format($item['sous_total'], 0, ',', ' ') }} F</p>
+                        </div>
+                        <div class="col-span-2 flex items-center justify-between gap-4 sm:col-span-1 sm:flex-col sm:items-end">
+                            <p class="chiffres hidden text-[1.1rem] font-semibold sm:block">{{ number_format($item['sous_total'], 0, ',', ' ') }} F</p>
+                            <form method="POST" action="{{ route('panier.supprimer', $item['id'] ?? $index) }}">
+                                @csrf @method('DELETE')
+                                <button type="submit" class="btn btn-fantome btn-sm -mr-3 text-[0.92rem]">
+                                    <x-icone nom="corbeille" /> Retirer<span class="sr-only"> {{ $item['nom'] }} du panier</span>
+                                </button>
+                            </form>
+                        </div>
+                    </li>
+                @endforeach
+            </ul>
+
+            {{-- RÉCAPITULATIF --}}
+            <aside class="revele bg-carte p-6 lg:sticky lg:top-28" style="--delai: 120ms" aria-labelledby="titre-recap">
+                <h2 id="titre-recap" class="titre-display text-[1.3rem]">Récapitulatif</h2>
+
+                <form method="POST" action="{{ route('panier.coupon.appliquer') }}" class="mt-5">
+                    @csrf
+                    <label for="coupon" class="etiquette">Code promo</label>
+                    <div class="flex gap-2">
+                        <input id="coupon" type="text" name="coupon_code" value="{{ $coupon['code'] ?? '' }}" placeholder="Votre code" class="champ uppercase">
+                        <button type="submit" class="btn btn-contour">Appliquer</button>
+                    </div>
+                    @error('coupon_code')<p class="erreur">{{ $message }}</p>@enderror
+                    @if(!empty($coupon['code']))
+                        <p class="mt-2 flex items-center gap-1.5 text-[0.92rem] text-succes"><x-icone nom="coche" class="size-4" /> Code {{ $coupon['code'] }} appliqué</p>
                     @endif
-                </div>
-                <div>
-                    <div style="font-weight:600; color:#4A1B0C; margin-bottom:4px;">{{ $item['nom'] }}</div>
-                    <div style="font-size:12px; color:#7a6a5a;">{{ $item['type_commande'] }} — Qté: {{ $item['quantite'] }}</div>
-                </div>
-            </div>
-            <div style="display:flex; align-items:center; gap:20px;">
-                <div style="font-weight:600; color:#8B4513; font-size:16px;">{{ number_format($item['sous_total'], 0, ',', ' ') }} F</div>
-                <form method="POST" action="{{ route('panier.supprimer', $index) }}">
-                    @csrf @method('DELETE')
-                    <button type="submit" style="background:#fee2e2; color:#dc2626; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; font-size:13px; transition:all 0.2s ease;"
-                        onmouseover="this.style.background='#dc2626'; this.style.color='white'"
-                        onmouseout="this.style.background='#fee2e2'; this.style.color='#dc2626'">
-                        Supprimer
-                    </button>
                 </form>
-            </div>
-        </div>
-        @endforeach
-        <div style="padding:20px 24px; background:#FDF6EE; border-top:1px solid #e8ddd3;">
-            <form method="POST" action="{{ route('panier.coupon.appliquer') }}" style="display:flex; gap:10px; align-items:center; margin-bottom:14px; flex-wrap:wrap;">
-                @csrf
-                <input type="text" name="coupon_code" placeholder="Code promo" value="{{ $coupon['code'] ?? '' }}" style="flex:1; min-width:220px; padding:11px 14px; border:1px solid #e8ddd3; border-radius:8px; font-size:14px;">
-                <button type="submit" style="background:#8B4513; color:white; padding:11px 16px; border:none; border-radius:8px; cursor:pointer;">Appliquer</button>
-            </form>
 
-            @if(!empty($coupon['code']))
-                <div style="margin-bottom:10px; color:#4A1B0C; font-size:13px; font-weight:600;">Coupon appliqué : {{ $coupon['code'] }} (-{{ number_format($discount, 0, ',', ' ') }} F)</div>
-            @endif
+                <dl class="mt-6 space-y-2.5 border-t border-trait pt-5 text-[0.98rem]">
+                    <div class="flex justify-between gap-4"><dt class="text-encre-2">Sous-total</dt><dd class="chiffres">{{ number_format($subtotal, 0, ',', ' ') }} F</dd></div>
+                    @if($discount > 0)
+                        <div class="flex justify-between gap-4"><dt class="text-encre-2">Réduction</dt><dd class="chiffres text-succes">− {{ number_format($discount, 0, ',', ' ') }} F</dd></div>
+                    @endif
+                    <div class="flex justify-between gap-4"><dt class="text-encre-2">Livraison</dt><dd class="text-encre-2">Calculée à l'étape suivante</dd></div>
+                    <div class="flex items-baseline justify-between gap-4 border-t border-trait pt-4">
+                        <dt class="font-medium">Total</dt>
+                        <dd class="titre-display chiffres text-[1.8rem] text-brun">{{ number_format($total, 0, ',', ' ') }} F</dd>
+                    </div>
+                </dl>
 
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                <strong style="font-size:18px; color:#4A1B0C;">Sous-total :</strong>
-                <span style="font-size:16px; color:#4A1B0C;">{{ number_format($subtotal, 0, ',', ' ') }} F</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8px;">
-                <strong style="font-size:18px; color:#4A1B0C;">Réduction :</strong>
-                <span style="font-size:16px; color:#16a34a;">-{{ number_format($discount, 0, ',', ' ') }} F</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-top:12px;">
-                <strong style="font-size:20px; color:#4A1B0C;">Total :</strong>
-                <strong style="font-size:24px; color:#8B4513;">{{ number_format($total, 0, ',', ' ') }} F</strong>
-            </div>
+                <p class="mt-5 flex items-start gap-2.5 bg-papier-2 p-4 text-[0.92rem] text-encre-2">
+                    <x-icone nom="livraison" class="mt-0.5 size-4 shrink-0 text-brun" />
+                    Livraison partout en Côte d'Ivoire sous 24 à 72 h, ou retrait gratuit en boutique.
+                </p>
+
+                <a href="{{ route('commande') }}" class="btn btn-brun btn-lg mt-6 w-full">Passer la commande <x-icone nom="fleche" /></a>
+                <a href="{{ route('catalogue') }}" class="btn btn-fantome mt-2 w-full">Continuer mes achats</a>
+            </aside>
         </div>
-    </div>
-    <div style="display:flex; gap:12px; justify-content:flex-end; flex-wrap:wrap;">
-        <a href="{{ route('catalogue') }}" style="background:white; color:#8B4513; padding:12px 24px; border:1px solid #e8ddd3; border-radius:8px; text-decoration:none;">Continuer les achats</a>
-        <a href="{{ route('commande') }}" style="background:#8B4513; color:white; padding:12px 28px; border-radius:8px; text-decoration:none; font-weight:500; transition:all 0.2s ease;"
-            onmouseover="this.style.background='#4A1B0C'"
-            onmouseout="this.style.background='#8B4513'">
-            Confirmer la commande →
-        </a>
-    </div>
     @endif
 </div>
 

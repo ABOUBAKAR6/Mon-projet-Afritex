@@ -1,3 +1,598 @@
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
+
+/*
+  Système visuel AfriTex
+  ------------------------------------------------------------
+  Structure : celle de la plateforme paroissiale (Église), couleurs AfriTex.
+  Accent      : --brun (#8B4513), seule couleur d'action. Ses teintes dérivées
+                sont calculées en OKLCH (color-mix), comme sur Église.
+  Second accent : l'or (#C8963E), réservé aux surfaces sombres (brun foncé).
+  Neutres     : papier et encre, légèrement teintés vers le brun.
+  Typographie : Geist (texte, interface), Poppins semi-gras (titres).
+                Corps 17px mobile / 18px bureau sur la boutique.
+  Formes      : angles droits partout (boutique et admin), aucune ombre au repos.
+  Mouvement   : 150-250ms, ease-out fort, désactivé si prefers-reduced-motion.
+  Calques     : dropdown 20, sticky 30, overlay 40, modal 50, toast 60.
+*/
+
+:root {
+    --brun: #8b4513;
+    --brun-fonce: #4a1b0c;
+    --or: #c8963e;
+
+    /* Papier crème AfriTex (#FDF6EE) et neutres teintés vers le brun */
+    --papier: oklch(0.978 0.009 68);
+    --papier-2: color-mix(in oklch, var(--brun) 5%, oklch(0.95 0.008 70));
+    --carte: oklch(0.993 0.003 70);
+    --encre: color-mix(in oklch, var(--brun) 10%, oklch(0.21 0 0));
+    --encre-2: color-mix(in oklch, var(--brun) 8%, oklch(0.42 0 0));
+    --encre-3: color-mix(in oklch, var(--brun) 6%, oklch(0.52 0 0));
+    --trait: color-mix(in oklch, var(--brun) 9%, oklch(0.9 0 0));
+    --trait-fort: color-mix(in oklch, var(--brun) 12%, oklch(0.8 0 0));
+
+    --brun-doux: color-mix(in oklch, var(--brun) 9%, var(--papier));
+    --brun-trait: color-mix(in oklch, var(--brun) 24%, var(--papier));
+
+    --or-clair: oklch(0.9 0.07 82);
+    --or-doux: oklch(0.8 0.08 78);
+
+    --succes: oklch(0.47 0.11 155);
+    --succes-doux: oklch(0.95 0.035 155);
+    --alerte: oklch(0.5 0.12 70);
+    --alerte-doux: oklch(0.955 0.045 85);
+    --danger: oklch(0.5 0.17 25);
+    --danger-doux: oklch(0.955 0.03 25);
+
+    --input: color-mix(in oklch, var(--brun) 14%, oklch(0.78 0 0));
+    --ease-out-fort: cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+@layer base {
+    html {
+        -webkit-text-size-adjust: 100%;
+        scroll-padding-top: 6rem;
+    }
+
+    body {
+        @apply bg-papier text-encre font-sans antialiased;
+        font-feature-settings: 'ss01';
+    }
+
+    h1,
+    h2,
+    h3 {
+        text-wrap: balance;
+    }
+
+    p {
+        text-wrap: pretty;
+    }
+
+    ::selection {
+        background: var(--brun-trait);
+        color: var(--encre);
+    }
+
+    :focus-visible {
+        outline: 2px solid var(--brun);
+        outline-offset: 2px;
+    }
+
+    /* Champs du plugin forms : angles droits, focus brun au lieu du bleu par défaut */
+    [type='text'],
+    [type='email'],
+    [type='url'],
+    [type='password'],
+    [type='number'],
+    [type='date'],
+    [type='search'],
+    [type='tel'],
+    select,
+    textarea {
+        --tw-ring-color: var(--brun);
+    }
+
+    [type='checkbox'],
+    [type='radio'] {
+        color: var(--brun);
+        border-color: var(--input);
+    }
+
+    [x-cloak] {
+        display: none !important;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        *,
+        *::before,
+        *::after {
+            animation-duration: 0.01ms !important;
+            animation-iteration-count: 1 !important;
+            transition-duration: 0.01ms !important;
+            scroll-behavior: auto !important;
+        }
+    }
+}
+
+@layer components {
+    /* Boutique : corps de texte généreux, lisible à tout âge */
+    .boutique {
+        font-size: 1.0625rem;
+        line-height: 1.6;
+    }
+
+    @media (min-width: 64rem) {
+        .boutique {
+            font-size: 1.125rem;
+        }
+    }
+
+    .conteneur {
+        @apply mx-auto w-full max-w-7xl px-4 sm:px-6 lg:px-8;
+    }
+
+    .titre-display {
+        font-family: theme('fontFamily.display');
+        font-weight: 600;
+        letter-spacing: -0.02em;
+        line-height: 1.15;
+    }
+
+    /* Petit intitulé au-dessus d'un titre de section (comme sur Église) */
+    .intitule {
+        font-family: theme('fontFamily.display');
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--brun);
+    }
+
+    .chiffres {
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* ---------- Boutons ---------- */
+    .btn {
+        @apply inline-flex min-h-11 items-center justify-center gap-2 whitespace-nowrap px-5 text-[0.95rem] font-semibold;
+        transition-property: color, background-color, border-color, transform;
+        transition-duration: 150ms;
+        transition-timing-function: var(--ease-out-fort);
+    }
+
+    .btn:active {
+        transform: scale(0.98);
+    }
+
+    .btn:disabled,
+    .btn[aria-disabled='true'] {
+        @apply pointer-events-none opacity-50;
+    }
+
+    .btn svg {
+        @apply size-4 shrink-0;
+    }
+
+    .btn-lg {
+        @apply min-h-13 px-7 text-base;
+    }
+
+    .btn-lg svg {
+        @apply size-5;
+    }
+
+    .btn-sm {
+        @apply min-h-9 px-3 text-sm;
+    }
+
+    .btn-brun {
+        background: var(--brun);
+        color: oklch(0.99 0.004 70);
+    }
+
+    .btn-brun:hover {
+        background: var(--brun-fonce);
+    }
+
+    .btn-contour {
+        @apply border;
+        border-color: var(--trait-fort);
+        background: var(--carte);
+        color: var(--encre);
+    }
+
+    .btn-contour:hover {
+        border-color: var(--brun-trait);
+        background: var(--brun-doux);
+        color: var(--brun-fonce);
+    }
+
+    /* Sur photo ou surface sombre */
+    .btn-clair {
+        @apply border;
+        border-color: oklch(1 0 0 / 0.7);
+        color: #fff;
+    }
+
+    .btn-clair:hover {
+        background: oklch(0.99 0.004 70);
+        color: var(--encre);
+    }
+
+    .btn-or {
+        background: var(--or);
+        color: var(--brun-fonce);
+    }
+
+    .btn-or:hover {
+        background: var(--or-clair);
+    }
+
+    .btn-danger {
+        @apply border;
+        border-color: color-mix(in oklch, var(--danger) 35%, transparent);
+        background: var(--danger-doux);
+        color: var(--danger);
+    }
+
+    .btn-danger:hover {
+        background: var(--danger);
+        color: #fff;
+    }
+
+    .btn-fantome {
+        color: var(--encre-2);
+    }
+
+    .btn-fantome:hover {
+        background: var(--brun-doux);
+        color: var(--brun-fonce);
+    }
+
+    /* Lien texte avec flèche */
+    .lien-fleche {
+        @apply inline-flex items-center gap-1.5 font-semibold;
+        color: var(--brun);
+    }
+
+    .lien-fleche svg {
+        @apply size-4;
+        transition: transform 200ms var(--ease-out-fort);
+    }
+
+    .lien-fleche:hover svg,
+    .group:hover .lien-fleche svg {
+        transform: translateX(4px);
+    }
+
+    .lien {
+        color: var(--brun);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    .lien:hover {
+        color: var(--brun-fonce);
+    }
+
+    /* ---------- Formulaires ---------- */
+    .etiquette {
+        @apply mb-1.5 block text-[0.9rem] font-medium;
+        color: var(--encre);
+    }
+
+    .champ {
+        @apply block min-h-11 w-full border px-3.5 py-2 text-[0.98rem];
+        border-color: var(--input);
+        background: var(--carte);
+        color: var(--encre);
+        transition: border-color 150ms ease-out;
+    }
+
+    .champ::placeholder {
+        color: var(--encre-3);
+    }
+
+    .champ:focus {
+        border-color: var(--brun);
+        outline: 2px solid var(--brun);
+        outline-offset: -1px;
+        box-shadow: none;
+    }
+
+    textarea.champ {
+        @apply min-h-[7rem] py-3;
+    }
+
+    .aide {
+        @apply mt-1.5 text-sm;
+        color: var(--encre-2);
+    }
+
+    .erreur {
+        @apply mt-1.5 text-sm font-medium;
+        color: var(--danger);
+    }
+
+    /* Choix sous forme de cartes (format de vente, livraison, paiement) */
+    .choix {
+        @apply relative flex cursor-pointer items-center gap-4 border p-4;
+        border-color: var(--trait-fort);
+        background: var(--carte);
+        transition: border-color 150ms ease-out, background-color 150ms ease-out;
+    }
+
+    .choix:hover {
+        border-color: var(--brun-trait);
+    }
+
+    .choix:has(input:checked),
+    .choix.est-choisi {
+        border-color: var(--brun);
+        background: var(--brun-doux);
+        box-shadow: inset 0 0 0 1px var(--brun);
+    }
+
+    .choix:has(input:focus-visible) {
+        outline: 2px solid var(--brun);
+        outline-offset: 2px;
+    }
+
+    /* ---------- Surfaces ---------- */
+    .surface {
+        background: var(--carte);
+    }
+
+    .surface-bordee {
+        @apply border;
+        border-color: var(--trait);
+        background: var(--carte);
+    }
+
+    /* Filet brun qui se dessine en haut au survol (signature Église) */
+    .filet {
+        @apply relative;
+    }
+
+    .filet::before {
+        content: '';
+        @apply absolute inset-x-0 top-0 z-10 h-[3px];
+        background: var(--brun);
+        transform: scaleX(0);
+        transform-origin: left;
+        transition: transform 450ms var(--ease-out-fort);
+    }
+
+    .filet:hover::before,
+    .filet:focus-within::before {
+        transform: scaleX(1);
+    }
+
+    /* ---------- Pastilles de statut : couleur + point + libellé, jamais la couleur seule ---------- */
+    .pastille {
+        @apply inline-flex items-center gap-1.5 whitespace-nowrap px-2.5 py-1 text-[0.8rem] font-medium;
+        background: var(--papier-2);
+        color: var(--encre-2);
+    }
+
+    .pastille::before {
+        content: '';
+        @apply size-1.5 shrink-0 rounded-full;
+        background: currentColor;
+    }
+
+    .pastille-attente {
+        background: var(--alerte-doux);
+        color: var(--alerte);
+    }
+
+    .pastille-brun {
+        background: var(--brun-doux);
+        color: var(--brun-fonce);
+    }
+
+    .pastille-succes {
+        background: var(--succes-doux);
+        color: var(--succes);
+    }
+
+    .pastille-danger {
+        background: var(--danger-doux);
+        color: var(--danger);
+    }
+
+    /* ---------- Tableaux (admin, récapitulatifs) ---------- */
+    .tableau {
+        @apply w-full border-collapse text-left text-[0.92rem];
+    }
+
+    .tableau th {
+        @apply px-4 py-3 text-[0.8rem] font-medium;
+        color: var(--encre-2);
+        background: var(--papier-2);
+    }
+
+    .tableau td {
+        @apply border-t px-4 py-3.5 align-middle;
+        border-color: var(--trait);
+    }
+
+    .tableau tbody tr {
+        transition: background-color 150ms ease-out;
+    }
+
+    .tableau tbody tr:hover {
+        background: color-mix(in oklch, var(--brun-doux) 60%, transparent);
+    }
+
+    /* ---------- Texte riche (pages légales, FAQ, à propos) ---------- */
+    .prose-afritex {
+        max-width: 68ch;
+        color: var(--encre);
+    }
+
+    .prose-afritex > * + * {
+        margin-top: 1em;
+    }
+
+    .prose-afritex h2 {
+        font-family: theme('fontFamily.display');
+        font-weight: 600;
+        font-size: 1.45em;
+        line-height: 1.2;
+        margin-top: 1.8em;
+    }
+
+    .prose-afritex h3 {
+        font-weight: 600;
+        font-size: 1.12em;
+        margin-top: 1.4em;
+    }
+
+    .prose-afritex ul,
+    .prose-afritex ol {
+        padding-left: 1.3em;
+    }
+
+    .prose-afritex ul {
+        list-style: disc;
+    }
+
+    .prose-afritex ol {
+        list-style: decimal;
+    }
+
+    .prose-afritex li + li {
+        margin-top: 0.35em;
+    }
+
+    .prose-afritex li::marker {
+        color: var(--brun);
+    }
+
+    .prose-afritex a {
+        color: var(--brun);
+        text-decoration: underline;
+        text-underline-offset: 3px;
+    }
+
+    .defilement-discret {
+        scrollbar-width: none;
+    }
+
+    .defilement-discret::-webkit-scrollbar {
+        display: none;
+    }
+
+    /* ---------- Bandeau d'informations défilant (haut de la boutique) ---------- */
+    @keyframes defilement {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(-50%);
+        }
+    }
+
+    .bandeau-defilant__piste {
+        animation: defilement 45s linear infinite;
+    }
+
+    .bandeau-defilant:hover .bandeau-defilant__piste,
+    .bandeau-defilant:focus-within .bandeau-defilant__piste {
+        animation-play-state: paused;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .bandeau-defilant {
+            overflow-x: auto;
+        }
+
+        .bandeau-defilant__piste {
+            animation: none;
+        }
+    }
+
+    /* ---------- Apparition en fondu vers le haut (décalage via animation-delay) ---------- */
+    @keyframes apparition {
+        from {
+            opacity: 0;
+            transform: translateY(14px);
+        }
+        to {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    .apparition {
+        animation: apparition 600ms var(--ease-out-fort) both;
+    }
+
+    /* Révélation au défilement : l'état caché n'est posé que si le script tourne (classe js sur <html>) */
+    .js .revele {
+        opacity: 0;
+        transform: translateY(18px);
+        transition:
+            opacity 600ms var(--ease-out-fort),
+            transform 600ms var(--ease-out-fort);
+        transition-delay: var(--delai, 0ms);
+    }
+
+    .js .revele.est-visible {
+        opacity: 1;
+        transform: none;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .apparition {
+            animation: none;
+        }
+
+        .js .revele {
+            opacity: 1;
+            transform: none;
+        }
+    }
+
+    /* Image qui grossit doucement au survol de sa carte */
+    .zoom-doux {
+        transition: transform 700ms var(--ease-out-fort);
+    }
+
+    .group:hover .zoom-doux {
+        transform: scale(1.03);
+    }
+
+    /* Parallaxe de la rangée défilante (app.js, rangeeDefilante) : la photo, agrandie pour avoir de la marge,
+       glisse de --parallaxe. « translate » et « scale » se cumulent avec le zoom au survol (transform). */
+    .rangee-parallaxe .zoom-doux {
+        scale: 1.18;
+        translate: var(--parallaxe, 0) 0;
+    }
+
+    /* Carte Leaflet : repère carré brun, contrôles aux angles droits, sans ombre */
+    .repere-afritex {
+        display: flex;
+        width: 22px;
+        height: 22px;
+        background: var(--brun);
+        border: 3px solid #fff;
+    }
+
+    .carte-livraison .leaflet-bar,
+    .carte-livraison .leaflet-bar a {
+        border-radius: 0;
+        box-shadow: none;
+    }
+
+    .carte-livraison .leaflet-bar {
+        border: 1px solid var(--trait-fort);
+    }
+
+    @media print {
+        .sans-impression {
+            display: none !important;
+        }
+    }
+}

@@ -1,335 +1,147 @@
-@extends('layouts.app')
-@section('title', 'Gestion des Commandes - AfriTex Admin')
+@extends('layouts.admin')
+@section('title', 'Commandes · AfriTex')
 @section('content')
+@php
+    $statuts = [
+        'en_attente' => 'En attente',
+        'confirmee' => 'Confirmée',
+        'en_preparation' => 'En préparation',
+        'expedie' => 'Expédiée',
+        'livree' => 'Livrée',
+        'annulee' => 'Annulée',
+    ];
+    $compteurs = [
+        ['', 'Toutes', $stats['total'] ?? 0],
+        ['en_attente', 'En attente', $stats['en_attente'] ?? 0],
+        ['confirmee', 'Confirmées', $stats['confirmee'] ?? 0],
+        ['livree', 'Livrées', $stats['livree'] ?? 0],
+        ['annulee', 'Annulées', $stats['annulee'] ?? 0],
+    ];
+@endphp
 
-<div style="padding:30px; background:#f8f4f0; min-height:100vh;">
+<x-admin-entete titre="Commandes" description="Suivez chaque commande et faites-la avancer jusqu'à la livraison.">
+    <p class="flex flex-col items-end bg-brun-fonce px-5 py-3 text-white">
+        <span class="text-[0.85rem] text-or-doux">Encaissé aujourd'hui</span>
+        <span class="titre-display chiffres text-[1.3rem] text-or">{{ number_format($stats['ca_jour'] ?? 0, 0, ',', ' ') }} F</span>
+    </p>
+</x-admin-entete>
 
-    {{-- EN-TÊTE --}}
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:28px;">
-        <div>
-            <h2 style="font-size:26px; font-weight:bold; color:#4A1B0C; margin:0;">
-                📋 Gestion des Commandes
-            </h2>
-            <small style="color:#7a6a5a;">AfriTex — Vue administrateur</small>
-        </div>
-        <a href="{{ route('admin.dashboard') }}"
-           style="background:white; color:#4A1B0C; border:2px solid #4A1B0C;
-                  padding:8px 18px; border-radius:8px; text-decoration:none;
-                  font-size:14px; font-weight:600;">
-            ← Tableau de bord
-        </a>
-    </div>
-
-    {{-- ALERTE --}}
-    @if(session('success'))
-        <div style="background:#d4edda; color:#155724; border:1px solid #c3e6cb;
-                    border-radius:10px; padding:14px 20px; margin-bottom:20px;">
-            ✅ {{ session('success') }}
-        </div>
-    @endif
-
-    {{-- STATS --}}
-    <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:16px; margin-bottom:28px;">
-
-        <div style="background:white; border-radius:12px; padding:16px; text-align:center;
-                    box-shadow:0 2px 8px rgba(0,0,0,0.08);">
-            <div style="font-size:22px; font-weight:bold; color:#4A1B0C;">{{ $stats['total'] }}</div>
-            <div style="font-size:12px; color:#7a6a5a; margin-top:4px;">Total</div>
-        </div>
-
-        <div style="background:white; border-radius:12px; padding:16px; text-align:center;
-                    box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:3px solid #f0ad4e;">
-            <div style="font-size:22px; font-weight:bold; color:#856404;">{{ $stats['en_attente'] }}</div>
-            <div style="font-size:12px; color:#7a6a5a; margin-top:4px;">En attente</div>
-        </div>
-
-        <div style="background:white; border-radius:12px; padding:16px; text-align:center;
-                    box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:3px solid #0d6efd;">
-            <div style="font-size:22px; font-weight:bold; color:#0d6efd;">{{ $stats['confirmee'] }}</div>
-            <div style="font-size:12px; color:#7a6a5a; margin-top:4px;">Confirmées</div>
-        </div>
-
-        <div style="background:white; border-radius:12px; padding:16px; text-align:center;
-                    box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:3px solid #198754;">
-            <div style="font-size:22px; font-weight:bold; color:#198754;">{{ $stats['livree'] }}</div>
-            <div style="font-size:12px; color:#7a6a5a; margin-top:4px;">Livrées</div>
-        </div>
-
-        <div style="background:white; border-radius:12px; padding:16px; text-align:center;
-                    box-shadow:0 2px 8px rgba(0,0,0,0.08); border-top:3px solid #dc3545;">
-            <div style="font-size:22px; font-weight:bold; color:#dc3545;">{{ $stats['annulee'] }}</div>
-            <div style="font-size:12px; color:#7a6a5a; margin-top:4px;">Annulées</div>
-        </div>
-
-        <div style="background:linear-gradient(135deg,#8B4513,#4A1B0C); border-radius:12px;
-                    padding:16px; text-align:center; box-shadow:0 2px 8px rgba(0,0,0,0.15);">
-            <div style="font-size:15px; font-weight:bold; color:white;">
-                {{ number_format($stats['ca_jour'], 0, ',', ' ') }} F
-            </div>
-            <div style="font-size:12px; color:rgba(255,255,255,0.8); margin-top:4px;">CA aujourd'hui</div>
-        </div>
-
-    </div>
-
-    {{-- FILTRES --}}
-    <div style="background:white; border-radius:12px; padding:20px;
-                box-shadow:0 2px 8px rgba(0,0,0,0.08); margin-bottom:24px;">
-        <form method="GET" style="display:flex; gap:12px; align-items:flex-end; flex-wrap:wrap;">
-
-            <div style="flex:2; min-width:200px;">
-                <label style="font-size:13px; font-weight:600; color:#4A1B0C;
-                               display:block; margin-bottom:6px;">🔍 Recherche</label>
-                <input type="text" name="search"
-                       value="{{ request('search') }}"
-                       placeholder="Nom, email ou n° commande..."
-                       style="width:100%; padding:9px 12px; border:1px solid #ddd;
-                              border-radius:8px; font-size:14px; box-sizing:border-box;">
-            </div>
-
-            <div style="flex:1; min-width:160px;">
-                <label style="font-size:13px; font-weight:600; color:#4A1B0C;
-                               display:block; margin-bottom:6px;">📌 Statut</label>
-                <select name="statut"
-                        style="width:100%; padding:9px 12px; border:1px solid #ddd;
-                               border-radius:8px; font-size:14px; background:white; box-sizing:border-box;">
-                    <option value="">Tous les statuts</option>
-                    <option value="en_attente"     {{ request('statut')=='en_attente'     ? 'selected':'' }}>⏳ En attente</option>
-                    <option value="confirmee"      {{ request('statut')=='confirmee'      ? 'selected':'' }}>✅ Confirmée</option>
-                    <option value="en_preparation" {{ request('statut')=='en_preparation' ? 'selected':'' }}>🔧 En préparation</option>
-                    <option value="expedie"        {{ request('statut')=='expedie'        ? 'selected':'' }}>🚚 Expédiée</option>
-                    <option value="livree"         {{ request('statut')=='livree'         ? 'selected':'' }}>📦 Livrée</option>
-                    <option value="annulee"        {{ request('statut')=='annulee'        ? 'selected':'' }}>❌ Annulée</option>
-                </select>
-            </div>
-
-            <div style="flex:1; min-width:160px;">
-                <label style="font-size:13px; font-weight:600; color:#4A1B0C;
-                               display:block; margin-bottom:6px;">📅 Date</label>
-                <input type="date" name="date"
-                       value="{{ request('date') }}"
-                       style="width:100%; padding:9px 12px; border:1px solid #ddd;
-                              border-radius:8px; font-size:14px; box-sizing:border-box;">
-            </div>
-
-            <div style="display:flex; gap:8px;">
-                <button type="submit"
-                        style="background:#8B4513; color:white; border:none; padding:9px 20px;
-                               border-radius:8px; font-size:14px; font-weight:600; cursor:pointer;">
-                    Filtrer
-                </button>
-                <a href="{{ route('admin.commandes') }}"
-                   style="background:#f8f4f0; color:#4A1B0C; border:1px solid #ddd; padding:9px 14px;
-                          border-radius:8px; font-size:14px; text-decoration:none; font-weight:600;">
-                    ✕
+{{-- Filtres rapides par statut --}}
+<nav aria-label="Filtrer par statut" class="defilement-discret -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+    <ul class="flex w-max gap-1 bg-carte p-1 sm:w-auto">
+        @foreach($compteurs as [$valeur, $libelle, $nombre])
+            @php $actif = (string) request('statut', '') === $valeur; @endphp
+            <li>
+                <a href="{{ route('admin.commandes', array_filter(array_merge(request()->except(['statut', 'page']), ['statut' => $valeur]))) }}" @if($actif) aria-current="page" @endif
+                   class="flex min-h-10 items-center gap-2 whitespace-nowrap px-3.5 text-[0.95rem] transition-colors {{ $actif ? 'bg-brun text-white' : 'text-encre-2 hover:bg-brun-doux hover:text-brun-fonce' }}">
+                    {{ $libelle }} <span class="chiffres {{ $actif ? 'text-white/80' : 'text-encre-3' }}">{{ $nombre }}</span>
                 </a>
-            </div>
+            </li>
+        @endforeach
+    </ul>
+</nav>
 
-        </form>
+{{-- Recherche et date --}}
+<form method="GET" class="mt-4 grid gap-3 bg-carte p-4 sm:grid-cols-[1fr_12rem_12rem_auto] sm:items-end">
+    <div>
+        <label for="f-recherche" class="etiquette">Recherche</label>
+        <input id="f-recherche" type="search" name="search" value="{{ request('search') }}" placeholder="Nom, e-mail ou numéro de commande" class="champ">
     </div>
+    <div>
+        <label for="f-statut" class="etiquette">Statut</label>
+        <select id="f-statut" name="statut" class="champ">
+            <option value="">Tous</option>
+            @foreach($statuts as $valeur => $libelle)
+                <option value="{{ $valeur }}" @selected(request('statut') === $valeur)>{{ $libelle }}</option>
+            @endforeach
+        </select>
+    </div>
+    <div>
+        <label for="f-date" class="etiquette">Date</label>
+        <input id="f-date" type="date" name="date" value="{{ request('date') }}" class="champ">
+    </div>
+    <div class="flex gap-2">
+        <button type="submit" class="btn btn-brun">Filtrer</button>
+        @if(request()->hasAny(['search', 'statut', 'date']))
+            <a href="{{ route('admin.commandes') }}" class="btn btn-contour">Effacer</a>
+        @endif
+    </div>
+</form>
 
-    {{-- TABLEAU --}}
-    <div style="background:white; border-radius:12px; box-shadow:0 2px 8px rgba(0,0,0,0.08); overflow:hidden;">
-
-        @if($commandes->isEmpty())
-            <div style="text-align:center; padding:60px; color:#7a6a5a;">
-                <div style="font-size:48px; margin-bottom:12px;">📭</div>
-                <p>Aucune commande trouvée.</p>
-            </div>
-        @else
-            <div style="overflow-x:auto;">
-                <table style="width:100%; border-collapse:collapse;">
-                    <thead>
-                        <tr style="background:#FDF6EE;">
-                            <th style="padding:14px 16px; text-align:left; font-size:13px;
-                                       color:#4A1B0C; border-bottom:2px solid #e8ddd3;">N° Commande</th>
-                            <th style="padding:14px 16px; text-align:left; font-size:13px;
-                                       color:#4A1B0C; border-bottom:2px solid #e8ddd3;">Client</th>
-                            <th style="padding:14px 16px; text-align:left; font-size:13px;
-                                       color:#4A1B0C; border-bottom:2px solid #e8ddd3;">Articles</th>
-                            <th style="padding:14px 16px; text-align:left; font-size:13px;
-                                       color:#4A1B0C; border-bottom:2px solid #e8ddd3;">Total</th>
-                            <th style="padding:14px 16px; text-align:left; font-size:13px;
-                                       color:#4A1B0C; border-bottom:2px solid #e8ddd3;">Paiement</th>
-                            <th style="padding:14px 16px; text-align:left; font-size:13px;
-                                       color:#4A1B0C; border-bottom:2px solid #e8ddd3;">Statut</th>
-                            <th style="padding:14px 16px; text-align:left; font-size:13px;
-                                       color:#4A1B0C; border-bottom:2px solid #e8ddd3;">Date</th>
-                            <th style="padding:14px 16px; text-align:center; font-size:13px;
-                                       color:#4A1B0C; border-bottom:2px solid #e8ddd3;">Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        @php
-                            $statuts = [
-                                'en_attente'     => ['label'=>'En attente',     'bg'=>'#fff3cd', 'color'=>'#856404'],
-                                'confirmee'      => ['label'=>'Confirmée',      'bg'=>'#cce5ff', 'color'=>'#004085'],
-                                'en_preparation' => ['label'=>'En préparation', 'bg'=>'#d1ecf1', 'color'=>'#0c5460'],
-                                'expedie'        => ['label'=>'Expédiée',       'bg'=>'#e2e3e5', 'color'=>'#383d41'],
-                                'livree'         => ['label'=>'Livrée',         'bg'=>'#d4edda', 'color'=>'#155724'],
-                                'annulee'        => ['label'=>'Annulée',        'bg'=>'#f8d7da', 'color'=>'#721c24'],
-                            ];
-                        @endphp
-
-                        @foreach($commandes as $commande)
-                        @php $s = $statuts[$commande->statut] ?? ['label'=>$commande->statut,'bg'=>'#e2e3e5','color'=>'#333']; @endphp
-                        <tr style="border-bottom:1px solid #f0e8e0; transition:background 0.15s;"
-                            onmouseover="this.style.background='#FDF6EE'"
-                            onmouseout="this.style.background='white'">
-
-                            {{-- N° Commande --}}
-                            <td style="padding:14px 16px; font-weight:bold; color:#8B4513;">
-                                #{{ str_pad($commande->id, 4, '0', STR_PAD_LEFT) }}
+{{-- Tableau --}}
+<section class="mt-4 bg-carte" aria-label="Liste des commandes">
+    @if($commandes->isEmpty())
+        <div class="px-6 py-16 text-center">
+            <p class="titre-display text-[1.3rem]">Aucune commande trouvée</p>
+            <p class="mt-1 text-encre-2">Modifiez les filtres ou effacez la recherche.</p>
+        </div>
+    @else
+        <div class="overflow-x-auto">
+            <table class="tableau">
+                <thead>
+                    <tr>
+                        <th scope="col">Commande</th>
+                        <th scope="col">Client</th>
+                        <th scope="col" class="text-right">Articles</th>
+                        <th scope="col">Paiement</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col" class="text-right">Total</th>
+                        <th scope="col"><span class="sr-only">Actions</span></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @foreach($commandes as $commande)
+                        <tr>
+                            <td>
+                                <a href="{{ route('admin.commande.detail', $commande) }}" class="chiffres font-semibold text-brun hover:underline">n° {{ str_pad($commande->id, 4, '0', STR_PAD_LEFT) }}</a>
+                                <span class="block text-[0.85rem] text-encre-2">{{ $commande->created_at->format('d/m/Y H:i') }}</span>
                             </td>
-
-                            {{-- Client --}}
-                            <td style="padding:14px 16px;">
-                                <div style="font-weight:600; color:#333;">{{ $commande->user->name }}</div>
-                                <div style="font-size:12px; color:#7a6a5a;">{{ $commande->user->email }}</div>
+                            <td>
+                                <span class="block font-medium">{{ $commande->user->name ?? 'Client supprimé' }}</span>
+                                <span class="block text-[0.85rem] text-encre-2">{{ $commande->user->email ?? '' }}</span>
                             </td>
-
-                            {{-- Articles --}}
-                            <td style="padding:14px 16px;">
-                                <span style="background:#FDF6EE; border:1px solid #e8ddd3;
-                                             color:#4A1B0C; padding:3px 10px; border-radius:20px;
-                                             font-size:12px;">
-                                    {{ $commande->items->count() }} article(s)
-                                </span>
-                            </td>
-
-                            {{-- Total --}}
-                            <td style="padding:14px 16px; font-weight:bold; color:#333;">
-                                {{ number_format($commande->total, 0, ',', ' ') }} F CFA
-                            </td>
-
-                            {{-- Paiement --}}
-                            <td style="padding:14px 16px;">
+                            <td class="chiffres text-right">{{ $commande->items->count() }}</td>
+                            <td>
                                 @if($commande->paiement)
-                                    @php $ps = $commande->paiement->statut; @endphp
-                                    <span style="background:{{ $ps=='paye'?'#d4edda':($ps=='en_attente'?'#fff3cd':'#f8d7da') }};
-                                                 color:{{ $ps=='paye'?'#155724':($ps=='en_attente'?'#856404':'#721c24') }};
-                                                 padding:3px 10px; border-radius:20px; font-size:12px;">
-                                        {{ ucfirst($ps) }}
-                                    </span>
-                                    <div style="font-size:11px; color:#7a6a5a; margin-top:3px;">
-                                        {{ $commande->paiement->methode }}
-                                    </div>
+                                    <x-statut-commande :statut="$commande->paiement->statut" />
+                                    <span class="mt-1 block text-[0.85rem] text-encre-2">{{ ucfirst(str_replace('_', ' ', $commande->paiement->methode)) }}</span>
                                 @else
-                                    <span style="background:#e2e3e5; color:#383d41; padding:3px 10px;
-                                                 border-radius:20px; font-size:12px;">Non défini</span>
+                                    <span class="text-encre-2">Non défini</span>
                                 @endif
                             </td>
-
-                            {{-- Statut --}}
-                            <td style="padding:14px 16px;">
-                                <span style="background:{{ $s['bg'] }}; color:{{ $s['color'] }};
-                                             padding:4px 12px; border-radius:20px; font-size:12px;
-                                             font-weight:600;">
-                                    {{ $s['label'] }}
-                                </span>
-                            </td>
-
-                            {{-- Date --}}
-                            <td style="padding:14px 16px;">
-                                <div style="font-size:13px; color:#333;">
-                                    {{ $commande->created_at->format('d/m/Y') }}
-                                </div>
-                                <div style="font-size:11px; color:#7a6a5a;">
-                                    {{ $commande->created_at->format('H:i') }}
-                                </div>
-                            </td>
-
-                            {{-- Actions --}}
-                            <td style="padding:14px 16px; text-align:center;">
-                                <div style="display:flex; gap:6px; justify-content:center; align-items:center;">
-
-                                    {{-- Voir détail --}}
-                                    <a href="{{ route('admin.commande.detail', $commande) }}"
-                                       style="background:#4A1B0C; color:white; padding:6px 14px;
-                                              border-radius:6px; text-decoration:none; font-size:13px;">
-                                        👁 Voir
-                                    </a>
-
-                                    {{-- Changer statut --}}
-                                    <div style="position:relative; display:inline-block;">
-                                        <button onclick="toggleMenu({{ $commande->id }})"
-                                                style="background:#8B4513; color:white; border:none;
-                                                       padding:6px 12px; border-radius:6px;
-                                                       font-size:13px; cursor:pointer;">
-                                            ⚙ ▾
+                            <td><x-statut-commande :statut="$commande->statut" /></td>
+                            <td class="chiffres whitespace-nowrap text-right font-semibold">{{ number_format($commande->total, 0, ',', ' ') }} F</td>
+                            <td class="text-right">
+                                <div class="flex items-center justify-end gap-1">
+                                    <a href="{{ route('admin.commande.detail', $commande) }}" class="btn btn-fantome btn-sm">Détail</a>
+                                    <div class="relative" x-data="{ ouvert: false }" @click.outside="ouvert = false" @keydown.escape="ouvert = false">
+                                        <button type="button" @click="ouvert = !ouvert" :aria-expanded="ouvert" class="btn btn-contour btn-sm">
+                                            Statut <x-icone nom="chevron-bas" />
                                         </button>
-
-                                        <div id="menu-{{ $commande->id }}"
-                                             style="display:none; position:absolute; right:0; top:110%;
-                                                    background:white; border:1px solid #e8ddd3;
-                                                    border-radius:10px; box-shadow:0 4px 20px rgba(0,0,0,0.12);
-                                                    z-index:999; min-width:180px; overflow:hidden;">
-                                            <div style="padding:8px 12px; font-size:11px; color:#7a6a5a;
-                                                        border-bottom:1px solid #f0e8e0; font-weight:600;">
-                                                CHANGER LE STATUT
-                                            </div>
-                                            @foreach($statuts as $value => $info)
-                                                @if($value !== $commande->statut)
-                                                <form method="POST"
-                                                      action="{{ route('admin.commande.statut', $commande) }}">
+                                        <div x-show="ouvert" x-cloak x-transition.origin.top.right
+                                             class="absolute right-0 top-full z-dropdown mt-1 w-52 border border-trait bg-carte py-1 text-left shadow-[0_18px_40px_-24px_oklch(0.25_0.04_45/0.45)]">
+                                            <p class="px-3.5 py-2 text-[0.85rem] text-encre-2">Passer la commande en :</p>
+                                            @foreach($statuts as $valeur => $libelle)
+                                                @continue($valeur === $commande->statut)
+                                                <form method="POST" action="{{ route('admin.commande.statut', $commande) }}">
                                                     @csrf @method('PATCH')
-                                                    <input type="hidden" name="statut" value="{{ $value }}">
-                                                    <button type="submit"
-                                                            style="width:100%; text-align:left; background:none;
-                                                                   border:none; padding:10px 14px; cursor:pointer;
-                                                                   font-size:13px; color:#333; display:block;"
-                                                            onmouseover="this.style.background='#FDF6EE'"
-                                                            onmouseout="this.style.background='none'">
-                                                        <span style="background:{{ $info['bg'] }};
-                                                                     color:{{ $info['color'] }};
-                                                                     padding:2px 8px; border-radius:10px;
-                                                                     font-size:12px;">
-                                                            {{ $info['label'] }}
-                                                        </span>
+                                                    <input type="hidden" name="statut" value="{{ $valeur }}">
+                                                    <button type="submit" class="flex min-h-10 w-full items-center px-3.5 transition-colors hover:bg-brun-doux">
+                                                        <x-statut-commande :statut="$valeur" />
                                                     </button>
                                                 </form>
-                                                @endif
                                             @endforeach
                                         </div>
                                     </div>
-
                                 </div>
                             </td>
                         </tr>
-                        @endforeach
-                    </tbody>
-                </table>
-            </div>
-
-            {{-- PAGINATION --}}
-            <div style="display:flex; justify-content:space-between; align-items:center;
-                        padding:16px 20px; border-top:1px solid #f0e8e0;">
-                <small style="color:#7a6a5a;">
-                    {{ $commandes->firstItem() }}–{{ $commandes->lastItem() }}
-                    sur {{ $commandes->total() }} commandes
-                </small>
-                {{ $commandes->links() }}
-            </div>
-        @endif
-    </div>
-</div>
-
-{{-- Script menu déroulant --}}
-<script>
-function toggleMenu(id) {
-    // Ferme tous les autres menus
-    document.querySelectorAll('[id^="menu-"]').forEach(m => {
-        if (m.id !== 'menu-' + id) m.style.display = 'none';
-    });
-    const menu = document.getElementById('menu-' + id);
-    menu.style.display = menu.style.display === 'none' ? 'block' : 'none';
-}
-
-// Ferme les menus si on clique ailleurs
-document.addEventListener('click', function(e) {
-    if (!e.target.closest('[id^="menu-"]') && !e.target.closest('button[onclick]')) {
-        document.querySelectorAll('[id^="menu-"]').forEach(m => m.style.display = 'none');
-    }
-});
-</script>
+                    @endforeach
+                </tbody>
+            </table>
+        </div>
+        <div class="border-t border-trait p-4">{{ $commandes->links() }}</div>
+    @endif
+</section>
 
 @endsection

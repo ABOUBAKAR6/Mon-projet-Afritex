@@ -13,6 +13,13 @@ use App\Http\Controllers\AccountController;
 use App\Http\Controllers\CreationController;
 use App\Http\Controllers\LegalController;
 use App\Http\Controllers\PageController;
+use App\Http\Controllers\InvoiceController;
+use App\Http\Controllers\MagicAssistantController;
+use App\Http\Controllers\YardageController;
+use App\Http\Controllers\LoyaltyController;
+use App\Http\Controllers\EspaceGestionController;
+use App\Http\Controllers\Admin\CompteController;
+use App\Http\Controllers\Admin\EquipeController;
 
 // ===== PAGES PUBLIQUES =====
 Route::get('/', [ProduitController::class, 'index'])->name('accueil');
@@ -30,10 +37,10 @@ Route::post('/stripe/webhook', [\App\Http\Controllers\StripeWebhookController::c
 Route::get('/paiement/{commande}/callback', [PaiementController::class, 'callback'])->name('paiement.callback');
 
 Route::middleware('auth')->group(function () {
+    // Après une connexion sur la boutique, tout le monde reste côté boutique :
+    // l'administration ne s'ouvre que depuis /espace-client.
     Route::get('/dashboard', function () {
-        return auth()->user()->role === 'admin'
-            ? redirect()->route('admin.dashboard')
-            : redirect()->route('panier');
+        return redirect()->route('panier');
     })->name('dashboard');
 
     Route::get('/preferences', function () { return view('preferences'); })->name('preferences');
@@ -85,35 +92,65 @@ Route::middleware('auth')->group(function () {
 Route::get('/api/panier/current', [CommandeController::class, 'getPanierCourant'])->name('api.panier.current.guest');
 
 // ===== ADMIN =====
+// Propriétaire et secrétaires entrent (middleware admin) ; chaque section exige ensuite son droit.
+// Le propriétaire a tous les droits (Gate::before) ; « proprietaire » lui réserve l'équipe, les rôles et le logo.
 Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
+    // Sans le droit « tableau de bord », renvoie vers la première section autorisée
     Route::get('/', [AdminController::class, 'index'])->name('admin.dashboard');
-    Route::get('/produits', [AdminController::class, 'produits'])->name('admin.produits');
-    Route::get('/categories', [CategorieController::class, 'index'])->name('admin.categories');
-    Route::get('/users', [AdminController::class, 'utilisateurs'])->name('admin.users');
-    Route::patch('/users/{user}/role', [AdminController::class, 'updateUserRole'])->name('admin.users.role');
-    Route::get('/commandes', [AdminController::class, 'commandes'])->name('admin.commandes');
-    Route::get('/commandes/{commande}', [AdminController::class, 'commandeDetail'])->name('admin.commande.detail');
-    Route::patch('/commandes/{commande}/statut', [AdminController::class, 'updateStatut'])->name('admin.commande.statut');
-    Route::put('/commandes/{commande}/statut', [AdminController::class, 'updateStatut'])->name('admin.commandes.statut');
 
-    // Produits CRUD
-    Route::get('/produits/ajouter', [AdminController::class, 'showAjouterProduit'])->name('admin.produits.ajouter.form');
-    Route::post('/produits/ajouter', [AdminController::class, 'ajouterProduit'])->name('admin.produits.ajouter');
-    Route::post('/produits/{id}/modifier', [AdminController::class, 'editProduit'])->name('admin.produits.edit');
-    Route::delete('/produits/{id}', [AdminController::class, 'destroyProduit'])->name('admin.produits.destroy');
+    Route::middleware('can:manage-orders')->group(function () {
+        Route::get('/commandes', [AdminController::class, 'commandes'])->name('admin.commandes');
+        Route::get('/commandes/{commande}', [AdminController::class, 'commandeDetail'])->name('admin.commande.detail');
+        Route::patch('/commandes/{commande}/statut', [AdminController::class, 'updateStatut'])->name('admin.commande.statut');
+        Route::put('/commandes/{commande}/statut', [AdminController::class, 'updateStatut'])->name('admin.commandes.statut');
+    });
 
-    // Catégories CRUD
-    Route::post('/categories', [CategorieController::class, 'store'])->name('admin.categories.store');
-    Route::put('/categories/{id}', [CategorieController::class, 'update'])->name('admin.categories.update');
-    Route::delete('/categories/{id}', [CategorieController::class, 'destroy'])->name('admin.categories.destroy');
+    Route::middleware('can:manage-products')->group(function () {
+        Route::get('/produits', [AdminController::class, 'produits'])->name('admin.produits');
+        Route::get('/produits/ajouter', [AdminController::class, 'showAjouterProduit'])->name('admin.produits.ajouter.form');
+        Route::post('/produits/ajouter', [AdminController::class, 'ajouterProduit'])->name('admin.produits.ajouter');
+        Route::post('/produits/{id}/modifier', [AdminController::class, 'editProduit'])->name('admin.produits.edit');
+        Route::delete('/produits/{id}', [AdminController::class, 'destroyProduit'])->name('admin.produits.destroy');
+        Route::post('/produits/{produit}/images', [AdminController::class, 'ajouterImage'])->name('admin.produit.image.ajouter');
+        Route::delete('/images/{image}', [AdminController::class, 'supprimerImage'])->name('admin.produit.image.supprimer');
+    });
 
-    // Images
-    Route::post('/produits/{produit}/images', [AdminController::class, 'ajouterImage'])->name('admin.produit.image.ajouter');
-    Route::delete('/images/{image}', [AdminController::class, 'supprimerImage'])->name('admin.produit.image.supprimer');
+    Route::middleware('can:manage-categories')->group(function () {
+        Route::get('/categories', [CategorieController::class, 'index'])->name('admin.categories');
+        Route::post('/categories', [CategorieController::class, 'store'])->name('admin.categories.store');
+        Route::put('/categories/{id}', [CategorieController::class, 'update'])->name('admin.categories.update');
+        Route::delete('/categories/{id}', [CategorieController::class, 'destroy'])->name('admin.categories.destroy');
+    });
+
+    Route::get('/users', [AdminController::class, 'utilisateurs'])->middleware('can:manage-users')->name('admin.users');
+
+    // Mon compte : chaque membre de l'équipe gère son propre profil
+    Route::get('/compte', [CompteController::class, 'edit'])->name('admin.compte');
+    Route::patch('/compte', [CompteController::class, 'updateInformations'])->name('admin.compte.informations');
+    Route::post('/compte/photo', [CompteController::class, 'updatePhoto'])->name('admin.compte.photo');
+    Route::delete('/compte/photo', [CompteController::class, 'destroyPhoto'])->name('admin.compte.photo.supprimer');
+    Route::put('/compte/mot-de-passe', [CompteController::class, 'updateMotDePasse'])->name('admin.compte.mot-de-passe');
+
+    // Réservé au propriétaire
+    Route::middleware('can:proprietaire')->group(function () {
+        Route::patch('/users/{user}/role', [AdminController::class, 'updateUserRole'])->name('admin.users.role');
+        Route::post('/compte/logo', [CompteController::class, 'updateLogo'])->name('admin.compte.logo');
+        Route::delete('/compte/logo', [CompteController::class, 'destroyLogo'])->name('admin.compte.logo.supprimer');
+
+        Route::get('/equipe', [EquipeController::class, 'index'])->name('admin.equipe');
+        Route::post('/equipe', [EquipeController::class, 'store'])->name('admin.equipe.store');
+        Route::put('/equipe/{user}', [EquipeController::class, 'update'])->name('admin.equipe.update');
+        Route::delete('/equipe/{user}', [EquipeController::class, 'destroy'])->name('admin.equipe.destroy');
+    });
 });
 
 // Reste des routes admin hors groupe si besoin, mais ici on a tout regroupé.
 // Route::post('/produits/{id}/modifier', [AdminController::class, 'modifierProduit'])->name('admin.produits.modifier'); // C'était ici, je le déplace dans le groupe.
 
+
+// ===== ESPACE DE GESTION (connexion séparée, hors de la boutique) =====
+Route::get('/espace-client', [EspaceGestionController::class, 'create'])->name('espace.connexion');
+Route::post('/espace-client', [EspaceGestionController::class, 'store'])->name('espace.connexion.envoyer');
+Route::post('/espace-client/deconnexion', [EspaceGestionController::class, 'destroy'])->middleware('auth')->name('espace.deconnexion');
 
 require __DIR__.'/auth.php';

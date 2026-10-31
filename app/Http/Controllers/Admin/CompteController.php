@@ -1,0 +1,121 @@
+<?php
+
+namespace App\Http\Controllers\Admin;
+
+use App\Http\Controllers\Controller;
+use App\Models\Parametre;
+use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Str;
+use Illuminate\Validation\Rule;
+use Illuminate\Validation\Rules\Password;
+use Illuminate\View\View;
+
+/**
+ * Compte de l'administrateur connecté (photo, informations, mot de passe)
+ * et logo de la boutique affiché sur les pages publiques.
+ */
+class CompteController extends Controller
+{
+    public function edit(Request $request): View
+    {
+        return view('admin.compte', [
+            'admin' => $request->user(),
+            'logo' => Parametre::valeur('logo'),
+        ]);
+    }
+
+    public function updateInformations(Request $request): RedirectResponse
+    {
+        $admin = $request->user();
+
+        $donnees = $request->validate([
+            'name' => ['required', 'string', 'max:255'],
+            'email' => ['required', 'string', 'lowercase', 'email', 'max:255', Rule::unique('users')->ignore($admin->id)],
+            'phone' => ['nullable', 'string', 'max:30'],
+        ]);
+
+        $admin->fill($donnees);
+        if ($admin->isDirty('email')) {
+            $admin->email_verified_at = null;
+        }
+        $admin->save();
+
+        return back()->with('success', 'Vos informations sont enregistrées.');
+    }
+
+    public function updatePhoto(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+        ], [
+            'photo.max' => 'La photo ne doit pas dépasser 2 Mo.',
+        ]);
+
+        $admin = $request->user();
+        $this->supprimerFichier($admin->photo);
+        $admin->update(['photo' => $this->enregistrer($request->file('photo'), 'images/profils')]);
+
+        return back()->with('success', 'Votre photo de profil est à jour.');
+    }
+
+    public function destroyPhoto(Request $request): RedirectResponse
+    {
+        $admin = $request->user();
+        $this->supprimerFichier($admin->photo);
+        $admin->update(['photo' => null]);
+
+        return back()->with('success', 'Votre photo de profil a été retirée.');
+    }
+
+    public function updateMotDePasse(Request $request): RedirectResponse
+    {
+        $donnees = $request->validateWithBag('motDePasse', [
+            'current_password' => ['required', 'current_password'],
+            'password' => ['required', Password::defaults(), 'confirmed'],
+        ]);
+
+        $request->user()->update(['password' => $donnees['password']]);
+
+        return back()->with('success', 'Votre mot de passe a été modifié.');
+    }
+
+    public function updateLogo(Request $request): RedirectResponse
+    {
+        $request->validate([
+            'logo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:1024'],
+        ], [
+            'logo.max' => 'Le logo ne doit pas dépasser 1 Mo.',
+        ]);
+
+        $this->supprimerFichier(Parametre::valeur('logo'));
+        Parametre::definir('logo', $this->enregistrer($request->file('logo'), 'images/site'));
+
+        return back()->with('success', 'Le logo de la boutique est à jour.');
+    }
+
+    public function destroyLogo(): RedirectResponse
+    {
+        $this->supprimerFichier(Parametre::valeur('logo'));
+        Parametre::definir('logo', null);
+
+        return back()->with('success', 'Le logo a été retiré : la boutique affiche de nouveau le « A ».');
+    }
+
+    // Nom aléatoire : jamais le nom d'origine du fichier (espaces, accents, collisions)
+    private function enregistrer(UploadedFile $fichier, string $dossier): string
+    {
+        $nom = Str::random(24) . '.' . $fichier->extension();
+        $fichier->move(public_path($dossier), $nom);
+
+        return $dossier . '/' . $nom;
+    }
+
+    private function supprimerFichier(?string $chemin): void
+    {
+        if ($chemin && str_starts_with($chemin, 'images/') && is_file(public_path($chemin))) {
+            unlink(public_path($chemin));
+        }
+    }
+}

@@ -23,7 +23,28 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
         ]);
+
+        // Un visiteur non connecté qui ouvre l'administration est envoyé vers l'espace de gestion,
+        // pas vers la connexion de la boutique.
+        $middleware->redirectGuestsTo(fn (\Illuminate\Http\Request $request) => $request->is('admin', 'admin/*')
+            ? route('espace.connexion')
+            : route('login'));
     })
     ->withExceptions(function (Exceptions $exceptions) {
-        //
+        // Fichier plus lourd que la limite de PHP (post_max_size) : retour au formulaire avec un message,
+        // plutôt que la page d'erreur « Content Too Large ». La session n'est pas encore ouverte à ce stade
+        // (le contrôle a lieu avant), d'où le paramètre ?fichier=trop-lourd lu par les layouts.
+        $exceptions->render(function (\Illuminate\Http\Exceptions\PostTooLargeException $e, \Illuminate\Http\Request $request) {
+            if ($request->expectsJson()) {
+                return null;
+            }
+
+            // Retour uniquement vers une page du site (jamais vers un autre domaine)
+            $precedente = $request->headers->get('referer');
+            $retour = $precedente && parse_url($precedente, PHP_URL_HOST) === $request->getHost()
+                ? strtok($precedente, '?')
+                : url('/');
+
+            return redirect($retour . '?fichier=trop-lourd');
+        });
     })->create();

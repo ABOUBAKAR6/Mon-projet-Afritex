@@ -1,216 +1,188 @@
 @extends('layouts.app')
 @section('content')
+@php
+    $prixMin = \App\Models\Produit::whereNotNull('prix_metre')->where('prix_metre', '>', 0)->min('prix_metre');
+    $nbProduits = \App\Models\Produit::count();
+    $vedettes = $produits->take(5);
+    $visuels = $produits->filter(fn ($p) => $p->image)->values();
+    $lienWhatsapp = config('services.whatsapp.numero') ? 'https://wa.me/' . config('services.whatsapp.numero') : null;
+@endphp
 
-<div id="hero-container" class="relative h-screen w-full overflow-hidden bg-[#4A1B0C]" style="background-image: url('{{ asset('images/hero-bg.avif') }}'); background-size: cover; background-position: center;">
-    <!-- Entrance Grid Layer -->
-    <div id="entrance-grid" class="absolute inset-0 z-50 pointer-events-none" style="display: none;"></div>
+{{-- GRAND VISUEL --}}
+<section class="relative isolate flex min-h-[34rem] items-center overflow-hidden bg-brun-fonce text-white sm:min-h-[38rem] lg:min-h-[44rem]">
+    {{-- Jacquard à motifs : bande 16:9 sur grand écran, cadrage carré sur mobile (hero en portrait) --}}
+    <picture class="absolute inset-0 -z-10">
+        <source media="(max-width: 639px)" srcset="{{ asset('images/hero-tissu-mobile.avif') }}" type="image/avif">
+        <source media="(max-width: 639px)" srcset="{{ asset('images/hero-tissu-mobile.webp') }}" type="image/webp">
+        <source srcset="{{ asset('images/hero-tissu.avif') }}" type="image/avif">
+        <source srcset="{{ asset('images/hero-tissu.webp') }}" type="image/webp">
+        <img src="{{ asset('images/hero-tissu.jpg') }}" alt="" fetchpriority="high" decoding="async" class="h-full w-full object-cover">
+    </picture>
+    {{-- Voile pour garantir la lisibilité du texte blanc sur la photo --}}
+    <div aria-hidden="true" class="absolute inset-0 -z-10 bg-[linear-gradient(180deg,oklch(0.16_0.04_40/0.58)_0%,oklch(0.16_0.04_40/0.42)_45%,oklch(0.16_0.04_40/0.74)_100%)]"></div>
+    {{-- La trame du jacquard est chargée : on assombrit davantage le centre, là où se trouve le texte --}}
+    <div aria-hidden="true" class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_55%_at_50%_52%,oklch(0.16_0.04_40/0.62)_0%,oklch(0.16_0.04_40/0.35)_60%,transparent_100%)]"></div>
 
-    <!-- Parallax Background Layer - FIXED VISIBILITY -->
-    <div id="parallax-bg" class="absolute top-0 left-0 w-full h-[120%] pointer-events-none z-10 transition-opacity duration-1000"
-         style="opacity: 1; background-image: url('{{ asset('images/hero-bg.avif') }}'); background-size: cover; background-position: center; will-change: transform;">
-    </div>
-
-    <!-- Gradient Overlay -->
-    <div class="absolute inset-0 z-20 bg-gradient-to-b from-[#4A1B0C]/60 via-transparent to-[#4A1B0C]/80 pointer-events-none"></div>
-
-    <!-- Hero Content -->
-    <div class="relative z-30 h-full flex flex-col items-center justify-center text-center px-6 text-white">
-        <h1 id="hero-title" class="font-serif text-5xl md:text-7xl mb-4 leading-tight transition-all duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]" style="opacity: 1; transform: translateY(0);">
-            Le meilleur <span class="text-afri-gold">tissu</span>,<br/>livré chez vous
-        </h1>
-        <p id="hero-desc" class="text-lg md:text-xl opacity-80 max-w-2xl mx-auto transition-all duration-700 delay-300 ease-[cubic-bezier(0.22,1,0.36,1)]" style="opacity: 1; transform: translateY(0);">
-            Découvrez notre collection de tissus africains de qualité<br/>
-            Vente en gros et en détail
-        </p>
-        <div id="hero-btns" class="mt-10 flex flex-col sm:flex-row gap-4 justify-center items-center transition-all duration-700 delay-500 ease-[cubic-bezier(0.22,1,0.36,1)]" style="opacity: 1; transform: translateY(0);">
-            <a href="{{ route('catalogue') }}" class="bg-white text-afri-brown px-8 py-3 rounded-full font-bold text-sm transition-all hover:-translate-y-1 hover:shadow-2xl active:scale-95">
-                Voir le catalogue
-            </a>
+    <div class="conteneur pb-28 pt-12 text-center lg:pb-36">
+        <p class="apparition font-display text-[0.8rem] font-semibold uppercase tracking-[0.18em] text-white/85 sm:text-[0.85rem]">Tissus africains, gros et détail</p>
+        <h1 class="titre-display apparition mx-auto mt-5 max-w-[16ch] text-[2.6rem] leading-[1.1] sm:text-[3.5rem] lg:text-[4.2rem]" style="animation-delay: 80ms">Le meilleur tissu, livré chez vous</h1>
+        <p class="apparition mx-auto mt-5 max-w-[46ch] text-white/85 lg:text-[1.15rem]" style="animation-delay: 160ms">Grain de diamant, duchesse, soie, dentelle : au mètre, au rouleau ou en confection, livrés partout en Côte d'Ivoire.</p>
+        <div class="apparition mt-9 flex flex-col justify-center gap-3 sm:flex-row" style="animation-delay: 240ms">
+            <a href="{{ route('catalogue') }}" class="btn btn-brun btn-lg">Voir le catalogue <x-icone nom="fleche" /></a>
             @guest
-            <a href="{{ route('register') }}" class="border-2 border-white/60 text-white px-8 py-3 rounded-full text-sm transition-all hover:bg-white/10 active:scale-95">
-                S'inscrire gratuitement
-            </a>
+                <a href="{{ route('register') }}" class="btn btn-clair btn-lg">Créer un compte</a>
+            @else
+                <a href="{{ route('panier') }}" class="btn btn-clair btn-lg">Mon panier</a>
             @endguest
         </div>
     </div>
-</div>
+</section>
 
-<!-- REST OF THE PAGE (Trust Bar, Categories, etc.) -->
-<div class="bg-afri-dark py-3 px-6 flex flex-wrap justify-center gap-4 sm:gap-6 text-white/80 text-xs md:text-sm">
-    @foreach(['✓ Livraison rapide', '✓ Gros & Détail', '✓ Qualité garantie', '✓ Paiement sécurisé'] as $item)
-    <span class="whitespace-nowrap">{{ $item }}</span>
-    @endforeach
-</div>
-
-<div class="animate-section px-6 py-16 bg-afri-beige">
-    <div class="max-w-7xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="font-serif text-3xl md:text-4xl text-afri-dark">Nos catégories</h2>
-            <a href="{{ route('catalogue') }}" class="text-afri-brown text-sm border-b border-afri-brown hover:text-afri-dark transition">Voir tout →</a>
-        </div>
-        <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-7 gap-4">
-            @foreach($categories as $cat)
-            <a href="{{ route('catalogue', ['categorie_id' => $cat->id]) }}"
-               class="group bg-white border border-gray-200 rounded-xl p-4 text-center text-afri-dark transition-all duration-300 hover:-translate-y-2 hover:border-afri-brown hover:shadow-lg">
-                <div class="text-3xl mb-2 group-hover:scale-110 transition-transform">
-                    @if($cat->image)
-                        <img src="{{ asset($cat->image) }}" class="w-full h-full object-cover rounded-full aspect-square">
-                    @else
-                        🧵
-                    @endif
-                </div>
-                <div class="text-[11px] font-medium uppercase tracking-wider truncate">{{ $cat->nom }}</div>
-            </a>
-            @endforeach
-        </div>
-    </div>
-</div>
-
-<div class="animate-section px-6 py-16 bg-white">
-    <div class="max-w-7xl mx-auto">
-        <div class="flex justify-between items-center mb-8">
-            <h2 class="font-serif text-3xl md:text-4xl text-afri-dark">Produits populaires</h2>
-            <a href="{{ route('catalogue') }}" class="text-afri-brown text-sm border-b border-afri-brown hover:text-afri-dark transition">Voir tout →</a>
-        </div>
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            @forelse($produits as $produit)
-            <div class="product-card border border-gray-200 rounded-2xl overflow-hidden bg-afri-beige group transition-all duration-300 hover:-translate-y-2 hover:shadow-2xl">
-                <div class="h-48 bg-gradient-to-br from-afri-cream to-[#EDD5B8] flex items-center justify-center text-6xl overflow-hidden">
-                    @if($produit->image)
-                        <img src="{{ asset($produit->image) }}" class="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500">
-                    @else
-                        🧵
-                    @endif
-                </div>
-                <div class="p-4">
-                    <div class="text-[11px] text-afri-gold font-bold uppercase mb-1 tracking-widest">{{ $produit->categorie->nom }}</div>
-                    <div class="text-sm font-bold mb-2 text-afri-dark truncate">{{ $produit->nom }}</div>
-                    <div class="text-xs text-afri-brown font-medium mb-4">
-                        @if($produit->prix_metre) 📏 {{ number_format($produit->prix_metre, 0, ',', ' ') }} F/mètre @endif
-                    </div>
-                    <a href="{{ route('produit.show', $produit->slug) }}" class="block w-full bg-afri-brown text-white py-2 rounded-lg text-center text-xs font-medium transition hover:bg-afri-dark">
-                        Voir le produit →
-                    </a>
-                </div>
+{{-- ACCÈS RAPIDES, À CHEVAL SUR LE VISUEL --}}
+@php
+    $blocs = [
+        [
+            'intitule' => 'Livraison',
+            'valeur' => '24 à 72 h',
+            'grand' => true,
+            'texte' => 'Partout en Côte d\'Ivoire, offerte dès 50 000 F d\'achat.',
+            'lien' => [route('faq'), 'Délais et zones'],
+        ],
+        [
+            'intitule' => 'Au mètre',
+            'valeur' => $prixMin ? 'Dès ' . number_format($prixMin, 0, ',', ' ') . ' F' : 'Au mètre',
+            'grand' => (bool) $prixMin,
+            'texte' => 'Le métrage exact pour votre modèle, ou le rouleau entier pour l\'atelier.',
+            'lien' => [route('catalogue'), 'Voir les prix'],
+        ],
+        [
+            'intitule' => 'Paiement',
+            'valeur' => 'Mobile Money',
+            'grand' => false,
+            'texte' => 'Orange Money, MTN, Wave, Moov, carte bancaire ou espèces à la livraison.',
+            'lien' => [route('faq'), 'Comment payer'],
+        ],
+    ];
+@endphp
+<div class="conteneur relative z-10 -mt-20 lg:-mt-24">
+    <div class="grid bg-carte md:grid-cols-3 md:divide-x md:divide-trait">
+        @foreach($blocs as $i => $bloc)
+            <div class="group filet relative flex-col p-7 transition-colors duration-200 hover:bg-brun-doux lg:p-8 {{ $i === 0 ? 'flex' : 'hidden md:flex' }}">
+                <h2 class="text-[0.8125rem] font-semibold uppercase tracking-[0.14em] text-brun">{{ $bloc['intitule'] }}</h2>
+                <p class="titre-display chiffres mt-3.5 {{ $bloc['grand'] ? 'text-[2.6rem] leading-[0.95] tracking-[-0.03em]' : 'text-[1.5rem] leading-tight' }}">{{ $bloc['valeur'] }}</p>
+                <p class="mt-2 text-[0.95rem] text-encre-2">{{ $bloc['texte'] }}</p>
+                <a href="{{ $bloc['lien'][0] }}" class="lien-fleche mt-auto pt-5 text-[0.9rem] after:absolute after:inset-0 after:content-['']">{{ $bloc['lien'][1] }} <x-icone nom="fleche" /></a>
             </div>
-            @empty
-            <p class="text-gray-400 text-center col-span-full py-10">Aucun produit pour le moment.</p>
-            @endforelse
-        </div>
+        @endforeach
     </div>
 </div>
 
-<div class="animate-section px-6 py-16 bg-afri-beige">
-    <div class="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-6">
-        <div class="group bg-white border border-gray-200 rounded-3xl p-8 relative overflow-hidden transition-all hover:-translate-y-1 hover:shadow-xl">
-            <span class="bg-afri-brown text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase">Vente en Gros</span>
-            <h3 class="font-serif text-2xl mt-4 mb-2 text-afri-dark">Commandes en gros</h3>
-            <p class="text-gray-500 text-sm leading-relaxed mb-6">Profitez de tarifs avantageux pour les achats en grande quantité.</p>
-            <a href="{{ route('catalogue') }}" class="inline-block bg-afri-brown text-white px-6 py-2 rounded-full text-xs font-bold transition hover:bg-afri-dark">Commander en gros</a>
+{{-- FAMILLES DE TISSUS --}}
+@if($categories->isNotEmpty())
+<section class="pt-20 lg:pt-28" aria-labelledby="titre-categories">
+    <div class="conteneur">
+        <div class="revele flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <x-titre-bloc intitule="Nos tissus" titre="Choisissez votre famille de tissu" id="titre-categories" />
+            <a href="{{ route('catalogue') }}" class="lien-fleche shrink-0">Tout le catalogue <x-icone nom="fleche" /></a>
         </div>
-        <div class="group bg-white border border-gray-200 rounded-3xl p-8 relative overflow-hidden transition-all hover:-translate-y-1 hover:shadow-xl">
-            <span class="bg-afri-brown text-white text-[10px] px-3 py-1 rounded-full font-bold uppercase">Vente au détail</span>
-            <h3 class="font-serif text-2xl mt-4 mb-2 text-afri-dark">Commandes au détail</h3>
-            <p class="text-gray-500 text-sm leading-relaxed mb-6">Achetez exactement ce dont vous avez besoin, au mètre ou à la pièce.</p>
-            <a href="{{ route('catalogue') }}" class="inline-block bg-afri-brown text-white px-6 py-2 rounded-full text-xs font-bold transition hover:bg-afri-dark">Commander au détail</a>
+
+        <ul class="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
+            @foreach($categories as $cat)
+                <li class="revele" style="--delai: {{ min($loop->index, 9) * 50 }}ms">
+                    <a href="{{ route('catalogue', ['categorie_id' => $cat->id]) }}" class="group filet relative block bg-carte">
+                        <div class="aspect-square overflow-hidden bg-papier-2">
+                            @if(!empty($cat->image) && file_exists(public_path($cat->image)))
+                                <img src="{{ asset($cat->image) }}" alt="" loading="lazy" decoding="async" class="zoom-doux h-full w-full object-cover">
+                            @else
+                                <span aria-hidden="true" class="titre-display flex h-full w-full items-center justify-center text-[3.5rem] text-brun-trait">{{ mb_substr($cat->nom, 0, 1) }}</span>
+                            @endif
+                        </div>
+                        <span class="flex min-h-14 items-center justify-between gap-2 px-4 py-3 text-[0.98rem] font-medium transition-colors group-hover:text-brun-fonce">
+                            {{ $cat->nom }}
+                            <x-icone nom="fleche" class="size-4 shrink-0 text-brun opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-x-1 group-hover:opacity-100" />
+                        </span>
+                    </a>
+                </li>
+            @endforeach
+        </ul>
+    </div>
+</section>
+@endif
+
+{{-- SÉLECTION --}}
+<section class="pt-20 lg:pt-28" aria-labelledby="titre-selection">
+    <div class="conteneur">
+        <div class="revele flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+            <x-titre-bloc intitule="La sélection" titre="Les tissus les plus demandés" id="titre-selection" />
+            <a href="{{ route('catalogue') }}" class="lien-fleche shrink-0">Voir les {{ $nbProduits }} tissus <x-icone nom="fleche" /></a>
+        </div>
+
+        @if($vedettes->isEmpty())
+            <p class="mt-10 bg-carte p-10 text-center text-encre-2">Les premiers tissus arrivent bientôt dans la boutique.</p>
+        @else
+            <div class="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+                @foreach($vedettes as $produit)
+                    <x-carte-produit :produit="$produit" :grand="$loop->first"
+                        class="revele {{ $loop->first ? 'sm:col-span-2 lg:row-span-2' : '' }}" style="--delai: {{ $loop->index * 70 }}ms" />
+                @endforeach
+            </div>
+        @endif
+    </div>
+</section>
+
+{{-- COMMENT ACHETER --}}
+<section class="mt-20 bg-papier-2 py-16 lg:mt-28 lg:py-24" aria-labelledby="titre-achat">
+    <div class="conteneur grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
+        <div class="revele relative mb-12 mr-10 sm:mr-16">
+            @if($visuels->get(1))
+                <img src="{{ asset($visuels->get(1)->image) }}" alt="{{ $visuels->get(1)->nom }}" loading="lazy" class="aspect-[4/5] w-full max-w-md object-cover">
+            @else
+                <img src="{{ asset('images/hero-bg.avif') }}" alt="" loading="lazy" class="aspect-[4/5] w-full max-w-md object-cover">
+            @endif
+            @if($visuels->get(2))
+                <img src="{{ asset($visuels->get(2)->image) }}" alt="{{ $visuels->get(2)->nom }}" loading="lazy"
+                     class="absolute -bottom-12 -right-10 aspect-square w-[52%] max-w-64 border-[6px] border-papier-2 object-cover sm:-right-16">
+            @endif
+            @if($prixMin)
+                <p class="absolute -right-10 top-6 bg-papier-2 py-2 pl-4 text-right sm:-right-16">
+                    <span class="block text-[0.95rem] text-encre-2">Dès</span>
+                    <span class="titre-display chiffres block text-[2.6rem] leading-none text-brun sm:text-[3.2rem]">{{ number_format($prixMin, 0, ',', ' ') }} F</span>
+                    <span class="block text-[0.95rem] text-encre-2">le mètre</span>
+                </p>
+            @endif
+        </div>
+
+        <div class="revele" style="--delai: 120ms">
+            <x-titre-bloc intitule="Comment acheter" titre="Au mètre, au rouleau ou en confection" id="titre-achat" />
+            <p class="mt-5 text-[1.05rem] font-medium lg:text-[1.15rem]">Achetez exactement ce dont vous avez besoin, au mètre ou à la pièce, ou profitez de tarifs avantageux sur les grandes quantités.</p>
+
+            <dl class="mt-8 divide-y divide-trait border-y border-trait">
+                <div class="grid gap-1 py-4 sm:grid-cols-[9rem_1fr] sm:gap-6">
+                    <dt class="titre-display text-[1.05rem]">Au détail</dt>
+                    <dd class="text-encre-2">Le métrage exact de votre modèle, à partir d'un mètre.</dd>
+                </div>
+                <div class="grid gap-1 py-4 sm:grid-cols-[9rem_1fr] sm:gap-6">
+                    <dt class="titre-display text-[1.05rem]">En gros</dt>
+                    <dd class="text-encre-2">Le rouleau entier, pour les ateliers, tailleurs et revendeurs.</dd>
+                </div>
+                <div class="grid gap-1 py-4 sm:grid-cols-[9rem_1fr] sm:gap-6">
+                    <dt class="titre-display text-[1.05rem]">En confection</dt>
+                    <dd class="text-encre-2">Pantalon, chemise ou tunique, manches courtes ou longues, selon le tissu.</dd>
+                </div>
+            </dl>
+
+            <div class="mt-8 flex flex-col gap-3 sm:flex-row">
+                <a href="{{ route('catalogue') }}" class="btn btn-brun btn-lg">Choisir un tissu <x-icone nom="fleche" /></a>
+                @auth
+                    @if(Route::has('yardage.index'))
+                        <a href="{{ route('yardage.index') }}" class="btn btn-contour btn-lg"><x-icone nom="regle" /> Calculer mon métrage</a>
+                    @endif
+                @elseif($lienWhatsapp)
+                    <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour btn-lg"><x-icone nom="message" /> Demander conseil</a>
+                @endauth
+            </div>
         </div>
     </div>
-</div>
-
-<script>
-
-document.addEventListener('DOMContentLoaded', () => {
-
-    const reducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-    const grid = document.getElementById('entrance-grid');
-    const bg = document.getElementById('parallax-bg');
-    const title = document.getElementById('hero-title');
-    const desc = document.getElementById('hero-desc');
-    const btns = document.getElementById('hero-btns');
-
-    if (!bg) {
-        return;
-    }
-
-    const hasSeenEntrance = sessionStorage.getItem('afritex_entrance_done');
-
-    if (hasSeenEntrance || reducedMotion) {
-        bg.style.opacity = '1';
-        title.style.opacity = '1'; title.style.transform = 'translateY(0)';
-        desc.style.opacity = '1'; desc.style.transform = 'translateY(0)';
-        btns.style.opacity = '1'; btns.style.transform = 'translateY(0)';
-    } else {
-        const rows = 6, cols = 10;
-        grid.style.display = 'grid';
-        grid.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
-        grid.style.gridTemplateRows = `repeat(${rows}, 1fr)`;
-
-        for (let i = 0; i < rows * cols; i++) {
-            const tile = document.createElement('div');
-            const r = Math.floor(i / cols);
-            const c = i % cols;
-            const rx = (Math.random() - 0.5) * 1000;
-            const ry = (Math.random() - 0.5) * 1000;
-            const rot = (Math.random() - 0.5) * 90;
-
-            Object.assign(tile.style, {
-                backgroundImage: `url('{{ asset('images/hero-bg.avif') }}')`,
-                backgroundSize: 'cover',
-                backgroundPosition: `${(c / (cols-1)) * 100}% ${(r / (rows-1)) * 100}%`,
-                transform: `translate3d(${rx}px, ${ry}px, 0) rotate(${rot}deg)`,
-                opacity: '0',
-                transition: 'transform 0.7s cubic-bezier(0.22, 1, 0.36, 1), opacity 0.7s ease',
-                willChange: 'transform, opacity'
-            });
-            grid.appendChild(tile);
-
-            setTimeout(() => {
-                tile.style.transform = 'translate3d(0,0,0) rotate(0deg)';
-                tile.style.opacity = '1';
-            }, (i * 20) + 100);
-        }
-
-        setTimeout(() => {
-            bg.style.opacity = '1';
-            title.style.opacity = '1'; title.style.transform = 'translateY(0)';
-            desc.style.opacity = '1'; desc.style.transform = 'translateY(0)';
-            btns.style.opacity = '1'; btns.style.transform = 'translateY(0)';
-            sessionStorage.setItem('afritex_entrance_done', 'true');
-            setTimeout(() => grid.style.display = 'none', 1000);
-        }, 2500);
-    }
-
-    if (!reducedMotion) {
-        let requestID;
-        const handleScroll = () => {
-            const scrollY = window.scrollY;
-            bg.style.transform = `translate3d(0, ${scrollY * 0.3}px, 0)`;
-            requestID = requestAnimationFrame(handleScroll);
-        };
-        window.addEventListener('scroll', handleScroll, { passive: true });
-        requestID = requestAnimationFrame(handleScroll);
-    }
-
-    const observer = new IntersectionObserver((entries) => {
-        entries.forEach(entry => {
-            if (entry.isIntersecting) entry.target.classList.add('visible');
-        });
-    }, { threshold: 0.1 });
-
-    document.querySelectorAll('.animate-section').forEach(el => {
-        el.style.opacity = '0';
-        el.style.transform = 'translateY(40px)';
-        el.style.transition = 'all 0.7s cubic-bezier(0.22, 1, 0.36, 1)';
-        observer.observe(el);
-    });
-});
-</script>
-
-<style>
-.animate-section.visible {
-    opacity: 1 !important;
-    transform: translateY(0) !important;
-}
-</style>
+</section>
 
 @endsection

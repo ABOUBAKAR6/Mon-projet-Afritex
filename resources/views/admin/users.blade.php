@@ -1,59 +1,56 @@
-@extends('layouts.app')
-
+@extends('layouts.admin')
+@section('title', 'Utilisateurs · AfriTex')
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-gray-800">Gestion des Utilisateurs</h1>
-        <a href="{{ route('admin.dashboard') }}" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded transition">Retour au Dashboard</a>
-    </div>
 
-    @if(session('success'))
-        <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
-            {{ session('success') }}
-        </div>
-    @endif
+<x-admin-entete titre="Utilisateurs" description="Les comptes de la boutique et leur rôle." />
 
-    <div class="bg-white shadow-md rounded-lg overflow-hidden">
-        <table class="min-w-full leading-normal">
+<section class="bg-carte" aria-label="Liste des utilisateurs">
+    <div class="overflow-x-auto">
+        <table class="tableau">
             <thead>
-                <tr class="bg-gray-100 border-b-2 border-gray-200 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider">
-                    <th class="px-5 py-3">Utilisateur</th>
-                    <th class="px-5 py-3">Email</th>
-                    <th class="px-5 py-3">Rôle</th>
-                    <th class="px-5 py-3 text-right">Action</th>
+                <tr>
+                    <th scope="col">Utilisateur</th>
+                    <th scope="col">E-mail</th>
+                    <th scope="col">Rôle</th>
+                    <th scope="col"><span class="sr-only">Action</span></th>
                 </tr>
             </thead>
             <tbody>
                 @foreach($users as $user)
-                <tr class="border-b border-gray-200 hover:bg-gray-50">
-                    <td class="px-5 py-5 text-sm">
-                        <p class="text-gray-900 whitespace-no-wrap font-medium">{{ $user->name }}</p>
-                    </td>
-                    <td class="px-5 py-5 text-sm">
-                        <p class="text-gray-600 whitespace-no-wrap">{{ $user->email }}</p>
-                    </td>
-                    <td class="px-5 py-5 text-sm">
-                        <span class="px-2 py-1 rounded-full text-xs font-semibold {{ $user->role === 'admin' ? 'bg-purple-100 text-purple-700' : 'bg-blue-100 text-blue-700' }}">
-                            {{ ucfirst($user->role) }}
-                        </span>
-                    </td>
-                    <td class="px-5 py-5 text-sm text-right">
-                        <form action="{{ route('admin.users.role', $user->id) }}" method="POST" class="inline-block">
-                            @csrf
-                            @method('PATCH')
-                            <input type="hidden" name="role" value="{{ $user->role === 'admin' ? 'client' : 'admin' }}">
-                            <button type="submit" class="text-indigo-600 hover:text-indigo-900 font-semibold transition">
-                                Changer en {{ $user->role === 'admin' ? 'Client' : 'Admin' }}
-                            </button>
-                        </form>
-                    </td>
-                </tr>
+                    @php
+                        $estAdmin = $user->estProprietaire();
+                        $roleLibelle = $estAdmin ? 'Administrateur' : ($user->estSecretaire() ? 'Secrétaire' : 'Client');
+                    @endphp
+                    <tr>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <span aria-hidden="true" class="titre-display flex size-10 shrink-0 items-center justify-center rounded-full {{ $estAdmin ? 'bg-brun-fonce text-or' : 'bg-brun-doux text-brun' }}">{{ mb_strtoupper(mb_substr($user->name, 0, 1)) }}</span>
+                                <span class="font-medium">{{ $user->name }}@if($user->id === Auth::id()) <span class="font-normal text-encre-2">(vous)</span>@endif</span>
+                            </div>
+                        </td>
+                        <td class="text-encre-2">{{ $user->email }}</td>
+                        <td><span class="pastille {{ $user->estPersonnel() ? 'pastille-brun' : '' }}">{{ $roleLibelle }}</span></td>
+                        <td class="text-right">
+                            {{-- Changer un rôle est réservé au propriétaire ; les secrétaires se gèrent depuis la page Équipe --}}
+                            @if($user->estSecretaire())
+                                @can('proprietaire')
+                                    <a href="{{ route('admin.equipe') }}" class="btn btn-fantome btn-sm">Gérer ses droits</a>
+                                @endcan
+                            @elseif($user->id !== Auth::id() && Auth::user()->can('proprietaire'))
+                                <form action="{{ route('admin.users.role', $user->id) }}" method="POST"
+                                      onsubmit="return confirm(@js($estAdmin ? 'Retirer les droits d\'administration à ' . $user->name . ' ?' : 'Donner les droits d\'administration à ' . $user->name . ' ?'))">
+                                    @csrf @method('PATCH')
+                                    <input type="hidden" name="role" value="{{ $estAdmin ? 'client' : 'admin' }}">
+                                    <button type="submit" class="btn btn-contour btn-sm">{{ $estAdmin ? 'Passer en client' : 'Passer administrateur' }}</button>
+                                </form>
+                            @endif
+                        </td>
+                    </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
-    <div class="mt-4">
-        {{ $users->links() }}
-    </div>
-</div>
+    <div class="border-t border-trait p-4">{{ $users->links() }}</div>
+</section>
+
 @endsection

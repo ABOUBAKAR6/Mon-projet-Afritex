@@ -1,161 +1,79 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+@section('title', 'Ajouter un produit · AfriTex')
 @section('content')
+@php
+    $prix = [['prix_metre', 'Au mètre'], ['prix_rouleau', 'Au rouleau'], ['prix_pantalon', 'Pantalon'], ['prix_chemise', 'Chemise'], ['prix_tunique', 'Tunique']];
+@endphp
 
-<style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    .admin-wrap {
-        min-height: 100vh;
-        background: #F7F3EE;
-        padding: 40px 48px;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-    }
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        margin-bottom: 36px;
-        padding-bottom: 24px;
-        border-bottom: 1px solid #E0D5C8;
-    }
-    .page-header h1 {
-        font-family: Georgia, 'Times New Roman', serif;
-        font-size: 28px;
-        font-weight: normal;
-        color: #2C1810;
-        letter-spacing: -0.3px;
-    }
-    .btn-back {
-        background: #F2ECE5;
-        color: #7A6A5A;
-        border: none;
-        padding: 11px 22px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        text-decoration: none;
-        transition: background 0.2s;
-    }
-    .btn-back:hover { background: #E0D5C8; }
-    .form-card {
-        background: white;
-        border-radius: 16px;
-        padding: 40px;
-        box-shadow: 0 4px 20px rgba(44,24,16,0.08);
-        max-width: 800px;
-        margin: 0 auto;
-    }
-    .form-group { margin-bottom: 20px; }
-    .form-label {
-        display: block;
-        font-size: 12px;
-        font-weight: 600;
-        color: #5A3E30;
-        margin-bottom: 8px;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-    }
-    .form-control {
-        width: 100%;
-        padding: 12px;
-        border: 1px solid #E0D5C8;
-        border-radius: 8px;
-        font-size: 14px;
-        color: #2C1810;
-        background: #FDFAF7;
-        transition: border-color 0.2s;
-    }
-    .form-control:focus {
-        outline: none;
-        border-color: #7B3A1E;
-        background: white;
-    }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
-    .grid-5 { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; }
-    .section-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #9B8B7A;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 15px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #F0E9E0;
-        display: block;
-    }
-    .btn-submit {
-        background: #7B3A1E;
-        color: white;
-        border: none;
-        padding: 14px 30px;
-        border-radius: 8px;
-        font-size: 14px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-    .btn-submit:hover { background: #5E2B14; }
-</style>
+<a href="{{ route('admin.produits') }}" class="lien-fleche mb-5 flex-row-reverse justify-end text-[0.95rem]"><span>Tous les produits</span><x-icone nom="fleche-gauche" /></a>
 
-<div class="admin-wrap">
-    <div class="page-header">
-        <div>
-            <h1>Ajouter un produit</h1>
-            <p>Enregistrez une nouvelle pièce dans le catalogue</p>
-        </div>
-        <a href="{{ route('admin.produits') }}" class="btn-back">Retour à la liste</a>
-    </div>
+<x-admin-entete titre="Ajouter un produit" description="Enregistrez un nouveau tissu dans le catalogue." />
 
-    <div class="form-card">
-        <form method="POST" action="{{ route('admin.produits.ajouter') }}" enctype="multipart/form-data">
-            @csrf
-            <div class="grid-2">
-                <div class="form-group">
-                    <label class="form-label">Nom du produit *</label>
-                    <input type="text" name="nom" class="form-control" required placeholder="ex: Wax Hollandais Premium">
+<form method="POST" action="{{ route('admin.produits.ajouter') }}" enctype="multipart/form-data" class="grid items-start gap-6 xl:grid-cols-[1fr_22rem]">
+    @csrf
+    <div class="space-y-6">
+        <section class="bg-carte p-6 sm:p-8" aria-labelledby="titre-infos">
+            <h2 id="titre-infos" class="titre-display text-[1.25rem]">Le tissu</h2>
+            <div class="mt-5 grid gap-5 sm:grid-cols-2">
+                <div>
+                    <label for="nom" class="etiquette">Nom du produit</label>
+                    <input id="nom" type="text" name="nom" value="{{ old('nom') }}" class="champ" required placeholder="Wax hollandais premium">
+                    @error('nom')<p class="erreur">{{ $message }}</p>@enderror
                 </div>
-                <div class="form-group">
-                    <label class="form-label">Catégorie *</label>
-                    <select name="categorie_id" class="form-control" required>
-                        <option value="">Sélectionnez une catégorie</option>
+                <div>
+                    <label for="categorie" class="etiquette">Catégorie</label>
+                    <select id="categorie" name="categorie_id" class="champ" required>
+                        <option value="">Choisir une catégorie</option>
                         @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}">{{ $cat->nom }}</option>
+                            <option value="{{ $cat->id }}" @selected(old('categorie_id') == $cat->id)>{{ $cat->nom }}</option>
                         @endforeach
                     </select>
+                    @error('categorie_id')<p class="erreur">{{ $message }}</p>@enderror
                 </div>
             </div>
-
-            <div class="form-group">
-                <label class="form-label">Description</label>
-                <textarea name="description" class="form-control" rows="4" placeholder="Détails sur la matière, le motif..."></textarea>
+            <div class="mt-5">
+                <label for="description" class="etiquette">Description</label>
+                <textarea id="description" name="description" rows="5" class="champ" placeholder="La matière, le tombé, le motif, les usages conseillés…">{{ old('description') }}</textarea>
             </div>
+        </section>
 
-            <span class="section-label">Tarification</span>
-            <div class="grid-5" style="margin-bottom: 25px;">
-                @foreach([['prix_metre','Au mètre'], ['prix_rouleau','Au rouleau'], ['prix_pantalon','Pantalon'], ['prix_chemise','Chemise'], ['prix_tunique','Tunique']] as $p)
-                <div class="form-group">
-                    <label class="form-label">{{ $p[1] }}</label>
-                    <input type="number" name="{{ $p[0] }}" class="form-control" placeholder="0">
-                </div>
+        <section class="bg-carte p-6 sm:p-8" aria-labelledby="titre-tarifs">
+            <h2 id="titre-tarifs" class="titre-display text-[1.25rem]">Tarifs</h2>
+            <p class="mt-1 text-encre-2">Laissez vide un format qui n'est pas proposé pour ce tissu.</p>
+            <div class="mt-5 grid gap-4 sm:grid-cols-3 lg:grid-cols-5">
+                @foreach($prix as [$champ, $libelle])
+                    <div>
+                        <label for="{{ $champ }}" class="etiquette">{{ $libelle }}</label>
+                        <div class="relative">
+                            <input id="{{ $champ }}" type="number" min="0" name="{{ $champ }}" value="{{ old($champ) }}" class="champ chiffres pr-8" placeholder="0">
+                            <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-encre-3">F</span>
+                        </div>
+                    </div>
                 @endforeach
             </div>
-
-            <div class="grid-2" style="align-items: end;">
-                <div class="form-group">
-                    <label class="form-label">Stock initial</label>
-                    <input type="number" name="stock" class="form-control" value="0">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Photo principale</label>
-                    <input type="file" name="image" class="form-control" accept="image/*">
-                </div>
-            </div>
-
-            <div style="text-align: right; margin-top: 30px;">
-                <button type="submit" class="btn-submit">Enregistrer le produit</button>
-            </div>
-        </form>
+        </section>
     </div>
-</div>
+
+    <aside class="space-y-6 xl:sticky xl:top-10">
+        <section class="bg-carte p-6" aria-labelledby="titre-stock">
+            <h2 id="titre-stock" class="titre-display text-[1.25rem]">Stock et photo</h2>
+            <div class="mt-5">
+                <label for="stock" class="etiquette">Stock initial</label>
+                <input id="stock" type="number" min="0" name="stock" value="{{ old('stock', 0) }}" class="champ chiffres">
+            </div>
+            <div class="mt-5" x-data="{ apercu: null }">
+                <label for="image" class="etiquette">Photo principale</label>
+                <div class="relative mb-3 flex aspect-[4/5] items-center justify-center overflow-hidden bg-papier-2 text-brun-trait">
+                    <img x-show="apercu" x-cloak :src="apercu" alt="Aperçu de la photo" class="absolute inset-0 h-full w-full object-cover">
+                    <x-icone nom="image" class="size-10" x-show="!apercu" />
+                </div>
+                <input id="image" type="file" name="image" accept="image/*" class="champ py-2" @change="apercu = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null" aria-describedby="aide-image">
+                <p id="aide-image" class="aide">Image de 2 Mo au maximum.</p>
+                @error('image')<p class="erreur">{{ $message }}</p>@enderror
+            </div>
+        </section>
+        <button type="submit" class="btn btn-brun btn-lg w-full">Enregistrer le produit</button>
+    </aside>
+</form>
 
 @endsection

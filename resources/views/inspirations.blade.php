@@ -1,57 +1,69 @@
 @extends('layouts.app')
-
+@section('title', 'Inspirations · AfriTex')
 @section('content')
-<div class="container mx-auto px-4 py-8">
-    <h1 class="text-3xl font-bold text-center mb-8">Inspirations Communauté</h1>
 
-    <!-- Partage Form -->
-    <div class="bg-white p-6 rounded-lg shadow-md mb-12 max-w-xl mx-auto">
-        <h2 class="text-xl font-semibold mb-4">Partagez votre création !</h2>
-        <form action="{{ route('inspirations.store') }}" method="POST" enctype="multipart/form-data">
-            @csrf
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700">Tissu utilisé</label>
-                <select name="product_id" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500">
-                    @foreach(\App\Models\Produit::all() as $produit)
-                        <option value="{{ $produit->id }}">{{ $produit->nom }}</option>
+<x-en-tete-page titre="Inspirations" chapeau="Robes, boubous, chemises : les créations cousues par nos clients dans les tissus AfriTex." />
+
+<div class="conteneur pb-20 pt-10 lg:pb-28 lg:pt-14">
+    <div class="grid items-start gap-10 lg:grid-cols-[22rem_1fr] lg:gap-14">
+        {{-- PARTAGER --}}
+        <section class="bg-carte p-6 sm:p-8 lg:sticky lg:top-28" aria-labelledby="titre-partage">
+            <h2 id="titre-partage" class="titre-display text-[1.3rem]">Partagez votre création</h2>
+            <p class="mt-1 text-[0.95rem] text-encre-2">Une photo, le tissu utilisé, quelques mots.</p>
+            <form action="{{ route('inspirations.store') }}" method="POST" enctype="multipart/form-data" class="mt-6 space-y-5">
+                @csrf
+                <div>
+                    <label for="tissu" class="etiquette">Tissu utilisé</label>
+                    <select id="tissu" name="product_id" class="champ">
+                        @foreach(\App\Models\Produit::orderBy('nom')->get(['id', 'nom']) as $produit)
+                            <option value="{{ $produit->id }}">{{ $produit->nom }}</option>
+                        @endforeach
+                    </select>
+                </div>
+                <div>
+                    <label for="photo" class="etiquette">Photo de la tenue</label>
+                    <input id="photo" type="file" name="image" accept="image/*" required
+                           class="block w-full text-[0.92rem] text-encre-2 file:mr-3 file:min-h-11 file:border-0 file:bg-brun-doux file:px-4 file:font-semibold file:text-brun-fonce hover:file:bg-brun-trait">
+                </div>
+                <div>
+                    <label for="legende" class="etiquette">Votre histoire</label>
+                    <textarea id="legende" name="caption" rows="3" class="champ" placeholder="Pour quelle occasion, quel modèle…"></textarea>
+                </div>
+                <button type="submit" class="btn btn-brun w-full"><x-icone nom="televersement" /> Partager</button>
+            </form>
+        </section>
+
+        {{-- GALERIE --}}
+        <section aria-labelledby="titre-galerie">
+            <h2 id="titre-galerie" class="sr-only">Créations partagées</h2>
+            @if($creations->isEmpty())
+                <div class="flex min-h-64 flex-col justify-center bg-carte p-8">
+                    <p class="titre-display text-[1.4rem]">Soyez le premier à partager</p>
+                    <p class="mt-2 max-w-[48ch] text-encre-2">Montrez ce que vous avez cousu : votre création inspirera les prochains clients.</p>
+                </div>
+            @else
+                <ul class="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
+                    @foreach($creations as $creation)
+                        <li class="revele group filet relative bg-carte" style="--delai: {{ ($loop->index % 3) * 60 }}ms">
+                            <div class="aspect-[4/5] overflow-hidden bg-papier-2">
+                                <img src="{{ asset('storage/' . $creation->image_path) }}" alt="{{ $creation->caption ?: 'Création de ' . $creation->user->name }}" loading="lazy" class="zoom-doux h-full w-full object-cover">
+                            </div>
+                            <div class="p-5">
+                                <p class="font-medium">{{ $creation->user->name }}</p>
+                                @if($creation->caption)
+                                    <p class="mt-1 text-[0.95rem] text-encre-2">{{ $creation->caption }}</p>
+                                @endif
+                                @if($creation->product)
+                                    <a href="{{ route('produit.show', $creation->product->slug) }}" class="lien-fleche mt-3 text-[0.92rem]">{{ $creation->product->nom }} <x-icone nom="fleche" /></a>
+                                @endif
+                            </div>
+                        </li>
                     @endforeach
-                </select>
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700">Photo de votre œuvre</label>
-                <input type="file" name="image" class="mt-1 block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" required>
-            </div>
-            <div class="mb-4">
-                <label class="block text-sm font-medium text-gray-700">Votre commentaire</label>
-                <textarea name="caption" rows="3" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500" placeholder="Racontez-nous l'histoire de cette tenue..."></textarea>
-            </div>
-            <button type="submit" class="w-full bg-indigo-600 text-white py-2 px-4 rounded-md hover:bg-indigo-700 transition">Partager</button>
-        </form>
-    </div>
-
-    <!-- Gallery -->
-    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-        @foreach($creations as $creation)
-            <div class="bg-white rounded-lg shadow-md overflow-hidden group">
-                <div class="relative h-64 overflow-hidden">
-                    <img src="{{ asset('storage/' . $creation->image_path) }}" alt="{{ $creation->caption }}" class="w-full h-full object-cover transition transform group-hover:scale-110">
-                    <div class="absolute bottom-0 left-0 right-0 p-4 bg-gradient-to-t from-black/70 to-transparent text-white">
-                        <p class="text-sm font-medium">{{ $creation->user->name }}</p>
-                        <p class="text-xs opacity-80">Tissu: {{ $creation->product->nom }}</p>
-                    </div>
-                </div>
-                <div class="p-4">
-                    <p class="text-gray-600 text-sm italic">"{{ $creation->caption }}"</p>
-                    <a href="{{ route('produit.show', $creation->product->slug) }}" class="mt-3 block text-center text-indigo-600 font-semibold text-sm hover:underline">
-                        Acheter ce tissu &rarr;
-                    </a>
-                </div>
-            </div>
-        @endforeach
-    </div>
-
-    <div class="mt-8">
-        {{ $creations->links() }}
+                </ul>
+                <div class="mt-10">{{ $creations->links() }}</div>
+            @endif
+        </section>
     </div>
 </div>
+
 @endsection

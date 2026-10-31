@@ -1,147 +1,200 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+@section('title', 'Tableau de bord · AfriTex')
 @section('content')
+@php
+    $nbClients = \App\Models\User::count();
+    $nbEnAttente = \App\Models\Commande::where('statut', 'en_attente')->count();
 
-<div class="bg-[#FDF6EE] min-h-screen py-10 px-4 sm:px-6 lg:px-8">
-    <div class="max-w-7xl mx-auto">
-        <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-10 gap-4">
-            <h2 class="text-3xl font-serif font-bold text-[#4A1B0C]">📊 Tableau de bord Admin</h2>
-            <div class="flex gap-3">
-                <a href="{{ route('admin.produits.ajouter') }}" class="bg-[#8B4513] text-white px-4 py-2 rounded-xl text-sm font-bold hover:bg-[#5d330f] transition shadow-sm">
-                    + Nouveau Produit
-                </a>
-                <a href="{{ route('admin.categories.store') }}" class="bg-white border border-[#e8ddd3] text-[#8B4513] px-4 py-2 rounded-xl text-sm font-bold hover:bg-gray-50 transition shadow-sm">
-                    + Nouvelle Catégorie
-                </a>
-            </div>
-        </div>
+    // Chiffre d'affaires confirmé des 7 derniers jours (fourni par le contrôleur)
+    $jours = collect($ca_evolution ?? [])->map(fn ($montant, $date) => [
+        'date' => \Carbon\Carbon::parse($date),
+        'montant' => (float) $montant,
+    ])->values();
+    $maxJour = max(1, $jours->max('montant'));
+    $totalSemaine = $jours->sum('montant');
+    $meilleurJour = $jours->sortByDesc('montant')->first();
+    // Graduation : 0, la moitié et le haut de l'axe (arrondi à un pas lisible)
+    $pas = $maxJour > 100000 ? 50000 : ($maxJour > 20000 ? 10000 : ($maxJour > 5000 ? 2000 : 1000));
+    $haut = max($pas, ceil($maxJour / $pas) * $pas);
+    $f = fn ($n) => number_format($n, 0, ',', ' ') . ' F';
 
-        <!-- STATS GRID -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-            <!-- CA TOTAL -->
-            <div class="bg-white p-6 rounded-3xl border border-[#e8ddd3] shadow-sm group transition hover:shadow-md">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="p-3 bg-amber-100 rounded-2xl text-amber-600 group-hover:scale-110 transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
-                    </div>
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">CA Total</span>
-                </div>
-                <div class="text-2xl font-bold text-[#4A1B0C]">{{ number_format($ca_total, 0, ',', ' ') }} F</div>
-                <div class="text-[11px] text-green-600 font-medium mt-1">Revenus confirmés</div>
-            </div>
+    $maxVendu = max(1, collect($top_produits ?? [])->max('total_vendu'));
+@endphp
 
-            <!-- CA JOUR -->
-            <div class="bg-white p-6 rounded-3xl border border-[#e8ddd3] shadow-sm group transition hover:shadow-md">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="p-3 bg-blue-100 rounded-2xl text-blue-600 group-hover:scale-110 transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7h8m0 0v8m0-8l-8 8-4-4-6 6"></path></svg>
-                    </div>
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Aujourd'hui</span>
-                </div>
-                <div class="text-2xl font-bold text-[#4A1B0C]">{{ number_format($ca_jour, 0, ',', ' ') }} F</div>
-                <div class="text-[11px] text-blue-600 font-medium mt-1">Ventes du jour</div>
-            </div>
+<x-admin-entete titre="Tableau de bord" :description="'Bonjour ' . \Illuminate\Support\Str::before(Auth::user()->name, ' ') . ', voici l\'activité de la boutique.'">
+    @can('manage-products')<a href="{{ route('admin.produits.ajouter.form') }}" class="btn btn-brun"><x-icone nom="plus" /> Ajouter un produit</a>@endcan
+    @can('manage-categories')<a href="{{ route('admin.categories') }}" class="btn btn-contour">Gérer les catégories</a>@endcan
+</x-admin-entete>
 
-            <!-- PRODUITS -->
-            <a href="{{ route('admin.produits') }}" class="bg-white p-6 rounded-3xl border border-[#e8ddd3] shadow-sm group transition hover:shadow-md hover:-translate-y-1 block">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="p-3 bg-brown-100 rounded-2xl text-[#8B4513] group-hover:scale-110 transition" style="background-color: #FDF6EE;">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path></svg>
-                    </div>
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Catalogue</span>
-                </div>
-                <div class="text-2xl font-bold text-[#4A1B0C]">{{ $total_produits }}</div>
-                <div class="text-[11px] text-gray-500 font-medium mt-1">Produits actifs</div>
-            </a>
-
-            <!-- COMMANDES -->
-            <a href="{{ route('admin.commandes') }}" class="bg-white p-6 rounded-3xl border border-[#e8ddd3] shadow-sm group transition hover:shadow-md hover:-translate-y-1 block">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="p-3 bg-red-100 rounded-2xl text-red-600 group-hover:scale-110 transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z"></path></svg>
-                    </div>
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Ventes</span>
-                </div>
-                <div class="text-2xl font-bold text-[#4A1B0C]">{{ $total_commandes }}</div>
-                <div class="text-[11px] text-gray-500 font-medium mt-1">Commandes totales</div>
-            </a>
-
-            <!-- UTILISATEURS -->
-            <a href="{{ route('admin.users') }}" class="bg-white p-6 rounded-3xl border border-[#e8ddd3] shadow-sm group transition hover:shadow-md hover:-translate-y-1 block">
-                <div class="flex justify-between items-start mb-4">
-                    <div class="p-3 bg-purple-100 rounded-2xl text-purple-600 group-hover:scale-110 transition">
-                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path></svg>
-                    </div>
-                    <span class="text-xs font-bold text-gray-400 uppercase tracking-widest">Membres</span>
-                </div>
-                <div class="text-2xl font-bold text-[#4A1B0C]">{{ \App\Models\User::count() }}</div>
-                <div class="text-[11px] text-gray-500 font-medium mt-1">Utilisateurs inscrits</div>
-            </a>
-        </div>
-
-        {{-- COMMANDES RÉCENTES --}}
-        <div class="bg-white rounded-3xl border border-[#e8ddd3] shadow-sm overflow-hidden">
-            <div class="p-6 border-b border-[#e8ddd3] flex justify-between items-center">
-                <h3 class="text-lg font-bold text-[#4A1B0C]">Dernières commandes</h3>
-                <a href="{{ route('admin.commandes') }}" class="text-xs font-bold text-[#8B4513] hover:underline">Voir tout →</a>
-            </div>
-            <div class="overflow-x-auto">
-                <table class="w-full text-left border-collapse">
-                    <thead>
-                        <tr class="bg-gray-50">
-                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">ID</th>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Client</th>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Montant</th>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider">Statut</th>
-                            <th class="px-6 py-4 text-xs font-bold text-gray-400 uppercase tracking-wider text-right">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody class="divide-y divide-gray-100">
-                        @forelse($commandes_recentes as $commande)
-                            @php
-                                $colors = [
-                                    'en_attente' => 'bg-amber-100 text-amber-700',
-                                    'confirmee' => 'bg-blue-100 text-blue-700',
-                                    'en_preparation' => 'bg-indigo-100 text-indigo-700',
-                                    'expedie' => 'bg-gray-100 text-gray-700',
-                                    'livree' => 'bg-green-100 text-green-700',
-                                    'annulee' => 'bg-red-100 text-red-700',
-                                ];
-                                $c = $colors[$commande->statut] ?? 'bg-gray-100 text-gray-700';
-                            @endphp
-                            <tr class="hover:bg-gray-50 transition">
-                                <td class="px-6 py-4 text-sm font-bold text-[#8B4513]">
-                                    #{{ str_pad($commande->id, 4, '0', STR_PAD_LEFT) }}
-                                </td>
-                                <td class="px-6 py-4 text-sm text-gray-600">
-                                    {{ $commande->user->name }}
-                                </td>
-                                <td class="px-6 py-4 text-sm font-bold text-[#4A1B0C]">
-                                    {{ number_format($commande->total, 0, ',', ' ') }} F
-                                </td>
-                                <td class="px-6 py-4 text-sm">
-                                    <span class="{{ $c }} px-3 py-1 rounded-full text-[11px] font-bold uppercase">
-                                        {{ str_replace('_', ' ', $commande->statut) }}
-                                    </span>
-                                </td>
-                                <td class="px-6 py-4 text-right">
-                                    <a href="{{ route('admin.commande.detail', $commande->id) }}"
-                                       class="text-xs font-bold text-white bg-[#4A1B0C] px-3 py-1.5 rounded-lg hover:bg-[#8B4513] transition">
-                                        👁 Voir
-                                    </a>
-                                </td>
-                            </tr>
-                        @empty
-                            <tr>
-                                <td colspan="5" class="px-6 py-12 text-center text-gray-400 italic">
-                                    Aucune commande récente à afficher.
-                                </td>
-                            </tr>
-                        @endforelse
-                    </tbody>
-                </table>
-            </div>
-        </div>
+{{-- CHIFFRES CLÉS --}}
+<section aria-label="Chiffres clés" class="grid grid-cols-2 bg-carte lg:grid-cols-5 lg:divide-x lg:divide-trait">
+    <div class="col-span-2 border-b border-trait p-6 lg:col-span-1 lg:border-b-0">
+        <p class="text-[0.92rem] text-encre-2">Chiffre d'affaires confirmé</p>
+        <p class="titre-display chiffres mt-2 text-[2.2rem] leading-none">{{ $f($ca_total) }}</p>
+        <p class="mt-2 text-[0.88rem] text-encre-2">Commandes au statut « confirmée »</p>
     </div>
+    <div class="border-b border-r border-trait p-6 lg:border-b-0 lg:border-r-0">
+        <p class="text-[0.92rem] text-encre-2">Aujourd'hui</p>
+        <p class="titre-display chiffres mt-2 text-[1.7rem] leading-none">{{ $f($ca_jour) }}</p>
+    </div>
+    <a @can('manage-orders') href="{{ route('admin.commandes', ['statut' => 'en_attente']) }}" @endcan class="group filet border-b border-trait p-6 transition-colors hover:bg-brun-doux lg:border-b-0">
+        <p class="text-[0.92rem] text-encre-2">Commandes</p>
+        <p class="titre-display chiffres mt-2 text-[1.7rem] leading-none">{{ $total_commandes }}</p>
+        <p class="mt-2 text-[0.88rem] {{ $nbEnAttente ? 'font-medium text-alerte' : 'text-encre-2' }}">{{ $nbEnAttente }} en attente</p>
+    </a>
+    <a @can('manage-products') href="{{ route('admin.produits') }}" @endcan class="group filet border-r border-trait p-6 transition-colors hover:bg-brun-doux lg:border-r-0">
+        <p class="text-[0.92rem] text-encre-2">Produits</p>
+        <p class="titre-display chiffres mt-2 text-[1.7rem] leading-none">{{ $total_produits }}</p>
+        <p class="mt-2 text-[0.88rem] text-encre-2">dans {{ $total_categories }} catégories</p>
+    </a>
+    <a @can('manage-users') href="{{ route('admin.users') }}" @endcan class="group filet p-6 transition-colors hover:bg-brun-doux">
+        <p class="text-[0.92rem] text-encre-2">Comptes</p>
+        <p class="titre-display chiffres mt-2 text-[1.7rem] leading-none">{{ $nbClients }}</p>
+        <p class="mt-2 text-[0.88rem] text-encre-2">inscrits</p>
+    </a>
+</section>
+
+<div class="mt-6 grid items-start gap-6 xl:grid-cols-[1.6fr_1fr]">
+    {{-- VENTES DES 7 DERNIERS JOURS --}}
+    <section class="bg-carte p-6" aria-labelledby="titre-ventes">
+        <div class="flex flex-wrap items-baseline justify-between gap-2">
+            <h2 id="titre-ventes" class="titre-display text-[1.25rem]">Ventes confirmées, 7 derniers jours</h2>
+            <p class="chiffres text-[1.1rem] font-semibold">{{ $f($totalSemaine) }}</p>
+        </div>
+        <p class="mt-1 text-[0.95rem] text-encre-2">
+            @if($totalSemaine > 0)
+                Meilleur jour : {{ $meilleurJour['date']->translatedFormat('l j F') }}, {{ $f($meilleurJour['montant']) }}.
+            @else
+                Aucune vente confirmée cette semaine.
+            @endif
+        </p>
+
+        <div class="mt-6 grid grid-cols-[auto_1fr] gap-3">
+            {{-- Axe : trois graduations discrètes --}}
+            <div class="chiffres flex h-56 flex-col justify-between pb-7 text-right text-[0.8rem] text-encre-3" aria-hidden="true">
+                <span>{{ $f($haut) }}</span>
+                <span>{{ $f($haut / 2) }}</span>
+                <span>0 F</span>
+            </div>
+            <div class="relative h-56">
+                <div class="pointer-events-none absolute inset-x-0 top-0 h-[calc(100%-1.75rem)]" aria-hidden="true">
+                    <span class="absolute inset-x-0 top-0 border-t border-dashed border-trait"></span>
+                    <span class="absolute inset-x-0 top-1/2 border-t border-dashed border-trait"></span>
+                    <span class="absolute inset-x-0 bottom-0 border-t border-trait-fort"></span>
+                </div>
+                <ol class="relative grid h-full grid-cols-7 gap-2 sm:gap-3" aria-label="Ventes par jour">
+                    @foreach($jours as $jour)
+                        @php
+                            $hauteur = $jour['montant'] > 0 ? max(2, round(($jour['montant'] / $haut) * 100, 1)) : 0;
+                            $estAujourdhui = $jour['date']->isToday();
+                        @endphp
+                        <li class="group relative flex flex-col justify-end" tabindex="0"
+                            aria-label="{{ $jour['date']->translatedFormat('l j F') }} : {{ $f($jour['montant']) }}">
+                            <div class="relative flex h-[calc(100%-1.75rem)] items-end justify-center">
+                                <span class="block w-full max-w-12 rounded-t-[4px] transition-colors duration-150 {{ $estAujourdhui ? 'bg-brun' : 'bg-[color:color-mix(in_oklch,var(--brun)_70%,var(--carte))]' }} group-hover:bg-brun-fonce group-focus:bg-brun-fonce"
+                                      style="height: {{ $hauteur }}%"></span>
+                                {{-- Infobulle au survol ou au focus --}}
+                                <span class="pointer-events-none absolute bottom-full left-1/2 z-10 mb-2 -translate-x-1/2 whitespace-nowrap bg-encre px-2.5 py-1.5 text-[0.82rem] text-white opacity-0 transition-opacity duration-150 group-hover:opacity-100 group-focus:opacity-100"
+                                      style="bottom: {{ $hauteur }}%">
+                                    <span class="block text-white/70">{{ $jour['date']->translatedFormat('l j') }}</span>
+                                    <span class="chiffres font-semibold">{{ $f($jour['montant']) }}</span>
+                                </span>
+                            </div>
+                            <span class="mt-2 h-5 text-center text-[0.8rem] {{ $estAujourdhui ? 'font-semibold text-encre' : 'text-encre-2' }}">{{ $estAujourdhui ? 'Auj.' : $jour['date']->translatedFormat('D') }}</span>
+                        </li>
+                    @endforeach
+                </ol>
+            </div>
+        </div>
+
+        <details class="mt-4 text-[0.92rem]">
+            <summary class="cursor-pointer text-brun hover:underline">Voir les montants en tableau</summary>
+            <table class="tableau mt-3">
+                <thead><tr><th scope="col">Jour</th><th scope="col" class="text-right">Montant confirmé</th></tr></thead>
+                <tbody>
+                    @foreach($jours as $jour)
+                        <tr><td>{{ $jour['date']->translatedFormat('l j F') }}</td><td class="chiffres text-right">{{ $f($jour['montant']) }}</td></tr>
+                    @endforeach
+                </tbody>
+            </table>
+        </details>
+    </section>
+
+    {{-- PRODUITS LES PLUS VENDUS --}}
+    <section class="bg-carte p-6" aria-labelledby="titre-top">
+        <h2 id="titre-top" class="titre-display text-[1.25rem]">Les plus vendus</h2>
+        <p class="mt-1 text-[0.95rem] text-encre-2">Quantités commandées, toutes périodes.</p>
+        @if(collect($top_produits ?? [])->isEmpty())
+            <p class="mt-6 bg-papier-2 p-5 text-encre-2">Les ventes apparaîtront ici dès les premières commandes.</p>
+        @else
+            <ol class="mt-6 space-y-4">
+                @foreach($top_produits as $top)
+                    <li>
+                        <div class="flex items-baseline justify-between gap-4 text-[0.95rem]">
+                            <span class="truncate font-medium">{{ $top->nom }}</span>
+                            <span class="chiffres shrink-0 text-encre-2">{{ number_format($top->total_vendu, 0, ',', ' ') }}</span>
+                        </div>
+                        <div class="mt-1.5 h-2 bg-papier-2" aria-hidden="true">
+                            <div class="h-full rounded-r-[4px] bg-brun" style="width: {{ round(($top->total_vendu / $maxVendu) * 100) }}%"></div>
+                        </div>
+                    </li>
+                @endforeach
+            </ol>
+        @endif
+    </section>
+</div>
+
+<div class="mt-6 grid items-start gap-6 xl:grid-cols-[1.6fr_1fr]">
+    {{-- DERNIÈRES COMMANDES --}}
+    <section class="bg-carte" aria-labelledby="titre-recentes">
+        <div class="flex items-baseline justify-between gap-4 p-6 pb-4">
+            <h2 id="titre-recentes" class="titre-display text-[1.25rem]">Dernières commandes</h2>
+            @can('manage-orders')<a href="{{ route('admin.commandes') }}" class="lien-fleche text-[0.92rem]">Toutes les commandes <x-icone nom="fleche" /></a>@endcan
+        </div>
+        <div class="overflow-x-auto">
+            <table class="tableau">
+                <thead>
+                    <tr>
+                        <th scope="col">Commande</th>
+                        <th scope="col">Client</th>
+                        <th scope="col">Statut</th>
+                        <th scope="col" class="text-right">Montant</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @forelse($commandes_recentes as $commande)
+                        <tr class="relative">
+                            <td>@can('manage-orders')<a href="{{ route('admin.commande.detail', $commande->id) }}" class="chiffres font-semibold text-brun after:absolute after:inset-0 after:content-[''] hover:underline">n° {{ str_pad($commande->id, 4, '0', STR_PAD_LEFT) }}</a>@else<span class="chiffres font-semibold">n° {{ str_pad($commande->id, 4, '0', STR_PAD_LEFT) }}</span>@endcan</td>
+                            <td>{{ $commande->user->name ?? 'Client supprimé' }}<span class="block text-[0.85rem] text-encre-2">{{ $commande->created_at->diffForHumans() }}</span></td>
+                            <td><x-statut-commande :statut="$commande->statut" /></td>
+                            <td class="chiffres text-right font-medium">{{ $f($commande->total) }}</td>
+                        </tr>
+                    @empty
+                        <tr><td colspan="4" class="py-10 text-center text-encre-2">Aucune commande pour le moment.</td></tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+    </section>
+
+    {{-- STOCKS FAIBLES --}}
+    <section class="bg-carte p-6" aria-labelledby="titre-stocks">
+        <h2 id="titre-stocks" class="titre-display text-[1.25rem]">Stocks à réassortir</h2>
+        <p class="mt-1 text-[0.95rem] text-encre-2">Produits en vente avec moins de 5 unités.</p>
+        @if(collect($stocks_faibles ?? [])->isEmpty())
+            <p class="mt-6 flex items-center gap-2 bg-succes-doux p-4 text-succes"><x-icone nom="coche" class="size-4" /> Tous les stocks sont suffisants.</p>
+        @else
+            <ul class="mt-5 divide-y divide-trait">
+                @foreach($stocks_faibles as $produit)
+                    <li class="flex items-center justify-between gap-4 py-3">
+                        <span class="min-w-0 truncate font-medium">{{ $produit->nom }}</span>
+                        <span class="pastille {{ $produit->stock <= 0 ? 'pastille-danger' : 'pastille-attente' }}">{{ $produit->stock <= 0 ? 'Épuisé' : $produit->stock . ' restant' . ($produit->stock > 1 ? 's' : '') }}</span>
+                    </li>
+                @endforeach
+            </ul>
+            @can('manage-products')<a href="{{ route('admin.produits') }}" class="lien-fleche mt-4 text-[0.92rem]">Mettre à jour les stocks <x-icone nom="fleche" /></a>@endcan
+        @endif
+    </section>
 </div>
 
 @endsection

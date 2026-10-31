@@ -1,84 +1,38 @@
 @extends('layouts.app')
-@section('title', 'Politique de Confidentialité (RGPD) — AfriTex')
+@section('title', 'Politique de confidentialité · AfriTex')
 @section('content')
 
-<div class="bg-afri-beige min-h-screen py-24 px-6 sm:px-10 lg:px-16 relative">
-    <div class="max-w-4xl mx-auto">
-        <div class="text-center mb-20 reveal">
-            <span class="text-afri-gold text-xs uppercase tracking-widest font-bold mb-4 block">Confidentialité</span>
-            <h1 class="text-4xl md:text-6xl font-serif font-bold text-afri-dark leading-tight">Politique de <span class="italic text-afri-brown">Confidentialité</span></h1>
-            <div class="h-1 w-20 bg-afri-gold mx-auto mt-8"></div>
-        </div>
+<x-en-tete-page titre="Confidentialité" chapeau="Quelles données nous collectons, pourquoi, et comment exercer vos droits." />
 
-        <div class="bg-white rounded-[40px] p-8 md:p-16 shadow-sm border border-afri-cream space-y-12 text-afri-dark/80 leading-relaxed">
-            <div class="reveal">
-                <h2 class="text-2xl font-serif font-bold text-afri-dark mb-4">1. Collecte des données</h2>
-                <p class="text-sm">
-                    Nous collectons uniquement les informations nécessaires pour traiter vos commandes : nom, adresse de livraison, email et numéro de téléphone.
-                    C'est l'essence même de notre engagement envers votre vie privée.
-                </p>
-            </div>
+<div class="conteneur grid gap-10 pb-20 pt-12 lg:grid-cols-[16rem_1fr] lg:gap-16 lg:pb-28 lg:pt-16">
+    <nav aria-label="Sommaire" class="lg:sticky lg:top-28 lg:self-start">
+        <p class="font-medium">Sommaire</p>
+        <ol class="mt-3 space-y-1 text-[0.95rem]">
+            <li><a href="#collecte" class="flex min-h-10 items-center text-encre-2 hover:text-brun">Collecte des données</a></li>
+            <li><a href="#utilisation" class="flex min-h-10 items-center text-encre-2 hover:text-brun">Utilisation des données</a></li>
+            <li><a href="#droits" class="flex min-h-10 items-center text-encre-2 hover:text-brun">Vos droits</a></li>
+            <li><a href="#securite" class="flex min-h-10 items-center text-encre-2 hover:text-brun">Sécurité</a></li>
+        </ol>
+    </nav>
 
-            <div class="reveal">
-                <h2 class="text-2xl font-serif font-bold text-afri-dark mb-4">2. Utilisation des données</h2>
-                <p class="text-sm">
-                    Vos données sont utilisées exclusivement pour :
-                </p>
-                <ul class="list-disc list-inside mt-4 space-y-2 text-sm">
-                    <li>Le traitement et l'expédition de vos commandes de tissus.</li>
-                    <li>La communication concernant le statut de votre livraison.</li>
-                    <li>L'amélioration de notre catalogue selon vos préférences.</li>
-                </ul>
-            </div>
+    <article class="prose-afritex bg-carte p-6 sm:p-10 lg:p-12 [&>h2:first-child]:mt-0">
+        <h2 id="collecte">Collecte des données</h2>
+        <p>Nous collectons uniquement les informations nécessaires pour traiter vos commandes : nom, adresse de livraison, e-mail et numéro de téléphone.</p>
 
-            <div class="reveal">
-                <h2 class="text-2xl font-serif font-bold text-afri-dark mb-4">3. Vos Droits (RGPD)</h2>
-                <p class="text-sm">
-                    Conformément au Règlement Général sur la Protection des Données (RGPD), vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles.
-                    Pour toute demande, vous pouvez nous contacter via notre formulaire de contact.
-                </p>
-            </div>
+        <h2 id="utilisation">Utilisation des données</h2>
+        <p>Vos données sont utilisées exclusivement pour :</p>
+        <ul>
+            <li>le traitement et l'expédition de vos commandes de tissus ;</li>
+            <li>la communication concernant le statut de votre livraison ;</li>
+            <li>l'amélioration de notre catalogue selon vos préférences.</li>
+        </ul>
 
-            <div class="reveal">
-                <h2 class="text-2xl font-serif font-bold text-afri-dark mb-4">4. Sécurité</h2>
-                <p class="text-sm">
-                    Nous mettons en œuvre des mesures de sécurité rigoureuses pour protéger vos informations personnelles contre tout accès non autorisé.
-                </p>
-            </div>
-        </div>
+        <h2 id="droits">Vos droits</h2>
+        <p>Conformément au Règlement général sur la protection des données (RGPD), vous disposez d'un droit d'accès, de rectification et de suppression de vos données personnelles. Vous pouvez supprimer votre compte depuis vos préférences, ou nous écrire pour toute autre demande.</p>
 
-        <div class="text-center mt-16 reveal">
-            <a href="{{ route('accueil') }}" class="text-afri-brown font-bold text-sm uppercase tracking-widest border-b border-afri-brown pb-1 hover:text-afri-dark transition-colors">
-                Retour à la boutique
-            </a>
-        </div>
-    </div>
+        <h2 id="securite">Sécurité</h2>
+        <p>Nous mettons en œuvre des mesures de sécurité pour protéger vos informations personnelles contre tout accès non autorisé.</p>
+    </article>
 </div>
-
-<style>
-    .reveal {
-        opacity: 0;
-        transform: translateY(20px);
-        transition: all 0.8s cubic-bezier(0.22, 1, 0.36, 1);
-    }
-    .reveal.active {
-        opacity: 1;
-        transform: translateY(0);
-    }
-</style>
-
-<script>
-    document.addEventListener('DOMContentLoaded', () => {
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.classList.add('active');
-                }
-            });
-        }, { threshold: 0.1 });
-
-        document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
-    });
-</script>
 
 @endsection

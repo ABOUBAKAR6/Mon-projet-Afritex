@@ -1,165 +1,169 @@
 @extends('layouts.app')
+@php
+    $categorieActive = request('categorie_id') ? $categories->firstWhere('id', (int) request('categorie_id')) : null;
+    $titrePage = $categorieActive?->nom ?? (request('recherche') ? 'Résultats pour « ' . request('recherche') . ' »' : 'Le catalogue');
+    $filtresActifs = collect([request('recherche'), request('min_price'), request('max_price'), request('couleurs')])->filter()->isNotEmpty() || request('sort');
+    $allColors = collect($allColors)->filter()->values();
+    $tris = ['latest' => 'Les plus récents', 'price_asc' => 'Prix au mètre croissant', 'price_desc' => 'Prix au mètre décroissant'];
+@endphp
+@section('title', $titrePage . ' · AfriTex')
 @section('content')
 
-<div class="bg-afri-beige min-h-screen py-24 px-6 sm:px-10 lg:px-16 relative overflow-hidden">
-    <!-- Background Accents -->
-    <div class="absolute top-0 right-0 w-[500px] h-[500px] bg-afri-gold/10 rounded-full blur-3xl pointer-events-none -translate-y-1/2 translate-x-1/4"></div>
-    <div class="absolute bottom-0 left-0 w-[400px] h-[400px] bg-afri-cream rounded-full blur-3xl pointer-events-none translate-y-1/2 -translate-x-1/4"></div>
+{{-- Une catégorie ouverte prend sa propre photo comme bandeau --}}
+<x-en-tete-page :titre="$titrePage"
+    :ariane="$categorieActive ? [['Catalogue', route('catalogue')]] : []"
+    :vignette="$categorieActive?->image"
+    :chapeau="$categorieActive
+        ? 'Notre sélection ' . $categorieActive->nom . ' : au mètre, au rouleau ou en confection. Affinez par prix ou par couleur.'
+        : 'Tissus au mètre, au rouleau ou en confection. Choisissez une famille, puis affinez par prix ou par couleur.'" />
 
-    <div class="max-w-7xl mx-auto relative z-10">
-        <!-- Header Section -->
-        <div class="flex flex-col md:flex-row justify-between items-end mb-16 gap-6">
-            <div class="max-w-2xl">
-                <span class="text-afri-gold text-xs uppercase tracking-[0.3em] font-bold mb-4 block">La Collection</span>
-                <h2 class="text-5xl md:text-7xl font-serif font-bold text-afri-dark leading-tight">
-                    Catalogue <span class="italic text-afri-brown">des Tissus</span>
-                </h2>
+<div class="conteneur py-10 lg:py-14">
+    {{-- Familles de tissus : accès direct --}}
+    <nav aria-label="Familles de tissus" class="defilement-discret -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
+        <ul class="flex w-max gap-2 sm:w-auto sm:flex-wrap">
+            <li>
+                <a href="{{ route('catalogue', request()->except(['categorie_id', 'page'])) }}" @if(!$categorieActive) aria-current="page" @endif
+                   class="flex min-h-11 items-center px-4 text-[0.95rem] transition-colors {{ !$categorieActive ? 'bg-brun font-medium text-white' : 'bg-carte text-encre hover:bg-brun-doux hover:text-brun-fonce' }}">Toutes</a>
+            </li>
+            @foreach($categories as $cat)
+                @php $actif = $categorieActive?->id === $cat->id; @endphp
+                <li>
+                    <a href="{{ route('catalogue', array_merge(request()->except(['categorie_id', 'page']), ['categorie_id' => $cat->id])) }}" @if($actif) aria-current="page" @endif
+                       class="flex min-h-11 items-center whitespace-nowrap px-4 text-[0.95rem] transition-colors {{ $actif ? 'bg-brun font-medium text-white' : 'bg-carte text-encre hover:bg-brun-doux hover:text-brun-fonce' }}">{{ $cat->nom }}</a>
+                </li>
+            @endforeach
+        </ul>
+    </nav>
+
+    {{-- Recherche, prix, couleurs, tri --}}
+    <details class="group/filtres mt-6 bg-carte" {{ $filtresActifs ? 'open' : '' }} x-data x-init="if (window.matchMedia('(min-width: 64rem)').matches) $el.open = true">
+        <summary class="flex min-h-14 cursor-pointer list-none items-center justify-between gap-4 px-5 font-medium lg:hidden">
+            <span class="flex items-center gap-2"><x-icone nom="filtre" /> Affiner la recherche</span>
+            <x-icone nom="chevron-bas" class="size-4 transition-transform group-open/filtres:rotate-180" />
+        </summary>
+        <form method="GET" action="{{ route('catalogue') }}" class="grid gap-5 border-t border-trait p-5 sm:grid-cols-2 lg:grid-cols-[1.4fr_1fr_1fr_auto] lg:items-end lg:border-t-0 lg:p-6">
+            @if($categorieActive)
+                <input type="hidden" name="categorie_id" value="{{ $categorieActive->id }}">
+            @endif
+            <div>
+                <label for="f-recherche" class="etiquette">Recherche</label>
+                <input id="f-recherche" type="search" name="recherche" value="{{ request('recherche') }}" placeholder="Un motif, une couleur…" class="champ">
             </div>
-            <div class="text-afri-brown/60 text-sm italic font-serif">
-                Une sélection rigoureuse de textiles d'exception
+            <fieldset>
+                <legend class="etiquette">Prix au mètre (F)</legend>
+                <div class="flex gap-2">
+                    <label for="f-min" class="sr-only">Prix minimum</label>
+                    <input id="f-min" type="number" min="0" step="100" name="min_price" value="{{ request('min_price') }}" placeholder="Min" class="champ chiffres">
+                    <label for="f-max" class="sr-only">Prix maximum</label>
+                    <input id="f-max" type="number" min="0" step="100" name="max_price" value="{{ request('max_price') }}" placeholder="Max" class="champ chiffres">
+                </div>
+            </fieldset>
+            <div>
+                <label for="f-tri" class="etiquette">Trier par</label>
+                <select id="f-tri" name="sort" class="champ">
+                    @foreach($tris as $valeur => $libelle)
+                        <option value="{{ $valeur }}" @selected(request('sort', 'latest') === $valeur)>{{ $libelle }}</option>
+                    @endforeach
+                </select>
             </div>
-        </div>
+            <div class="flex gap-2 sm:col-span-2 lg:col-span-1">
+                <button type="submit" class="btn btn-brun flex-1 lg:flex-none">Appliquer</button>
+                @if($filtresActifs)
+                    <a href="{{ route('catalogue', $categorieActive ? ['categorie_id' => $categorieActive->id] : []) }}" class="btn btn-contour">Effacer</a>
+                @endif
+            </div>
 
-        <!-- Editorial Filter Bar -->
-        <div class="mb-20">
-            <form method="GET" action="{{ route('catalogue') }}" class="bg-white/50 backdrop-blur-md p-8 rounded-[40px] border border-afri-cream shadow-sm grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-10 items-end transition-all duration-500 hover:shadow-xl hover:shadow-afri-dark/5">
-
-                <div class="flex flex-col gap-3">
-                    <span class="text-[10px] text-afri-dark/40 uppercase tracking-widest font-bold">Essence</span>
-                    <select name="categorie_id" class="w-full bg-transparent py-2 text-sm text-afri-dark outline-none border-b border-afri-cream focus:border-afri-brown transition-colors cursor-pointer">
-                        <option value="">Toutes les catégories</option>
-                        @foreach($categories as $cat)
-                            <option value="{{ $cat->id }}" {{ request('categorie_id') == $cat->id ? 'selected' : '' }}>{{ $cat->nom }}</option>
-                        @endforeach
-                    </select>
-                </div>
-
-                <div class="flex flex-col gap-3">
-                    <span class="text-[10px] text-afri-dark/40 uppercase tracking-widest font-bold">Recherche</span>
-                    <input type="text" name="recherche" placeholder="Un motif, une couleur..." value="{{ request('recherche') }}" class="w-full bg-transparent py-2 text-sm outline-none border-b border-afri-cream focus:border-afri-brown transition-colors">
-                </div>
-
-                <div class="flex flex-col gap-3">
-                    <span class="text-[10px] text-afri-dark/40 uppercase tracking-widest font-bold">Budget (F/m)</span>
-                    <div class="flex gap-4">
-                        <input type="number" name="min_price" placeholder="Min" value="{{ request('min_price') }}" class="w-1/2 bg-transparent py-2 text-sm outline-none border-b border-afri-cream focus:border-afri-brown transition-colors">
-                        <input type="number" name="max_price" placeholder="Max" value="{{ request('max_price') }}" class="w-1/2 bg-transparent py-2 text-sm outline-none border-b border-afri-cream focus:border-afri-brown transition-colors">
-                    </div>
-                </div>
-
-                <div class="flex gap-4">
-                    <button type="submit" class="flex-1 bg-afri-dark text-white px-6 py-3 rounded-2xl text-xs font-bold uppercase tracking-widest transition-all duration-300 hover:bg-afri-brown hover:-translate-y-1 active:scale-95">
-                        Filtrer
-                    </button>
-                    <a href="{{ route('catalogue') }}" class="flex-1 bg-afri-beige text-afri-brown px-6 py-3 rounded-2xl text-center text-xs font-bold uppercase tracking-widest transition-all duration-300 hover:bg-afri-cream border border-afri-cream">
-                        Reset
-                    </a>
-                </div>
-
-                <div class="col-span-1 md:col-span-3 lg:col-span-4 pt-6 border-t border-afri-cream/50">
-                    <div class="flex flex-wrap items-center gap-4">
-                        <span class="text-[10px] text-afri-dark/40 uppercase tracking-widest font-bold mr-4">Nuances :</span>
-                        @forelse($allColors as $color)
-                            <label class="flex items-center gap-2 cursor-pointer group">
-                                <input type="checkbox" name="couleurs[]" value="{{ $color }}" {{ in_array($color, request('couleurs', [])) ? 'checked' : '' }} class="hidden peer">
-                                <span class="text-xs px-4 py-1.5 rounded-full border border-afri-cream bg-white text-afri-dark transition-all duration-300 peer-checked:bg-afri-dark peer-checked:text-white peer-checked:border-afri-dark group-hover:border-afri-brown">
-                                    {{ $color }}
-                                </span>
+            @if($allColors->isNotEmpty())
+                <fieldset class="sm:col-span-2 lg:col-span-4">
+                    <legend class="etiquette">Couleurs</legend>
+                    <div class="flex flex-wrap gap-2">
+                        @foreach($allColors as $couleur)
+                            <label class="cursor-pointer">
+                                <input type="checkbox" name="couleurs[]" value="{{ $couleur }}" @checked(in_array($couleur, (array) request('couleurs', []))) class="peer sr-only">
+                                <span class="flex min-h-10 items-center border border-trait-fort px-3.5 text-[0.92rem] transition-colors hover:border-brun-trait peer-checked:border-brun peer-checked:bg-brun peer-checked:text-white peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-offset-2 peer-focus-visible:outline-brun">{{ $couleur }}</span>
                             </label>
-                        @empty
-                            <span class="text-xs text-afri-dark/30 italic">Aucune nuance spécifiée</span>
-                        @endforelse
+                        @endforeach
                     </div>
-                </div>
-            </form>
-        </div>
+                </fieldset>
+            @endif
+        </form>
+    </details>
 
-        <!-- Asymmetric Product Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-8 gap-y-16">
-            @forelse($produits as $produit)
-            @php
-                $isFeatured = ($loop->index % 5 === 0);
-                $gridClass = $isFeatured ? 'lg:col-span-2' : 'col-span-1';
-                $imgHeight = $isFeatured ? 'h-96' : 'h-72';
-            @endphp
-            <div class="{{ $gridClass }} group relative">
-                <div class="relative overflow-hidden rounded-[40px] bg-white transition-all duration-700 hover:shadow-2xl hover:shadow-afri-dark/10">
-
-                    <!-- Image Container -->
-                    <div class="relative {{ $imgHeight }} overflow-hidden bg-afri-cream">
-                        @if($produit->image)
-                            <img src="{{ asset($produit->image) }}" class="w-full h-full object-cover transition-transform duration-1000 group-hover:scale-110" alt="{{ $produit->nom }}">
-                        @else
-                            <div class="w-full h-full flex items-center justify-center text-6xl">🧵</div>
-                        @endif
-
-                        <!-- Floating Badge -->
-                        <div class="absolute top-6 left-6">
-                            <span class="bg-white/80 backdrop-blur-md text-afri-dark text-[10px] font-bold uppercase px-4 py-1.5 rounded-full tracking-widest shadow-sm">
-                                {{ $produit->categorie->nom }}
-                            </span>
-                        </div>
-
-                        <!-- Wishlist Button -->
-                        <div class="absolute top-6 right-6 z-10">
-                            @auth
-                                <form action="{{ route('wishlist.toggle', $produit->id) }}" method="POST">
-                                    @csrf
-                                    <button type="submit" class="p-3 rounded-full bg-white/80 backdrop-blur-sm text-gray-400 hover:text-red-500 transition shadow-sm active:scale-90">
-                                        <svg class="w-5 h-5" fill="{{ Auth::user()->wishlist()->where('produit_id', $produit->id)->exists() ? 'currentColor' : 'none' }}" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54l-1.45 1.32z" />
-                                        </svg>
-                                    </button>
-                                </form>
-                            @else
-                                <a href="{{ route('login') }}" class="p-3 rounded-full bg-white/80 backdrop-blur-sm text-gray-400 hover:text-red-500 transition shadow-sm">
-                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54l-1.45 1.32z" />
-                                    </svg>
-                                </a>
-                            @endauth
-                        </div>
-                    </div>
-
-                    <!-- Content -->
-                    <div class="p-8 bg-white">
-                        <div class="flex justify-between items-start mb-4">
-                            <h3 class="text-xl md:text-2xl font-serif font-bold text-afri-dark group-hover:text-afri-brown transition-colors leading-tight">
-                                {{ $produit->nom }}
-                            </h3>
-                            <div class="text-afri-gold font-bold text-lg">
-                                @if($produit->prix_metre) {{ number_format($produit->prix_metre, 0, ',', ' ') }} F <span class="text-[10px] uppercase opacity-60">/m</span> @endif
-                            </div>
-                        </div>
-
-                        <!-- Premium Tags -->
-                        <div class="flex flex-wrap gap-2 mb-8">
-                            @if($produit->prix_metre)<span class="rounded-full border border-afri-cream bg-afri-beige px-3 py-1 text-[10px] text-afri-brown uppercase tracking-wider">Au mètre</span>@endif
-                            @if($produit->prix_rouleau)<span class="rounded-full border border-afri-cream bg-afri-beige px-3 py-1 text-[10px] text-afri-brown uppercase tracking-wider">Au rouleau</span>@endif
-                            @if($produit->prix_pantalon)<span class="rounded-full border border-afri-cream bg-afri-beige px-3 py-1 text-[10px] text-afri-brown uppercase tracking-wider">Pantalon</span>@endif
-                            @if($produit->prix_chemise)<span class="rounded-full border border-afri-cream bg-afri-beige px-3 py-1 text-[10px] text-afri-brown uppercase tracking-wider">Chemise</span>@endif
-                            @if($produit->prix_tunique)<span class="rounded-full border border-afri-cream bg-afri-beige px-3 py-1 text-[10px] text-afri-brown uppercase tracking-wider">Tunique</span>@endif
-                        </div>
-
-                        <a href="{{ route('produit.show', $produit->slug) }}" class="inline-flex w-full justify-center rounded-2xl bg-afri-dark text-white py-4 text-xs font-bold uppercase tracking-[0.2em] transition-all duration-300 hover:bg-afri-brown hover:shadow-lg active:scale-95">
-                            Explorer la pièce
-                        </a>
-                    </div>
-                </div>
-            </div>
-            @empty
-            <div class="col-span-full rounded-[40px] border border-afri-cream bg-white p-20 text-center">
-                <div class="text-6xl mb-6 opacity-20">🧵</div>
-                <p class="text-xl font-serif italic text-afri-brown mb-6">Notre collection est actuellement en cours de renouvellement...</p>
-                <a href="{{ route('catalogue') }}" class="text-afri-dark font-bold text-sm uppercase tracking-widest border-b border-afri-dark pb-1 hover:text-afri-brown transition-colors">Réinitialiser les filtres</a>
-            </div>
-            @endforelse
-        </div>
+    {{-- Résultats --}}
+    <div class="mt-10 flex items-baseline justify-between gap-4">
+        <h2 class="titre-display text-[1.5rem]">
+            <span class="chiffres">{{ $produits->total() }}</span> {{ $produits->total() > 1 ? 'tissus' : 'tissu' }}
+        </h2>
+        @if($produits->lastPage() > 1)
+            <p class="text-[0.95rem] text-encre-2">Page {{ $produits->currentPage() }} sur {{ $produits->lastPage() }}</p>
+        @endif
     </div>
+
+    @if($produits->isEmpty())
+        <div class="mt-6 bg-carte px-6 py-16 text-center">
+            <p class="titre-display text-[1.4rem]">Aucun tissu ne correspond à ces critères</p>
+            <p class="mx-auto mt-2 max-w-[48ch] text-encre-2">Élargissez la fourchette de prix, retirez une couleur ou parcourez une autre famille de tissu.</p>
+            <a href="{{ route('catalogue') }}" class="btn btn-brun mt-6">Voir tout le catalogue</a>
+        </div>
+    @elseif($categorieActive)
+        {{-- Rangée défilante : déborde jusqu'au bord droit de l'écran, la carte suivante dépasse pour inviter à glisser --}}
+        <div x-data="rangeeDefilante" class="mt-6">
+            <div x-ref="piste" @scroll.passive="suivre" tabindex="0" role="region" aria-label="Tissus {{ $categorieActive->nom }}, défilement horizontal"
+                 class="rangee defilement-discret mr-[calc(50%-50vw)] flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 motion-safe:scroll-smooth pr-4 focus-visible:outline-offset-4 sm:pr-6 lg:gap-4 lg:pr-[calc(50vw-50%)]">
+                @foreach($produits as $produit)
+                    <x-carte-produit :produit="$produit"
+                        class="w-[78%] shrink-0 snap-start sm:w-[44%] lg:w-[calc((100%-2rem)/3.3)] xl:w-[calc((100%-3rem)/3.6)]" />
+                @endforeach
+            </div>
+
+            @if($produits->count() > 1)
+                <div class="mt-6 flex items-center gap-5">
+                    {{-- Curseur : sa largeur = la part visible de la rangée, il avance avec le défilement --}}
+                    <div class="h-0.5 flex-1 overflow-hidden bg-trait" aria-hidden="true">
+                        <div class="h-full bg-brun" :style="`width: ${part * 100}%; transform: translateX(${decalage * 100}%)`"></div>
+                    </div>
+                    <div class="flex gap-2">
+                        <button type="button" @click="glisser(-1)" :disabled="auDebut" class="btn btn-contour size-11 p-0 disabled:opacity-35">
+                            <x-icone nom="fleche-gauche" /><span class="sr-only">Tissus précédents</span>
+                        </button>
+                        <button type="button" @click="glisser(1)" :disabled="aLaFin" class="btn btn-contour size-11 p-0 disabled:opacity-35">
+                            <x-icone nom="fleche" /><span class="sr-only">Tissus suivants</span>
+                        </button>
+                    </div>
+                </div>
+            @endif
+        </div>
+    @else
+        <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+            @foreach($produits as $produit)
+                <x-carte-produit :produit="$produit" class="revele" style="--delai: {{ ($loop->index % 4) * 60 }}ms" />
+            @endforeach
+        </div>
+
+        <div class="mt-12">
+            {{ $produits->links() }}
+        </div>
+    @endif
 </div>
 
-<style>
-    .product-card { transition: all 0.5s cubic-bezier(0.22, 1, 0.36, 1); }
-</style>
+@if($autresProduits->isNotEmpty())
+    {{-- Les autres familles, sous la rangée de la catégorie --}}
+    <section class="border-t border-trait bg-papier-2 py-14 lg:py-20" aria-labelledby="titre-autres">
+        <div class="conteneur">
+            <div class="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+                <div>
+                    <h2 id="titre-autres" class="titre-display text-[1.7rem] lg:text-[2.1rem]">D'autres tissus à découvrir</h2>
+                    <p class="mt-1 text-encre-2">Les dernières arrivées des autres familles.</p>
+                </div>
+                <a href="{{ route('catalogue') }}" class="lien-fleche shrink-0">Tout le catalogue <x-icone nom="fleche" /></a>
+            </div>
+            <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+                @foreach($autresProduits as $produit)
+                    <x-carte-produit :produit="$produit" class="revele" style="--delai: {{ ($loop->index % 4) * 60 }}ms" />
+                @endforeach
+            </div>
+        </div>
+    </section>
+@endif
 
 @endsection

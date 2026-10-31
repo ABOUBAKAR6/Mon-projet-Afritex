@@ -1,263 +1,174 @@
 @extends('layouts.app')
+@section('title', 'Livraison · AfriTex')
+@push('tete')
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+@endpush
 @section('content')
+@php
+    $formats = [
+        'metre' => 'Au mètre', 'rouleau' => 'Au rouleau', 'pantalon' => 'Pantalon',
+        'chemise_courte' => 'Chemise manches courtes', 'chemise_longue' => 'Chemise manches longues',
+        'tunique_courte' => 'Tunique manches courtes', 'tunique_longue' => 'Tunique manches longues',
+    ];
+    $villes = ['Abidjan', 'Bouaké', 'Yamoussoukro', 'Daloa', 'Korhogo', 'San-Pédro', 'Man', 'Gagnoa', 'Divo', 'Abengourou'];
+    $fraisDomicile = $total >= 50000 ? 0 : 1500;
+    $indicatifs = ['+225' => 'Côte d\'Ivoire +225', '+221' => 'Sénégal +221', '+223' => 'Mali +223', '+226' => 'Burkina Faso +226', '+228' => 'Togo +228', '+229' => 'Bénin +229', '+224' => 'Guinée +224', '+33' => 'France +33'];
+@endphp
 
-<style>
-.order-container { max-width: 1100px; margin: 0 auto; padding: 40px 20px; font-family: 'DM Sans', sans-serif; }
-.order-header { text-align: center; margin-bottom: 40px; }
-.order-header h2 { font-family: 'Playfair Display', serif; font-size: 32px; color: #4A1B0C; font-weight: 700; margin-bottom: 10px; }
-.order-header p { color: #7a6a5a; font-size: 16px; }
+<div class="conteneur pb-20 pt-10 lg:pb-28 lg:pt-14">
+    @include('partials.etapes-commande', ['etape' => 1])
 
-.order-steps { display: flex; justify-content: center; align-items: center; margin-bottom: 50px; gap: 10px; }
-.step-item { display: flex; align-items: center; gap: 10px; }
-.step-dot { width: 35px; height: 35px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; transition: all 0.3s; border: 2px solid #e8ddd3; background: white; color: #aaa; }
-.step-dot.active { background: #8B4513; color: white; border-color: #8B4513; box-shadow: 0 0 15px rgba(139,69,19,0.3); }
-.step-line { width: 60px; height: 3px; background: #e8ddd3; transition: all 0.3s; }
-.step-line.active { background: #8B4513; }
-.step-text { font-size: 14px; font-weight: 600; color: #aaa; }
-.step-text.active { color: #4A1B0C; }
+    <h1 class="titre-display apparition mt-8 text-[2.2rem] sm:text-[2.8rem]">Où livrer votre commande ?</h1>
+    <p class="apparition mt-2 max-w-[60ch] text-encre-2" style="animation-delay: 60ms">Indiquez vos coordonnées et placez le repère sur la carte : le livreur vous trouvera sans détour.</p>
 
-.order-grid { display: grid; grid-template-columns: 1fr 380px; gap: 30px; align-items: start; }
-@media (max-width: 992px) { .order-grid { grid-template-columns: 1fr; } }
-
-.order-section { background: white; border-radius: 24px; padding: 30px; box-shadow: 0 10px 30px rgba(0,0,0,0.04); border: 1px solid #f0ebe5; margin-bottom: 24px; }
-.section-title { font-family: 'Playfair Display', serif; font-size: 20px; color: #4A1B0C; font-weight: 700; margin-bottom: 24px; display: flex; align-items: center; gap: 12px; }
-.section-title span { background: #FDF6EE; color: #8B4513; width: 32px; height: 32px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 16px; }
-
-.form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 20px; }
-.input-group { margin-bottom: 20px; }
-.input-label { font-size: 13px; color: #7a6a5a; font-weight: 600; margin-bottom: 6px; display: block; }
-.input-field { width: 100%; padding: 12px 16px; border: 1.5px solid #e8ddd3; border-radius: 12px; font-size: 15px; outline: none; transition: all 0.2s; background: white; box-sizing: border-box; }
-.input-field:focus { border-color: #8B4513; box-shadow: 0 0 0 3px rgba(139,69,19,0.1); }
-
-.delivery-options { display: flex; flex-direction: column; gap: 12px; }
-.delivery-item { display: flex; align-items: center; gap:15px; padding: 18px; border: 2px solid #e8ddd3; border-radius: 16px; cursor: pointer; transition: all 0.2s; background: white; position: relative; }
-.delivery-item:hover { border-color: #C8963E; background: #FFFBF5; transform: translateX(5px); }
-.delivery-item.selected { border-color: #8B4513; background: #FDF6EE; box-shadow: 0 4px 12px rgba(139,69,19,0.1); }
-.delivery-item input { width: 20px; height: 20px; accent-color: #8B4513; }
-.delivery-info { flex: 1; }
-.delivery-name { font-weight: 700; color: #4A1B0C; font-size: 16px; }
-.delivery-desc { font-size: 13px; color: #7a6a5a; }
-
-.map-section { margin-top: 20px; }
-.search-box { position: relative; margin-bottom: 15px; }
-.search-input { width: 100%; padding: 12px 44px 12px 14px; border: 1.5px solid #e8ddd3; border-radius: 12px; font-size: 15px; outline: none; transition: all 0.2s; }
-.search-input:focus { border-color: #8B4513; }
-.search-btn { position: absolute; right: 14px; top: 50%; transform: translateY(-50%); color: #8B4513; font-weight: 600; cursor: pointer; font-size: 14px; }
-.suggestions-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1.5px solid #e8ddd3; border-top: none; border-radius: 0 0 12px 12px; z-index: 1000; max-height: 200px; overflow-y: auto; box-shadow: 0 8px 20px rgba(0,0,0,0.1); }
-.suggestion-item { padding: 12px 14px; cursor: pointer; font-size: 13px; color: #2d2d2d; border-bottom: 1px solid #f0ebe5; transition: background 0.15s; }
-.suggestion-item:hover { background: #FDF6EE; }
-.detected-address { margin-top: 10px; padding: 12px 16px; background: #FDF6EE; border-radius: 12px; border-left: 4px solid #8B4513; font-size: 13px; color: #4A1B0C; }
-
-.recap-card { background: white; border-radius: 24px; padding: 25px; position: sticky; top: 100px; box-shadow: 0 15px 35px rgba(0,0,0,0.06); border: 1px solid #f0ebe5; }
-.recap-title { font-family: 'Playfair Display', serif; font-size: 20px; color: #4A1B0C; font-weight: 700; margin-bottom: 20px; text-align: center; }
-.recap-item { display: flex; justify-content: space-between; padding: 12px 0; border-bottom: 1px solid #f9f5f0; gap: 8px; }
-.recap-text { font-size: 13px; color: #4A1B0C; flex: 1; }
-.recap-subtext { font-size: 11px; color: #7a6a5a; display: block; }
-.recap-price { font-size: 13px; font-weight: 700; color: #8B4513; white-space: nowrap; }
-
-.total-box { background: #FDF6EE; border-radius: 16px; padding: 20px; margin-top: 20px; border: 1px dashed #C8963E; }
-.total-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 14px; color: #7a6a5a; }
-.total-final { display: flex; justify-content: space-between; margin-top: 12px; padding-top: 12px; border-top: 1px solid #e8ddd3; }
-.total-final span { font-size: 18px; font-weight: 800; color: #4A1B0C; }
-.total-final strong { font-size: 24px; color: #8B4513; }
-
-.btn-proceed { width: 100%; background: linear-gradient(135deg, #8B4513, #4A1B0C); color: white; padding: 18px; border: none; border-radius: 16px; font-size: 18px; font-weight: 700; cursor: pointer; transition: all 0.3s; box-shadow: 0 6px 20px rgba(139,69,19,0.3); margin-top: 20px; }
-.btn-proceed:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(139,69,19,0.4); }
-</style>
-
-<div class="order-container">
-    <div class="order-header">
-        <h2>Confirmer la livraison</h2>
-        <p>L'excellence du tissu, livrée avec soin à votre adresse</p>
-    </div>
-
-    <div class="order-steps">
-        <div class="step-item">
-            <div class="step-dot active">1</div>
-            <span class="step-text active">Adresse</span>
-        </div>
-        <div class="step-line active"></div>
-        <div class="step-item">
-            <div class="step-dot">2</div>
-            <span class="step-text">Paiement</span>
-        </div>
-        <div class="step-line"></div>
-        <div class="step-item">
-            <div class="step-dot">3</div>
-            <span class="step-text">Confirmation</span>
-        </div>
-    </div>
-
-    <form method="POST" action="{{ route('commande.confirmer') }}" id="formCommande">
+    <form method="POST" action="{{ route('commande.confirmer') }}" id="formCommande" class="mt-10 grid items-start gap-8 lg:grid-cols-[1fr_24rem] lg:gap-12">
         @csrf
-        <div class="order-grid">
-            <div class="order-main">
-                {{-- ADRESSE --}}
-                <div class="order-section">
-                    <div class="section-title"> Informations de livraison</div>
-
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label class="input-label">Prénom <span style="color:red;">*</span></label>
-                            <input type="text" name="prenom" required placeholder="Ex: Kouamé"
-                                   value="{{ old('prenom', explode(' ', auth()->user()->name)[0]) }}"
-                                   class="input-field">
-                        </div>
-                        <div class="input-group">
-                            <label class="input-label">Nom <span style="color:red;">*</span></label>
-                            <input type="text" name="nom_complet" required placeholder="Ex: Konan"
-                                   class="input-field">
-                        </div>
+        <div class="space-y-8">
+            {{-- COORDONNÉES --}}
+            <section class="bg-carte p-6 sm:p-8" aria-labelledby="titre-coordonnees">
+                <h2 id="titre-coordonnees" class="titre-display text-[1.3rem]">Vos coordonnées</h2>
+                <div class="mt-6 grid gap-5 sm:grid-cols-2">
+                    <div>
+                        <label for="prenom" class="etiquette">Prénom</label>
+                        <input id="prenom" type="text" name="prenom" required autocomplete="given-name" placeholder="Kouamé"
+                               value="{{ old('prenom', explode(' ', auth()->user()->name)[0]) }}" class="champ">
                     </div>
-
-                    <div class="input-group">
-                        <label class="input-label">Téléphone <span style="color:red;">*</span></label>
-                        <div style="display:flex; gap:10px;">
-                            <select name="indicatif" class="input-field" style="width:120px; cursor:pointer;">
-                                <option value="+225">🇨🇮 +225</option>
-                                <option value="+221">🇸🇳 +221</option>
-                                <option value="+223">🇲🇱 +223</option>
-                                <option value="+226">🇧🇫 +226</option>
-                                <option value="+228">🇹🇬 +228</option>
-                                <option value="+229">🇧🇯 +229</option>
-                                <option value="+224">🇬🇳 +224</option>
-                                <option value="+33"> 🇫🇷 +33</option>
+                    <div>
+                        <label for="nom_complet" class="etiquette">Nom</label>
+                        <input id="nom_complet" type="text" name="nom_complet" required autocomplete="family-name" placeholder="Konan" value="{{ old('nom_complet') }}" class="champ">
+                    </div>
+                    <div class="sm:col-span-2">
+                        <label for="telephone" class="etiquette">Téléphone</label>
+                        <div class="flex gap-2">
+                            <label for="indicatif" class="sr-only">Indicatif du pays</label>
+                            <select id="indicatif" name="indicatif" class="champ w-auto max-w-[11rem]">
+                                @foreach($indicatifs as $code => $libelle)
+                                    <option value="{{ $code }}">{{ $libelle }}</option>
+                                @endforeach
                             </select>
-                            <input type="tel" name="telephone" required placeholder="07 12 34 56 78" class="input-field" style="flex:1;">
+                            <input id="telephone" type="tel" name="telephone" required autocomplete="tel-national" placeholder="07 12 34 56 78" class="champ chiffres flex-1">
                         </div>
                     </div>
+                </div>
+            </section>
 
-                    <div class="input-group">
-                        <label class="input-label">Ville <span style="color:red;">*</span></label>
-                        <select name="ville" id="villeSelect" required onchange="updateCommunes()" class="input-field" style="cursor:pointer;">
-                            <option value="">-- Choisir une ville --</option>
-                            <option value="Abidjan">Abidjan</option>
-                            <option value="Bouaké">Bouaké</option>
-                            <option value="Yamoussoukro">Yamoussoukro</option>
-                            <option value="Daloa">Daloa</option>
-                            <option value="Korhogo">Korhogo</option>
-                            <option value="San-Pédro">San-Pédro</option>
-                            <option value="Man">Man</option>
-                            <option value="Gagnoa">Gagnoa</option>
-                            <option value="Divo">Divo</option>
-                            <option value="Abengourou">Abengourou</option>
+            {{-- ADRESSE --}}
+            <section class="bg-carte p-6 sm:p-8" aria-labelledby="titre-adresse">
+                <h2 id="titre-adresse" class="titre-display text-[1.3rem]">Adresse de livraison</h2>
+                <div class="mt-6 grid gap-5 sm:grid-cols-3">
+                    <div>
+                        <label for="villeSelect" class="etiquette">Ville</label>
+                        <select name="ville" id="villeSelect" required onchange="updateCommunes()" class="champ">
+                            <option value="">Choisir une ville</option>
+                            @foreach($villes as $ville)
+                                <option value="{{ $ville }}">{{ $ville }}</option>
+                            @endforeach
                         </select>
                     </div>
-
-                    <div class="form-grid">
-                        <div class="input-group">
-                            <label class="input-label">Commune <span style="color:red;">*</span></label>
-                            <select name="commune" id="communeSelect" required class="input-field" style="cursor:pointer;">
-                                <option value="">-- Commune --</option>
-                            </select>
-                        </div>
-                        <div class="input-group">
-                            <label class="input-label">Quartier</label>
-                            <input type="text" name="quartier" id="quartierInput" placeholder="Ex: Cocody Riviera..." class="input-field">
-                        </div>
+                    <div>
+                        <label for="communeSelect" class="etiquette">Commune</label>
+                        <select name="commune" id="communeSelect" required class="champ">
+                            <option value="">Choisissez d'abord la ville</option>
+                        </select>
                     </div>
-
-                    <div class="map-section">
-                        <label class="input-label">Localisation précise sur la carte <span style="color:red;">*</span></label>
-                        <div class="search-box">
-                            <input type="text" id="searchInput" placeholder="Rechercher votre adresse..." class="search-input" oninput="rechercherAdresse()">
-                            <span class="search-btn" onclick="rechercherAdresse()">Chercher</span>
-                            <div id="suggestions" class="suggestions-list" style="display:none;"></div>
-                        </div>
-                        <div id="map" style="width:100%; height:300px; border-radius:16px; border:1.5px solid #e8ddd3; overflow:hidden; z-index:1;"></div>
-                        <div id="adresseDetectee" class="detected-address" style="display:none;">
-                            <strong>Adresse détectée :</strong> <span id="texteAdresse"></span>
-                        </div>
+                    <div>
+                        <label for="quartierInput" class="etiquette">Quartier <span class="font-normal text-encre-2">(facultatif)</span></label>
+                        <input type="text" name="quartier" id="quartierInput" placeholder="Riviera 2" class="champ">
                     </div>
-
-                    <div class="input-group" style="margin-top:20px;">
-                        <label class="input-label">Note pour le livreur (optionnel)</label>
-                        <textarea name="note_livreur" rows="3" placeholder="Ex: Sonner au portail bleu, 2ème étage..." class="input-field" style="resize:vertical;"></textarea>
-                    </div>
-
-                    <input type="hidden" name="adresse_livraison" id="adresseComplete">
-                    <input type="hidden" name="latitude"  id="latInput">
-                    <input type="hidden" name="longitude" id="lngInput">
                 </div>
 
-                {{-- MODE DE LIVRAISON --}}
-                <div class="order-section">
-                    <div class="section-title"> Mode de livraison</div>
-                    <div class="delivery-options">
-                        <label class="delivery-item selected" id="label-domicile">
-                            <input type="radio" name="mode_livraison" value="domicile" checked onchange="selectLivraison(this)">
-                            <div class="delivery-info">
-                                <div class="delivery-name">Livraison à domicile</div>
-                                <div class="delivery-desc">Livré chez vous sous 24–48h</div>
-                            </div>
-                            <div style="font-weight:700; color:#8B4513; font-size:16px;">1 500 F</div>
-                        </label>
-                        <label class="delivery-item" id="label-boutique">
-                            <input type="radio" name="mode_livraison" value="boutique" onchange="selectLivraison(this)">
-                            <div class="delivery-info">
-                                <div class="delivery-name">🏪 Retrait en boutique</div>
-                                <div class="delivery-desc">Gratuit — Disponible dès demain</div>
-                            </div>
-                            <div style="font-weight:700; color:#10b981; font-size:16px;">Gratuit</div>
-                        </label>
+                <div class="mt-6">
+                    <label for="searchInput" class="etiquette">Position exacte sur la carte</label>
+                    <div class="relative">
+                        <x-icone nom="recherche" class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-encre-3" />
+                        <input type="text" id="searchInput" placeholder="Rechercher une adresse, un repère connu…" class="champ pl-10" oninput="rechercherAdresse()" autocomplete="off" aria-describedby="aide-carte">
+                        <div id="suggestions" class="absolute inset-x-0 top-full z-dropdown max-h-60 overflow-y-auto border border-t-0 border-trait-fort bg-carte" style="display:none;"></div>
                     </div>
-                    <input type="hidden" name="frais_livraison" id="fraisLivraison" value="1500">
+                    <p id="aide-carte" class="aide">Votre position est détectée automatiquement. Vous livrez ailleurs ? Cherchez l'adresse ou touchez la carte, puis faites glisser le repère.</p>
+                    <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                        <button type="button" id="btnLocaliser" onclick="localiser()" class="btn btn-contour btn-sm"><x-icone nom="repere" /> Me localiser</button>
+                        <p id="etatLocalisation" class="text-[0.92rem] text-encre-2" role="status" aria-live="polite"></p>
+                    </div>
+                    <div id="map" class="carte-livraison relative z-0 mt-3 h-72 w-full border border-trait sm:h-80"></div>
+                    <p id="adresseDetectee" class="mt-3 flex items-start gap-2 bg-brun-doux p-3.5 text-[0.95rem] text-brun-fonce" style="display:none;">
+                        <x-icone nom="repere" class="mt-0.5 size-4 shrink-0" />
+                        <span><span class="font-medium">Adresse repérée :</span> <span id="texteAdresse"></span></span>
+                    </p>
                 </div>
-            </div>
 
-            <div class="order-sidebar">
-                <div class="recap-card">
-                    <div class="recap-title">Votre Panier</div>
-                    <div class="recap-list">
-                        @foreach($panier as $item)
-                        <div class="recap-item">
-                            <span class="recap-text">
-                                {{ $item['nom'] }}
-                                <span class="recap-subtext">{{ $item['type_commande'] }} × {{ $item['quantite'] }}</span>
-                            </span>
-                            <span class="recap-price">{{ number_format($item['sous_total'], 0, ',', ' ') }} F</span>
-                        </div>
-                        @endforeach
-                    </div>
-
-                    <div class="total-box">
-                        <div class="total-row">
-                            <span>Sous-total</span>
-                            <span>{{ number_format($total, 0, ',', ' ') }} F</span>
-                        </div>
-                        <div class="total-row">
-                            <span>Livraison</span>
-                            <span id="affichageFrais" style="color:#8B4513; font-weight:600;">1 500 F</span>
-                        </div>
-                        <div class="total-final">
-                            <span>Total</span>
-                            <strong id="totalFinal">{{ number_format($total + 1500, 0, ',', ' ') }} F</strong>
-                        </div>
-                    </div>
-
-                    <button type="submit" onclick="assemblerAdresse()" class="btn-proceed">
-                        Passer au paiement →
-                    </button>
+                <div class="mt-6">
+                    <label for="note_livreur" class="etiquette">Note pour le livreur <span class="font-normal text-encre-2">(facultatif)</span></label>
+                    <textarea id="note_livreur" name="note_livreur" rows="3" placeholder="Portail bleu, deuxième étage…" class="champ"></textarea>
                 </div>
-            </div>
+
+                <input type="hidden" name="adresse_livraison" id="adresseComplete">
+                <input type="hidden" name="latitude" id="latInput">
+                <input type="hidden" name="longitude" id="lngInput">
+            </section>
+
+            {{-- MODE DE LIVRAISON --}}
+            <section class="bg-carte p-6 sm:p-8" aria-labelledby="titre-mode">
+                <h2 id="titre-mode" class="titre-display text-[1.3rem]">Mode de livraison</h2>
+                <div class="mt-6 grid gap-3 sm:grid-cols-2">
+                    <label class="choix" id="label-domicile">
+                        <input type="radio" name="mode_livraison" value="domicile" checked onchange="selectLivraison(this)" class="size-5">
+                        <span class="flex-1">
+                            <span class="block font-medium">Livraison à domicile</span>
+                            <span class="block text-[0.92rem] text-encre-2">Chez vous sous 24 à 48 h</span>
+                        </span>
+                        <span class="chiffres font-semibold {{ $fraisDomicile ? '' : 'text-succes' }}">{{ $fraisDomicile ? '1 500 F' : 'Offerte' }}</span>
+                    </label>
+                    <label class="choix" id="label-boutique">
+                        <input type="radio" name="mode_livraison" value="boutique" onchange="selectLivraison(this)" class="size-5">
+                        <span class="flex-1">
+                            <span class="block font-medium">Retrait en boutique</span>
+                            <span class="block text-[0.92rem] text-encre-2">Disponible dès le lendemain</span>
+                        </span>
+                        <span class="font-semibold text-succes">Gratuit</span>
+                    </label>
+                </div>
+                <input type="hidden" name="frais_livraison" id="fraisLivraison" value="{{ $fraisDomicile }}">
+            </section>
         </div>
+
+        {{-- RÉCAPITULATIF --}}
+        <aside class="bg-carte p-6 lg:sticky lg:top-28" aria-labelledby="titre-recap">
+            <h2 id="titre-recap" class="titre-display text-[1.3rem]">Votre commande</h2>
+            <ul class="mt-4 divide-y divide-trait">
+                @foreach($panier as $item)
+                    <li class="flex justify-between gap-4 py-3 text-[0.95rem]">
+                        <span>
+                            <span class="block font-medium">{{ $item['nom'] }}</span>
+                            <span class="block text-[0.88rem] text-encre-2">{{ $formats[$item['type_commande']] ?? $item['type_commande'] }} × <span class="chiffres">{{ $item['quantite'] }}</span></span>
+                        </span>
+                        <span class="chiffres whitespace-nowrap font-medium">{{ number_format($item['sous_total'], 0, ',', ' ') }} F</span>
+                    </li>
+                @endforeach
+            </ul>
+            <dl class="mt-2 space-y-2.5 border-t border-trait pt-4 text-[0.98rem]">
+                <div class="flex justify-between"><dt class="text-encre-2">Sous-total</dt><dd class="chiffres">{{ number_format($total, 0, ',', ' ') }} F</dd></div>
+                <div class="flex justify-between"><dt class="text-encre-2">Livraison</dt><dd id="affichageFrais" class="chiffres">{{ $fraisDomicile ? '1 500 F' : 'Offerte' }}</dd></div>
+                <div class="flex items-baseline justify-between border-t border-trait pt-4">
+                    <dt class="font-medium">Total</dt>
+                    <dd id="totalFinal" class="titre-display chiffres text-[1.8rem] text-brun">{{ number_format($total + $fraisDomicile, 0, ',', ' ') }} F</dd>
+                </div>
+            </dl>
+            <button type="submit" onclick="assemblerAdresse()" class="btn btn-brun btn-lg mt-6 w-full">Continuer vers le paiement <x-icone nom="fleche" /></button>
+            <a href="{{ route('panier') }}" class="btn btn-fantome mt-2 w-full">Modifier mon panier</a>
+        </aside>
     </form>
 </div>
 
-<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
-
 <script>
 var map = L.map('map').setView([5.3600, -4.0083], 12);
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map);
 
-var markerIcon = L.divIcon({
-    html: '<div style="background:#8B4513; width:20px; height:20px; border-radius:50% 50% 50% 0; transform:rotate(-45deg); border:3px solid white; box-shadow:0 2px 8px rgba(0,0,0,0.3);"></div>',
-    iconSize: [20, 20], iconAnchor: [10, 20], className: ''
-});
+var markerIcon = L.divIcon({ html: '<span class="repere-afritex"></span>', iconSize: [22, 22], iconAnchor: [11, 11], className: '' });
 var marker = null;
 
-map.on('click', function(e) {
+map.on('click', function (e) {
+    choisirALaMain();
     placerMarqueur(e.latlng.lat, e.latlng.lng);
     reverseGeocode(e.latlng.lat, e.latlng.lng);
 });
@@ -265,7 +176,8 @@ map.on('click', function(e) {
 function placerMarqueur(lat, lng) {
     if (marker) map.removeLayer(marker);
     marker = L.marker([lat, lng], { icon: markerIcon, draggable: true }).addTo(map);
-    marker.on('dragend', function(e) {
+    marker.on('dragstart', choisirALaMain);
+    marker.on('dragend', function (e) {
         var pos = e.target.getLatLng();
         reverseGeocode(pos.lat, pos.lng);
         document.getElementById('latInput').value = pos.lat;
@@ -287,15 +199,17 @@ function rechercherAdresse() {
             .then(data => {
                 suggestionsDiv.innerHTML = '';
                 if (data.length === 0) {
-                    suggestionsDiv.innerHTML = '<div style="padding:12px 14px; color:#aaa; font-size:13px;">Aucun résultat trouvé</div>';
+                    suggestionsDiv.innerHTML = '<p class="px-3.5 py-3 text-[0.92rem] text-encre-2">Aucune adresse trouvée. Essayez un repère proche.</p>';
                     suggestionsDiv.style.display = 'block';
                     return;
                 }
                 data.forEach(item => {
-                    const div = document.createElement('div');
-                    div.className = 'suggestion-item';
-                    div.innerHTML = item.display_name;
-                    div.onclick = () => {
+                    const btn = document.createElement('button');
+                    btn.type = 'button';
+                    btn.className = 'block w-full border-b border-trait px-3.5 py-3 text-left text-[0.92rem] transition-colors hover:bg-brun-doux';
+                    btn.textContent = item.display_name;
+                    btn.onclick = () => {
+                        choisirALaMain();
                         map.setView([parseFloat(item.lat), parseFloat(item.lon)], 16);
                         placerMarqueur(parseFloat(item.lat), parseFloat(item.lon));
                         afficherAdresse(item.display_name);
@@ -306,16 +220,17 @@ function rechercherAdresse() {
                             if (q) document.getElementById('quartierInput').value = q;
                         }
                     };
-                    suggestionsDiv.appendChild(div);
+                    suggestionsDiv.appendChild(btn);
                 });
                 suggestionsDiv.style.display = 'block';
             });
     }, 400);
 }
 
-document.addEventListener('click', function(e) {
-    if (!document.getElementById('searchInput').contains(e.target)) {
-        document.getElementById('suggestions').style.display = 'none';
+document.addEventListener('click', function (e) {
+    const zone = document.getElementById('suggestions');
+    if (!document.getElementById('searchInput').contains(e.target) && !zone.contains(e.target)) {
+        zone.style.display = 'none';
     }
 });
 
@@ -329,14 +244,120 @@ function reverseGeocode(lat, lng) {
                 if (data.address) {
                     const q = data.address.suburb || data.address.neighbourhood || data.address.quarter || '';
                     if (q) document.getElementById('quartierInput').value = q;
+                    remplirVilleCommune(data.address);
                 }
             }
         });
 }
 
+// Ville et commune déduites de l'adresse trouvée, seulement si le client ne les a pas déjà choisies
+const sansAccents = (s) => (s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+function remplirVilleCommune(a) {
+    const villeSelect = document.getElementById('villeSelect');
+    const communeSelect = document.getElementById('communeSelect');
+    const lieux = [a.city, a.town, a.village, a.municipality, a.county, a.state].map(sansAccents);
+    const ville = Object.keys(communes).find((v) => lieux.some((l) => l && l.includes(sansAccents(v))));
+    if (!ville) return;
+    if (!villeSelect.value) {
+        villeSelect.value = ville;
+        updateCommunes(false);
+    }
+    if (villeSelect.value === ville && !communeSelect.value) {
+        const quartiers = [a.city_district, a.borough, a.suburb, a.quarter, a.neighbourhood].map(sansAccents);
+        const commune = communes[ville].find((c) => quartiers.some((x) => x && (x.includes(sansAccents(c)) || sansAccents(c).includes(x))));
+        if (commune) communeSelect.value = commune;
+    }
+}
+
+/*
+  Localisation en temps réel : dès l'ouverture de la page, le repère suit la position de l'appareil
+  pendant qu'elle se précise (GPS), puis s'arrête quand elle est précise à 25 m ou au bout de 30 s.
+  Si le client place le repère lui-même (clic, glisser, recherche), son choix l'emporte.
+*/
+var suivi = null, minuterieSuivi = null, cercle = null, meilleurePrecision = Infinity, dernierGeocodage = 0, manuel = false;
+
+function dire(texte, ton) {
+    const etat = document.getElementById('etatLocalisation');
+    etat.textContent = texte;
+    etat.className = 'text-[0.92rem] ' + (ton === 'erreur' ? 'text-danger' : ton === 'ok' ? 'text-succes' : 'text-encre-2');
+}
+
+function arreterSuivi() {
+    if (suivi !== null) navigator.geolocation.clearWatch(suivi);
+    suivi = null;
+    clearTimeout(minuterieSuivi);
+}
+
+function choisirALaMain() {
+    if (manuel) return;
+    manuel = true;
+    arreterSuivi();
+    if (cercle) { map.removeLayer(cercle); cercle = null; }
+    dire('Repère placé à la main.');
+}
+
+function localiser() {
+    if (!('geolocation' in navigator)) {
+        dire('Votre navigateur ne permet pas la localisation. Placez le repère sur la carte.', 'erreur');
+        return;
+    }
+    if (!window.isSecureContext) {
+        dire('La localisation automatique demande une connexion sécurisée (https). Placez le repère sur la carte.', 'erreur');
+        return;
+    }
+    manuel = false;
+    meilleurePrecision = Infinity;
+    arreterSuivi();
+    dire('Recherche de votre position…');
+    suivi = navigator.geolocation.watchPosition(surPosition, surErreur, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+    minuterieSuivi = setTimeout(() => {
+        arreterSuivi();
+        if (meilleurePrecision < Infinity) dire(`Position trouvée à ${Math.round(meilleurePrecision)} m près. Ajustez le repère si besoin.`, 'ok');
+    }, 30000);
+}
+
+function surPosition(position) {
+    if (manuel) return;
+    const { latitude: lat, longitude: lng, accuracy } = position.coords;
+    if (accuracy > meilleurePrecision) return; // une mesure moins précise que la précédente ne déplace pas le repère
+    const premiere = meilleurePrecision === Infinity;
+    meilleurePrecision = accuracy;
+
+    placerMarqueur(lat, lng);
+    if (cercle) {
+        cercle.setLatLng([lat, lng]).setRadius(accuracy);
+    } else {
+        cercle = L.circle([lat, lng], { radius: accuracy, color: '#8b4513', weight: 1, fillColor: '#8b4513', fillOpacity: 0.12, interactive: false }).addTo(map);
+    }
+    if (premiere) map.setView([lat, lng], accuracy < 150 ? 17 : 15);
+    else map.panTo([lat, lng]);
+
+    const precise = accuracy <= 25;
+    dire(precise ? `Vous êtes ici, à ${Math.round(accuracy)} m près.` : `Position trouvée à ${Math.round(accuracy)} m près, elle se précise…`, precise ? 'ok' : null);
+    if (precise) arreterSuivi();
+
+    // Adresse : au plus une demande toutes les 4 s (règle d'usage de Nominatim)
+    const maintenant = Date.now();
+    if (premiere || precise || maintenant - dernierGeocodage > 4000) {
+        dernierGeocodage = maintenant;
+        reverseGeocode(lat, lng);
+    }
+}
+
+function surErreur(erreur) {
+    if (meilleurePrecision < Infinity && erreur.code !== 1) return; // on garde la position déjà trouvée
+    arreterSuivi();
+    const messages = {
+        1: 'Localisation refusée. Autorisez-la dans votre navigateur, ou placez le repère sur la carte.',
+        2: 'Position introuvable pour le moment. Touchez « Me localiser » pour réessayer.',
+        3: 'La localisation prend trop de temps. Touchez « Me localiser » pour réessayer.',
+    };
+    dire(messages[erreur.code] || messages[2], 'erreur');
+}
+
 function afficherAdresse(texte) {
     document.getElementById('texteAdresse').textContent = texte;
-    document.getElementById('adresseDetectee').style.display = 'block';
+    document.getElementById('adresseDetectee').style.display = 'flex';
 }
 
 const communes = {
@@ -352,10 +373,10 @@ const communes = {
     'Abengourou': ['Abengourou Centre','Zaranou'],
 };
 
-function updateCommunes() {
+function updateCommunes(centrer) {
     const ville = document.getElementById('villeSelect').value;
     const select = document.getElementById('communeSelect');
-    select.innerHTML = '<option value="">-- Commune --</option>';
+    select.innerHTML = '<option value="">Choisir une commune</option>';
     if (communes[ville]) {
         communes[ville].forEach(c => {
             const opt = document.createElement('option');
@@ -370,7 +391,11 @@ function updateCommunes() {
         'Man': [7.4128, -7.5538], 'Gagnoa': [6.1319, -5.9503],
         'Divo': [5.8370, -5.3564], 'Abengourou': [6.7297, -3.4962],
     };
-    if (coords[ville]) map.setView(coords[ville], 13);
+    // Choisir une ville recentre la carte, sauf quand la ville vient de la localisation automatique
+    if (centrer !== false && coords[ville]) {
+        choisirALaMain();
+        map.setView(coords[ville], 13);
+    }
 }
 
 function assemblerAdresse() {
@@ -396,16 +421,18 @@ function assemblerAdresse() {
 }
 
 const baseTotal = {{ $total }};
+// Livraison à domicile : 1 500 F, offerte dès 50 000 F d'achat (règle annoncée sur le site)
 function selectLivraison(radio) {
-    const frais = radio.value === 'domicile' ? 1500 : 0;
+    const frais = radio.value === 'domicile' && baseTotal < 50000 ? 1500 : 0;
     document.getElementById('fraisLivraison').value = frais;
-    document.getElementById('affichageFrais').textContent = frais > 0 ? '1 500 F' : 'Gratuit';
-    document.getElementById('totalFinal').textContent = new Intl.NumberFormat('fr-FR').format(baseTotal + frais) + ' F';
-    document.getElementById('label-domicile').classList.toggle('selected', radio.value === 'domicile');
-    document.getElementById('label-boutique').classList.toggle('selected', radio.value === 'boutique');
+    document.getElementById('affichageFrais').textContent = frais > 0 ? '1 500 F' : (radio.value === 'domicile' ? 'Offerte' : 'Gratuit');
+    document.getElementById('totalFinal').textContent = new Intl.NumberFormat('fr-FR').format(baseTotal + frais).replace(/\s/g, ' ') + ' F';
 }
 
 setTimeout(() => map.invalidateSize(), 300);
+
+// Localisation automatique dès l'ouverture de la page
+localiser();
 </script>
 
 @endsection

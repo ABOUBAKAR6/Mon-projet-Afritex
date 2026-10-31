@@ -20,6 +20,11 @@ class AdminController extends Controller
 
     public function index()
     {
+        // Un secrétaire sans le droit « tableau de bord » arrive sur sa première section autorisée
+        if (!auth()->user()->can('view-dashboard')) {
+            return redirect()->route(auth()->user()->premiereSectionAdmin());
+        }
+
         $today = now()->toDateString();
         $total_produits = Produit::count();
         $total_commandes = Commande::count();
@@ -115,6 +120,11 @@ class AdminController extends Controller
         $request->validate([
             'role' => 'required|in:client,admin',
         ]);
+
+        // Les secrétaires se gèrent depuis la page Équipe (droits), et on ne se retire pas ses propres droits
+        if ($user->estSecretaire() || $user->is(auth()->user())) {
+            return redirect()->back()->with('error', 'Ce compte se gère depuis la page Équipe.');
+        }
 
         $user->update(['role' => $request->role]);
 

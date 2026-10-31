@@ -6,6 +6,10 @@ use Closure;
 use Illuminate\Http\Request;
 use Symfony\Component\HttpFoundation\Response;
 
+/**
+ * Entrée de l'administration : propriétaire et secrétaires.
+ * Chaque section vérifie ensuite son propre droit (middleware can:… dans routes/web.php).
+ */
 class AdminMiddleware
 {
     /**
@@ -15,7 +19,7 @@ class AdminMiddleware
      */
     public function handle(Request $request, Closure $next): Response
     {
-        if (auth()->check() && auth()->user()->role === 'admin') {
+        if (auth()->check() && auth()->user()->estPersonnel()) {
             return $next($request);
         }
 

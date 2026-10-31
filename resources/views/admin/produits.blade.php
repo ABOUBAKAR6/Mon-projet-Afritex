@@ -1,723 +1,325 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+@section('title', 'Produits · AfriTex')
 @section('content')
+@php
+    // Données de chaque produit pour pré-remplir la fenêtre « Modifier » (tarifs réels, sinon anciennes colonnes de prix)
+    $donneesProduits = $produits->mapWithKeys(function ($p) {
+        $tarifs = collect(is_array($p->tarifications) ? $p->tarifications : [])
+            ->filter(fn ($t) => isset($t['label']))
+            ->values();
+        if ($tarifs->isEmpty()) {
+            $tarifs = collect([
+                ['label' => 'Au mètre', 'prix' => $p->prix_metre],
+                ['label' => 'Au rouleau', 'prix' => $p->prix_rouleau],
+                ['label' => 'Pantalon', 'prix' => $p->prix_pantalon],
+                ['label' => 'Chemise', 'prix' => $p->prix_chemise],
+                ['label' => 'Tunique', 'prix' => $p->prix_tunique],
+            ])->filter(fn ($t) => $t['prix'] !== null)->values();
+        }
+        return [$p->id => [
+            'nom' => $p->nom,
+            'categorie_id' => $p->categorie_id,
+            'stock' => $p->stock,
+            'description' => $p->description,
+            'meta_title' => $p->meta_title,
+            'meta_description' => $p->meta_description,
+            'image' => $p->image ? asset($p->image) : null,
+            'tarifs' => $tarifs,
+            'photos' => $p->images->map(fn ($i) => ['id' => $i->id, 'url' => asset($i->chemin)])->values(),
+        ]];
+    });
+@endphp
 
-<style>
-    * { box-sizing: border-box; margin: 0; padding: 0; }
+<x-admin-entete titre="Produits" :description="$produits->count() . ' produits au catalogue'">
+    <button type="button" onclick="document.getElementById('modal-ajouter').showModal()" class="btn btn-brun"><x-icone nom="plus" /> Ajouter un produit</button>
+</x-admin-entete>
 
-    .admin-wrap {
-        min-height: 100vh;
-        background: #F7F3EE;
-        padding: 40px 48px;
-        font-family: 'Segoe UI', system-ui, sans-serif;
-    }
-
-    /* ── En-tête ── */
-    .page-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: flex-end;
-        margin-bottom: 36px;
-        padding-bottom: 24px;
-        border-bottom: 1px solid #E0D5C8;
-    }
-    .page-header h1 {
-        font-family: Georgia, 'Times New Roman', serif;
-        font-size: 28px;
-        font-weight: normal;
-        color: #2C1810;
-        letter-spacing: -0.3px;
-    }
-    .page-header p {
-        font-size: 13px;
-        color: #9B8B7A;
-        margin-top: 5px;
-    }
-    .btn-primary {
-        background: #7B3A1E;
-        color: white;
-        border: none;
-        padding: 11px 22px;
-        border-radius: 8px;
-        font-size: 13px;
-        font-weight: 600;
-        cursor: pointer;
-        letter-spacing: 0.2px;
-        transition: background 0.2s;
-    }
-    .btn-primary:hover { background: #5E2B14; }
-
-    /* ── Alerte succès ── */
-    .alert-success {
-        background: #EAF7F0;
-        color: #1A6B42;
-        border: 1px solid #B6E2CC;
-        padding: 13px 18px;
-        border-radius: 8px;
-        font-size: 13px;
-        margin-bottom: 28px;
-    }
-
-    /* ── Tableau ── */
-    .table-card {
-        background: white;
-        border-radius: 14px;
-        box-shadow: 0 2px 16px rgba(44,24,16,0.07);
-        overflow: hidden;
-    }
-    .table-toolbar {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding: 18px 24px;
-        border-bottom: 1px solid #F0E9E0;
-    }
-    .table-toolbar h2 {
-        font-size: 14px;
-        font-weight: 600;
-        color: #2C1810;
-    }
-    .search-input {
-        padding: 8px 14px;
-        border: 1px solid #E0D5C8;
-        border-radius: 7px;
-        font-size: 13px;
-        width: 240px;
-        color: #2C1810;
-        background: #FDFAF7;
-        transition: border-color 0.2s;
-    }
-    .search-input:focus {
-        outline: none;
-        border-color: #7B3A1E;
-    }
-    table { width: 100%; border-collapse: collapse; }
-    thead tr { background: #FDFAF7; }
-    th {
-        padding: 13px 20px;
-        text-align: left;
-        font-size: 11px;
-        font-weight: 600;
-        color: #9B8B7A;
-        text-transform: uppercase;
-        letter-spacing: 0.6px;
-    }
-    td {
-        padding: 14px 20px;
-        border-bottom: 1px solid #F5EFE8;
-        font-size: 13px;
-        color: #3D2B1F;
-        vertical-align: middle;
-    }
-    .prod-row:last-child td { border-bottom: none; }
-    .prod-row:hover td { background: #FDFAF7; }
-
-    /* Photo miniature */
-    .thumb {
-        width: 48px;
-        height: 48px;
-        border-radius: 8px;
-        background: #F0E9DF;
-        overflow: hidden;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-    }
-    .thumb img { width: 100%; height: 100%; object-fit: cover; }
-    .thumb-placeholder {
-        width: 24px;
-        height: 24px;
-        opacity: 0.3;
-    }
-
-    /* Nom produit */
-    .prod-name { font-weight: 600; color: #2C1810; font-size: 14px; }
-
-    /* Badge catégorie */
-    .badge-cat {
-        display: inline-block;
-        background: #FDF0E0;
-        color: #7B3A1E;
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 500;
-    }
-
-    /* Prix */
-    .prix { font-weight: 600; color: #5E2B14; }
-
-    /* Badge stock */
-    .badge-stock {
-        display: inline-block;
-        padding: 3px 10px;
-        border-radius: 20px;
-        font-size: 11px;
-        font-weight: 600;
-    }
-    .stock-ok { background: #E8F5EE; color: #1A6B42; }
-    .stock-low { background: #FDE8E8; color: #B91C1C; }
-
-    /* Boutons actions */
-    .btn-edit {
-        background: #FDF0E0;
-        color: #7B3A1E;
-        border: none;
-        padding: 6px 14px;
-        border-radius: 7px;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.2s, color 0.2s;
-    }
-    .btn-edit:hover { background: #7B3A1E; color: white; }
-    .btn-delete {
-        background: #FDE8E8;
-        color: #B91C1C;
-        border: none;
-        padding: 6px 14px;
-        border-radius: 7px;
-        font-size: 12px;
-        font-weight: 500;
-        cursor: pointer;
-        transition: background 0.2s, color 0.2s;
-    }
-    .btn-delete:hover { background: #B91C1C; color: white; }
-    .actions { display: flex; gap: 8px; }
-
-    /* ── Modales ── */
-    .modal-overlay {
-        display: none;
-        position: fixed;
-        inset: 0;
-        background: rgba(20,10,5,0.55);
-        z-index: 1000;
-        align-items: center;
-        justify-content: center;
-    }
-    .modal-box {
-        background: white;
-        border-radius: 16px;
-        padding: 36px;
-        width: 680px;
-        max-width: 94vw;
-        max-height: 92vh;
-        overflow-y: auto;
-        box-shadow: 0 24px 64px rgba(20,10,5,0.25);
-    }
-    .modal-header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        margin-bottom: 28px;
-    }
-    .modal-header h3 {
-        font-family: Georgia, serif;
-        font-size: 20px;
-        font-weight: normal;
-        color: #2C1810;
-    }
-    .modal-close {
-        background: none;
-        border: none;
-        font-size: 22px;
-        cursor: pointer;
-        color: #9B8B7A;
-        line-height: 1;
-        padding: 4px;
-    }
-    .modal-close:hover { color: #2C1810; }
-
-    /* Champs formulaire */
-    .form-group { margin-bottom: 18px; }
-    .form-label {
-        display: block;
-        font-size: 12px;
-        font-weight: 600;
-        color: #5A3E30;
-        margin-bottom: 6px;
-        text-transform: uppercase;
-        letter-spacing: 0.4px;
-    }
-    .form-control {
-        width: 100%;
-        padding: 10px 12px;
-        border: 1px solid #E0D5C8;
-        border-radius: 8px;
-        font-size: 13px;
-        color: #2C1810;
-        background: #FDFAF7;
-        transition: border-color 0.2s;
-    }
-    .form-control:focus {
-        outline: none;
-        border-color: #7B3A1E;
-        background: white;
-    }
-    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
-    .grid-5 { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
-    .grid-3 { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; }
-    .col-span-2 { grid-column: span 2; }
-
-    /* Aperçu image */
-    .img-preview {
-        margin-top: 8px;
-        border-radius: 8px;
-        overflow: hidden;
-        width: 64px;
-        height: 64px;
-    }
-    .img-preview img { width: 100%; height: 100%; object-fit: cover; }
-
-    /* Boutons modal */
-    /* Dynamic Pricing Styles */
-    .pricing-row {
-        display: grid;
-        grid-template-columns: 1fr 1fr 40px;
-        gap: 10px;
-        margin-bottom: 10px;
-        align-items: center;
-    }
-    .btn-remove-price {
-        background: #FDE8E8;
-        color: #B91C1C;
-        border: none;
-        width: 30px;
-        height: 30px;
-        border-radius: 6px;
-        cursor: pointer;
-        font-weight: bold;
-    }
-    .btn-add-price {
-        background: #FDF0E0;
-        color: #7B3A1E;
-        border: 1px dashed #7B3A1E;
-        width: 100%;
-        padding: 10px;
-        border-radius: 8px;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        margin-top: 10px;
-        transition: all 0.2s;
-    }
-    .btn-add-price:hover { background: #FDF0E0; color: #5E2B14; border-style: solid; }
-
-    .modal-footer { display: flex; gap: 12px; margin-top: 28px; }
-    .btn-cancel {
-        flex: 1;
-        background: #F2ECE5;
-        color: #7A6A5A;
-        border: none;
-        padding: 12px;
-        border-radius: 8px;
-        font-size: 13px;
-        cursor: pointer;
-        transition: background 0.2s;
-    }
-    .ai-section {
-        background: #FDFBFA;
-        border: 1px dashed #D4B9A8;
-        padding: 16px;
-        border-radius: 12px;
-        margin-bottom: 18px;
-    }
-    .btn-ai {
-        background: linear-gradient(135deg, #7B3A1E 0%, #A65D3E 100%);
-        color: white;
-        border: none;
-        padding: 8px 16px;
-        border-radius: 6px;
-        font-size: 12px;
-        font-weight: 600;
-        cursor: pointer;
-        transition: transform 0.2s;
-    }
-    .btn-ai:hover { transform: scale(1.02); }
-    .btn-ai:disabled { opacity: 0.6; cursor: not-allowed; }
-
-    /* Séparateur section prix */
-    .section-label {
-        font-size: 11px;
-        font-weight: 600;
-        color: #9B8B7A;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-        margin-bottom: 12px;
-        padding-bottom: 8px;
-        border-bottom: 1px solid #F0E9E0;
-    }
-</style>
-
-<div class="admin-wrap">
-
-    <div class="page-header">
-        <div>
-            <h1>Gestion des produits</h1>
-            <p>{{ count($produits) }} produit(s) enregistré(s)</p>
+<section class="bg-carte" aria-label="Liste des produits">
+    <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
+        <label for="search" class="sr-only">Rechercher un produit</label>
+        <div class="relative w-full sm:max-w-sm">
+            <x-icone nom="recherche" class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-encre-3" />
+            <input type="search" id="search" class="champ pl-10" placeholder="Rechercher un produit" oninput="filterProduits()">
         </div>
-        <button class="btn-primary" onclick="document.getElementById('modal-ajouter').style.display='flex'">
-            Ajouter un produit
-        </button>
+        <p id="compte-produits" class="text-[0.92rem] text-encre-2" aria-live="polite"></p>
     </div>
-
-    @if(session('success'))
-    <div class="alert-success">{{ session('success') }}</div>
-    @endif
-
-    <div class="table-card">
-        <div class="table-toolbar">
-            <h2>Liste des produits</h2>
-            <input type="text" id="search" class="search-input" placeholder="Rechercher un produit..." onkeyup="filterProduits()">
-        </div>
-        <table>
+    <div class="overflow-x-auto">
+        <table class="tableau">
             <thead>
                 <tr>
-                    <th>Photo</th>
-                    <th>Produit</th>
-                    <th>Catégorie</th>
-                    <th>Prix / mètre</th>
-                    <th>Stock</th>
-                    <th>Actions</th>
+                    <th scope="col">Produit</th>
+                    <th scope="col">Catégorie</th>
+                    <th scope="col" class="text-right">Prix au mètre</th>
+                    <th scope="col">Stock</th>
+                    <th scope="col"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
-                @foreach($produits as $produit)
-                <tr class="prod-row">
-                    <td>
-                        <div class="thumb">
-                            @if($produit->image)
-                                <img src="{{ asset($produit->image) }}" alt="{{ $produit->nom }}">
-                            @else
-                                <svg class="thumb-placeholder" viewBox="0 0 24 24" fill="none" stroke="#7B3A1E" stroke-width="1.5">
-                                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="m21 15-5-5L5 21"/>
-                                </svg>
-                            @endif
-                        </div>
-                    </td>
-                    <td>
-                        <span class="prod-name">{{ $produit->nom }}</span>
-                    </td>
-                    <td>
-                        <span class="badge-cat">{{ $produit->categorie->nom }}</span>
-                    </td>
-                    <td>
-                        <span class="prix">
-                            @if($produit->prix_metre)
-                                {{ number_format($produit->prix_metre, 0, ',', ' ') }} F
-                            @else —
-                            @endif
-                        </span>
-                    </td>
-                    <td>
-                        <span class="badge-stock {{ $produit->stock > 10 ? 'stock-ok' : 'stock-low' }}">
-                            {{ $produit->stock }} en stock
-                        </span>
-                    </td>
-                    <td>
-                        <div class="actions">
-                            <button class="btn-edit" onclick="openEditProduit(
-                                {{ $produit->id }},
-                                '{{ addslashes($produit->nom) }}',
-                                {{ $produit->categorie_id }},
-                                {{ $produit->stock }},
-                                '{{ $produit->prix_metre }}',
-                                '{{ $produit->prix_rouleau }}',
-                                '{{ $produit->prix_pantalon }}',
-                                '{{ $produit->prix_chemise }}',
-                                '{{ $produit->prix_tunique }}',
-                                '{{ addslashes($produit->description) }}',
-                                '{{ $produit->image }}'
-                            )">Modifier</button>
-                            <button class="btn-edit" style="background: #E0D5C8; color: #2C1810;" onclick="openPhotosModal({{ $produit->id }})">Photos</button>
-                            <form method="POST" action="{{ route('admin.produits.destroy', $produit->id) }}"
-                                onsubmit="return confirm('Supprimer ce produit définitivement ?')" style="display:inline;">
-                                @csrf @method('DELETE')
-                                <button type="submit" class="btn-delete">Supprimer</button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
-                @endforeach
+                @forelse($produits as $produit)
+                    <tr class="prod-row" data-nom="{{ mb_strtolower($produit->nom . ' ' . ($produit->categorie->nom ?? '')) }}">
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <span class="flex size-12 shrink-0 items-center justify-center overflow-hidden bg-papier-2 text-brun-trait">
+                                    @if($produit->image && file_exists(public_path($produit->image)))
+                                        <img src="{{ asset($produit->image) }}" alt="" loading="lazy" class="h-full w-full object-cover">
+                                    @else
+                                        <x-icone nom="image" class="size-5" />
+                                    @endif
+                                </span>
+                                <span class="min-w-0">
+                                    <a href="{{ route('produit.show', $produit->slug) }}" target="_blank" class="block truncate font-medium hover:text-brun hover:underline">{{ $produit->nom }}</a>
+                                    <span class="block text-[0.85rem] text-encre-2">{{ $produit->images->count() }} photo{{ $produit->images->count() > 1 ? 's' : '' }} supplémentaire{{ $produit->images->count() > 1 ? 's' : '' }}</span>
+                                </span>
+                            </div>
+                        </td>
+                        <td>{{ $produit->categorie->nom ?? 'Sans catégorie' }}</td>
+                        <td class="chiffres whitespace-nowrap text-right font-medium">{{ $produit->prix_metre ? number_format($produit->prix_metre, 0, ',', ' ') . ' F' : 'Non défini' }}</td>
+                        <td>
+                            <span class="pastille {{ $produit->stock > 10 ? 'pastille-succes' : ($produit->stock > 0 ? 'pastille-attente' : 'pastille-danger') }}">
+                                {{ $produit->stock > 0 ? $produit->stock . ' en stock' : 'Épuisé' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="flex items-center justify-end gap-1">
+                                <button type="button" class="btn btn-fantome btn-sm" onclick="openEditProduit({{ $produit->id }})"><x-icone nom="crayon" /><span class="sr-only xl:not-sr-only">Modifier</span></button>
+                                <button type="button" class="btn btn-fantome btn-sm" onclick="openPhotosModal({{ $produit->id }})"><x-icone nom="image" /><span class="sr-only xl:not-sr-only">Photos</span></button>
+                                <form method="POST" action="{{ route('admin.produits.destroy', $produit->id) }}" onsubmit="return confirm('Supprimer définitivement « {{ addslashes($produit->nom) }} » ?')">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm text-danger hover:bg-danger-doux"><x-icone nom="corbeille" /><span class="sr-only">Supprimer {{ $produit->nom }}</span></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
+                @empty
+                    <tr><td colspan="5" class="py-14 text-center text-encre-2">Aucun produit pour l'instant. Ajoutez le premier tissu du catalogue.</td></tr>
+                @endforelse
             </tbody>
         </table>
     </div>
-</div>
+</section>
 
-<!-- MODAL AJOUTER -->
-<div id="modal-ajouter" class="modal-overlay">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h3>Nouveau produit</h3>
-            <button class="modal-close" onclick="document.getElementById('modal-ajouter').style.display='none'">&#x2715;</button>
+@php
+    $fenetre = 'm-auto w-[min(44rem,calc(100vw-2rem))] max-h-[calc(100svh-2rem)] overflow-y-auto bg-carte p-0 text-encre shadow-[0_24px_60px_-24px_oklch(0.2_0.03_40/0.5)] backdrop:bg-[oklch(0.2_0.03_40/0.55)]';
+@endphp
+
+{{-- FENÊTRE : AJOUTER --}}
+<dialog id="modal-ajouter" class="{{ $fenetre }}" aria-labelledby="titre-ajouter">
+    <form method="POST" action="{{ route('admin.produits.ajouter') }}" enctype="multipart/form-data" class="p-6 sm:p-8">
+        @csrf
+        <div class="flex items-start justify-between gap-4">
+            <h2 id="titre-ajouter" class="titre-display text-[1.5rem]">Nouveau produit</h2>
+            <button type="button" onclick="this.closest('dialog').close()" class="-m-2 flex size-11 items-center justify-center text-encre-2 hover:bg-papier-2"><x-icone nom="fermer" /><span class="sr-only">Fermer</span></button>
         </div>
-        <form method="POST" action="{{ route('admin.produits.ajouter') }}" enctype="multipart/form-data">
+        <div class="mt-6 grid gap-5 sm:grid-cols-2">
+            <div><label for="a-nom" class="etiquette">Nom du produit</label><input id="a-nom" type="text" name="nom" class="champ" required></div>
+            <div>
+                <label for="a-categorie" class="etiquette">Catégorie</label>
+                <select id="a-categorie" name="categorie_id" class="champ" required>
+                    @foreach($categories as $cat)<option value="{{ $cat->id }}">{{ $cat->nom }}</option>@endforeach
+                </select>
+            </div>
+        </div>
+        <fieldset class="mt-6">
+            <legend class="etiquette">Tarifs</legend>
+            <p class="aide -mt-1 mb-3">Un tarif par format : « Au mètre », « Au rouleau », « Pantalon »… Le premier sert de prix affiché.</p>
+            <div id="pricing-container-add" class="space-y-2"></div>
+            <button type="button" class="btn btn-contour btn-sm mt-3" onclick="addPricingRow('pricing-container-add')"><x-icone nom="plus" /> Ajouter un tarif</button>
+        </fieldset>
+        <div class="mt-6 grid gap-5 sm:grid-cols-[10rem_1fr]">
+            <div><label for="a-stock" class="etiquette">Stock</label><input id="a-stock" type="number" min="0" name="stock" class="champ chiffres" value="0"></div>
+            <div><label for="a-image" class="etiquette">Photo principale</label><input id="a-image" type="file" name="image" accept="image/*" class="champ py-2"></div>
+        </div>
+        <div class="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button type="button" class="btn btn-contour" onclick="this.closest('dialog').close()">Annuler</button>
+            <button type="submit" class="btn btn-brun">Enregistrer le produit</button>
+        </div>
+    </form>
+</dialog>
+
+{{-- FENÊTRE : MODIFIER --}}
+<dialog id="modal-modifier" class="{{ $fenetre }}" aria-labelledby="titre-modifier">
+    <form method="POST" id="form-modifier-produit" enctype="multipart/form-data" class="p-6 sm:p-8">
+        @csrf
+        <div class="flex items-start justify-between gap-4">
+            <h2 id="titre-modifier" class="titre-display text-[1.5rem]">Modifier le produit</h2>
+            <button type="button" onclick="this.closest('dialog').close()" class="-m-2 flex size-11 items-center justify-center text-encre-2 hover:bg-papier-2"><x-icone nom="fermer" /><span class="sr-only">Fermer</span></button>
+        </div>
+        <div class="mt-6 grid gap-5 sm:grid-cols-2">
+            <div><label for="edit-nom" class="etiquette">Nom du produit</label><input type="text" name="nom" id="edit-nom" class="champ" required></div>
+            <div>
+                <label for="edit-categorie" class="etiquette">Catégorie</label>
+                <select name="categorie_id" id="edit-categorie" class="champ" required>
+                    @foreach($categories as $cat)<option value="{{ $cat->id }}">{{ $cat->nom }}</option>@endforeach
+                </select>
+            </div>
+        </div>
+        <fieldset class="mt-6">
+            <legend class="etiquette">Tarifs</legend>
+            <div id="pricing-container-edit" class="space-y-2"></div>
+            <button type="button" class="btn btn-contour btn-sm mt-3" onclick="addPricingRow('pricing-container-edit')"><x-icone nom="plus" /> Ajouter un tarif</button>
+        </fieldset>
+
+        <div class="mt-6">
+            <label for="edit-description" class="etiquette">Description</label>
+            <textarea name="description" id="edit-description" rows="4" class="champ"></textarea>
+            <div class="mt-3 flex flex-col gap-2 bg-papier-2 p-3 sm:flex-row">
+                <label for="ai-keywords" class="sr-only">Mots-clés pour la description automatique</label>
+                <input type="text" id="ai-keywords" class="champ flex-1" placeholder="Mots-clés : luxe, soie, mariage…">
+                <button type="button" class="btn btn-contour btn-ai" onclick="generateAiDescription()"><x-icone nom="etincelle" /> Rédiger la description</button>
+            </div>
+        </div>
+
+        <fieldset class="mt-6 grid gap-5">
+            <legend class="etiquette">Référencement</legend>
+            <div><label for="edit-meta-title" class="etiquette font-normal text-encre-2">Titre pour Google</label><input type="text" name="meta_title" id="edit-meta-title" class="champ"></div>
+            <div><label for="edit-meta-description" class="etiquette font-normal text-encre-2">Description pour Google</label><textarea name="meta_description" id="edit-meta-description" rows="2" class="champ min-h-0"></textarea></div>
+        </fieldset>
+
+        <div class="mt-6 grid gap-5 sm:grid-cols-[10rem_1fr]">
+            <div><label for="edit-stock" class="etiquette">Stock</label><input type="number" min="0" name="stock" id="edit-stock" class="champ chiffres"></div>
+            <div>
+                <label for="edit-image" class="etiquette">Remplacer la photo principale</label>
+                <div class="flex items-center gap-3">
+                    <img id="edit-img-preview" src="" alt="" class="hidden size-11 shrink-0 object-cover">
+                    <input id="edit-image" type="file" name="image" accept="image/*" class="champ py-2">
+                </div>
+            </div>
+        </div>
+        <div class="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+            <button type="button" class="btn btn-contour" onclick="this.closest('dialog').close()">Annuler</button>
+            <button type="submit" class="btn btn-brun">Enregistrer les modifications</button>
+        </div>
+    </form>
+</dialog>
+
+{{-- FENÊTRE : PHOTOS --}}
+<dialog id="modal-photos" class="{{ $fenetre }}" aria-labelledby="photos-title">
+    <div class="p-6 sm:p-8">
+        <div class="flex items-start justify-between gap-4">
+            <h2 id="photos-title" class="titre-display text-[1.5rem]">Photos du produit</h2>
+            <button type="button" onclick="this.closest('dialog').close()" class="-m-2 flex size-11 items-center justify-center text-encre-2 hover:bg-papier-2"><x-icone nom="fermer" /><span class="sr-only">Fermer</span></button>
+        </div>
+        <div id="photos-container" class="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-4"></div>
+        <form method="POST" id="photos-form" enctype="multipart/form-data" class="mt-6 border-t border-trait pt-6">
             @csrf
-            <div class="grid-2" style="margin-bottom:18px;">
-                <div class="form-group">
-                    <label class="form-label">Nom du produit *</label>
-                    <input type="text" name="nom" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Catégorie *</label>
-                    <select name="categorie_id" class="form-control" required>
-                        @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}">{{ $cat->nom }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-
-            <div class="section-label">Tarification Dynamique</div>
-            <div id="pricing-container-add" style="margin-bottom:18px;">
-                <div class="pricing-row">
-                    <input type="text" name="tarifications[0][label]" class="form-control" placeholder="ex: Au mètre" required>
-                    <input type="number" name="tarifications[0][prix]" class="form-control" placeholder="Prix" required>
-                    <button type="button" class="btn-remove-price" onclick="this.parentElement.remove()">×</button>
-                </div>
-            </div>
-            <button type="button" class="btn-add-price" onclick="addPricingRow('pricing-container-add')">+ Ajouter une option de prix</button>
-
-            <div class="grid-3" style="margin-bottom:8px; margin-top:20px;">
-                <div class="form-group">
-                    <label class="form-label">Stock</label>
-                    <input type="number" name="stock" class="form-control" value="0">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Photos du produit</label>
-                    <input type="file" name="image" class="form-control" accept="image/*">
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn-cancel" onclick="document.getElementById('modal-ajouter').style.display='none'">Annuler</button>
-                <button type="submit" class="btn-submit">Enregistrer le produit</button>
+            <label for="p-images" class="etiquette">Ajouter des photos</label>
+            <input id="p-images" type="file" name="images[]" accept="image/*" multiple class="champ py-2">
+            <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button type="button" class="btn btn-contour" onclick="this.closest('dialog').close()">Fermer</button>
+                <button type="submit" class="btn btn-brun"><x-icone nom="televersement" /> Envoyer les photos</button>
             </div>
         </form>
     </div>
-</div>
-
-<!-- MODAL MODIFIER -->
-<div id="modal-modifier" class="modal-overlay">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h3>Modifier le produit</h3>
-            <button class="modal-close" onclick="document.getElementById('modal-modifier').style.display='none'">&#x2715;</button>
-        </div>
-        <form method="POST" id="form-modifier-produit" enctype="multipart/form-data">
-            @csrf
-            <div class="grid-2" style="margin-bottom:18px;">
-                <div class="form-group">
-                    <label class="form-label">Nom du produit *</label>
-                    <input type="text" name="nom" id="edit-nom" class="form-control" required>
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Catégorie *</label>
-                    <select name="categorie_id" id="edit-categorie" class="form-control" required>
-                        @foreach($categories as $cat)
-                        <option value="{{ $cat->id }}">{{ $cat->nom }}</option>
-                        @endforeach
-                    </select>
-                </div>
-            </div>
-
-            <div class="section-label">Tarification Dynamique</div>
-            <div id="pricing-container-edit" style="margin-bottom:18px;">
-                <!-- Injected by JS -->
-            </div>
-            <button type="button" class="btn-add-price" onclick="addPricingRow('pricing-container-edit')">+ Ajouter une option de prix</button>
-
-            <div class="ai-section">
-                <div class="section-label" style="border:none; margin-bottom:8px;">✨ Assistant Magique (IA)</div>
-                <div class="grid-2" style="gap:12px;">
-                    <input type="text" id="ai-keywords" class="form-control" placeholder="Mots-clés (ex: luxe, soie, mariage)">
-                    <button type="button" class="btn-ai" onclick="generateAiDescription()">Générer la description</button>
-                </div>
-            </div>
-
-            <div class="form-group">
-                <label class="form-label">Description du produit</label>
-                <textarea name="description" id="edit-description" class="form-control" rows="4"></textarea>
-            </div>
-
-            <div class="section-label">Référencement (SEO)</div>
-            <div class="form-group">
-                <label class="form-label">Titre Meta (pour Google)</label>
-                <input type="text" name="meta_title" id="edit-meta-title" class="form-control" placeholder="Titre accrocheur pour les moteurs de recherche">
-            </div>
-            <div class="form-group">
-                <label class="form-label">Description Meta</label>
-                <textarea name="meta_description" id="edit-meta-description" class="form-control" rows="2" placeholder="Résumé court pour attirer le clic sur Google"></textarea>
-            </div>
-
-            <div class="grid-3" style="margin-bottom:8px; margin-top:20px;">
-                <div class="form-group">
-                    <label class="form-label">Stock</label>
-                    <input type="number" name="stock" id="edit-stock" class="form-control">
-                </div>
-                <div class="form-group">
-                    <label class="form-label">Remplacer les photos</label>
-                    <input type="file" name="image" class="form-control" accept="image/*">
-                    <div id="edit-img-preview"></div>
-                </div>
-            </div>
-
-            <div class="modal-footer">
-                <button type="button" class="btn-cancel" onclick="document.getElementById('modal-modifier').style.display='none'">Annuler</button>
-                <button type="submit" class="btn-submit">Enregistrer les modifications</button>
-            </div>
-        </form>
-    </div>
-</div>
-
-<!-- MODAL PHOTOS -->
-<div id="modal-photos" class="modal-overlay">
-    <div class="modal-box">
-        <div class="modal-header">
-            <h3 id="photos-title">Gestion des photos</h3>
-            <button class="modal-close" onclick="document.getElementById('modal-photos').style.display='none'">&#x2715;</button>
-        </div>
-
-        <div class="mb-6">
-            <div class="section-label">Photos existantes</div>
-            <div id="photos-container" class="grid grid-cols-3 gap-4">
-                <!-- Photos injectées ici -->
-            </div>
-        </div>
-
-        <div class="border-t border-gray-100 pt-6">
-            <div class="section-label">Ajouter des photos</div>
-            <form method="POST" id="photos-form" enctype="multipart/form-data">
-                @csrf
-                <div class="form-group">
-                    <input type="file" name="images[]" class="form-control" accept="image/*" multiple>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn-cancel" onclick="document.getElementById('modal-photos').style.display='none'">Fermer</button>
-                    <button type="submit" class="btn-submit">Uploader les photos</button>
-                </div>
-            </form>
-        </div>
-    </div>
-</div>
+</dialog>
 
 <script>
+const produits = @json($donneesProduits);
+const jeton = '{{ csrf_token() }}';
+let indexTarif = 0;
+
 function filterProduits() {
-    const search = document.getElementById('search').value.toLowerCase();
-    document.querySelectorAll('.prod-row').forEach(row => {
-        const nom = row.querySelector('td:nth-child(2)').textContent.toLowerCase();
-        row.style.display = nom.includes(search) ? '' : 'none';
+    const terme = document.getElementById('search').value.toLowerCase().trim();
+    let visibles = 0;
+    document.querySelectorAll('.prod-row').forEach((ligne) => {
+        const ok = ligne.dataset.nom.includes(terme);
+        ligne.style.display = ok ? '' : 'none';
+        if (ok) visibles++;
     });
+    document.getElementById('compte-produits').textContent = terme ? `${visibles} résultat${visibles > 1 ? 's' : ''}` : '';
 }
 
 function addPricingRow(containerId, label = '', prix = '') {
-    const container = document.getElementById(containerId);
-    const index = container.children.length;
-    const row = document.createElement('div');
-    row.className = 'pricing-row';
-    row.innerHTML = `
-        <input type="text" name="tarifications[${index}][label]" class="form-control" placeholder="ex: Au mètre" value="${label}" ${containerId === 'pricing-container-add' ? 'required' : ''}>
-        <input type="number" name="tarifications[${index}][prix]" class="form-control" placeholder="Prix" value="${prix}" ${containerId === 'pricing-container-add' ? 'required' : ''}>
-        <button type="button" class="btn-remove-price" onclick="this.parentElement.remove()">×</button>
-    `;
-    container.appendChild(row);
+    const requis = containerId === 'pricing-container-add' ? 'required' : '';
+    const i = indexTarif++;
+    const ligne = document.createElement('div');
+    ligne.className = 'grid grid-cols-[1fr_9rem_auto] gap-2';
+    ligne.innerHTML = `
+        <input type="text" name="tarifications[${i}][label]" class="champ" placeholder="Au mètre" aria-label="Format" ${requis}>
+        <input type="number" min="0" name="tarifications[${i}][prix]" class="champ chiffres" placeholder="Prix en F" aria-label="Prix en francs CFA" ${requis}>
+        <button type="button" class="flex size-11 items-center justify-center text-encre-2 transition-colors hover:bg-danger-doux hover:text-danger" onclick="this.parentElement.remove()" aria-label="Retirer ce tarif">
+            <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+        </button>`;
+    ligne.querySelector('input[type=text]').value = label ?? '';
+    ligne.querySelector('input[type=number]').value = prix ?? '';
+    document.getElementById(containerId).appendChild(ligne);
 }
 
-const productPhotos = @json($produits->mapWithKeys(fn($p) => [$p->id => $p->images->map(fn($i) => ['id' => $i->id, 'chemin' => $i->chemin])]));
+function openEditProduit(id) {
+    const p = produits[id];
+    if (!p) return;
+    document.getElementById('edit-nom').value = p.nom ?? '';
+    document.getElementById('edit-categorie').value = p.categorie_id ?? '';
+    document.getElementById('edit-stock').value = p.stock ?? 0;
+    document.getElementById('edit-description').value = p.description ?? '';
+    document.getElementById('edit-meta-title').value = p.meta_title ?? '';
+    document.getElementById('edit-meta-description').value = p.meta_description ?? '';
+
+    const conteneur = document.getElementById('pricing-container-edit');
+    conteneur.innerHTML = '';
+    (p.tarifs.length ? p.tarifs : [{ label: 'Au mètre', prix: '' }]).forEach((t) => addPricingRow('pricing-container-edit', t.label, t.prix));
+
+    const apercu = document.getElementById('edit-img-preview');
+    apercu.classList.toggle('hidden', !p.image);
+    apercu.src = p.image ?? '';
+
+    document.getElementById('form-modifier-produit').action = `/admin/produits/${id}/modifier`;
+    document.getElementById('modal-modifier').showModal();
+}
 
 function openPhotosModal(id) {
-    const modal = document.getElementById('modal-photos');
-    const container = document.getElementById('photos-container');
-    const title = document.getElementById('photos-title');
-
-    const photos = productPhotos[id] || [];
-    title.innerText = 'Gestion des photos du produit';
-
-    container.innerHTML = '';
-    if (photos.length === 0) {
-        container.innerHTML = '<p class="text-gray-400 text-center py-4 text-sm">Aucune photo supplémentaire.</p>';
-    } else {
-        photos.forEach(photo => {
-            container.innerHTML += `
-                <div class="relative group border border-gray-200 rounded-lg p-2 bg-gray-50">
-                    <img src="/${photo.chemin}" class="w-full h-32 object-cover rounded-md">
-                    <form method="POST" action="/admin/images/${photo.id}" class="absolute top-2 right-2" onsubmit="return confirm('Supprimer cette photo ?')">
-                        <input type="hidden" name="_token" value="{{ csrf_token() }}">
-                        <input type="hidden" name="_method" value="DELETE">
-                        <button type="submit" class="bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-700">×</button>
-                    </form>
-                </div>
-            `;
-        });
+    const conteneur = document.getElementById('photos-container');
+    const photos = produits[id]?.photos ?? [];
+    conteneur.innerHTML = '';
+    if (!photos.length) {
+        conteneur.innerHTML = '<p class="col-span-full bg-papier-2 p-5 text-encre-2">Aucune photo supplémentaire pour ce produit.</p>';
     }
-
-    document.getElementById('photos-form').action = '/admin/produits/' + id + '/images';
-    modal.style.display = 'flex';
-}
-
-function openEditProduit(id, nom, categorieId, stock, prixMetre, prixRouleau, prixPantalon, prixChemise, prixTunique, description, image, metaTitle = '', metaDescription = '') {
-    document.getElementById('edit-nom').value = nom;
-    document.getElementById('edit-categorie').value = categorieId;
-    document.getElementById('edit-stock').value = stock;
-    document.getElementById('edit-prix_metre').value = prixMetre;
-    document.getElementById('edit-prix_rouleau').value = prixRouleau;
-    document.getElementById('edit-prix_pantalon').value = prixPantalon;
-    document.getElementById('edit-prix_chemise').value = prixChemise;
-    document.getElementById('edit-prix_tunique').value = prixTunique;
-    document.getElementById('edit-description').value = description;
-    document.getElementById('edit-meta-title').value = metaTitle;
-    document.getElementById('edit-meta-description').value = metaDescription;
-
-    const preview = document.getElementById('edit-img-preview');
-    if (image) {
-        preview.innerHTML = '<div class="img-preview"><img src="/' + image + '" alt="Aperçu"></div>';
-    } else {
-        preview.innerHTML = '';
-    }
-    document.getElementById('form-modifier-produit').action = '/admin/produits/' + id + '/modifier';
-    document.getElementById('modal-modifier').style.display = 'flex';
+    photos.forEach((photo) => {
+        const tuile = document.createElement('div');
+        tuile.className = 'relative aspect-square bg-papier-2';
+        tuile.innerHTML = `
+            <img src="${photo.url}" alt="" class="h-full w-full object-cover">
+            <form method="POST" action="/admin/images/${photo.id}" class="absolute right-1.5 top-1.5" onsubmit="return confirm('Supprimer cette photo ?')">
+                <input type="hidden" name="_token" value="${jeton}">
+                <input type="hidden" name="_method" value="DELETE">
+                <button type="submit" class="flex size-9 items-center justify-center bg-carte text-danger hover:bg-danger hover:text-white" aria-label="Supprimer cette photo">
+                    <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
+                </button>
+            </form>`;
+        conteneur.appendChild(tuile);
+    });
+    document.getElementById('photos-form').action = `/admin/produits/${id}/images`;
+    document.getElementById('modal-photos').showModal();
 }
 
 async function generateAiDescription() {
-    const productId = document.getElementById('form-modifier-produit').action.split('/').pop();
-    const keywords = document.getElementById('ai-keywords').value;
-    const btn = document.querySelector('.btn-ai');
-
+    const productId = document.getElementById('form-modifier-produit').action.split('/').slice(-2, -1)[0];
+    const keywords = document.getElementById('ai-keywords').value.trim();
+    const bouton = document.querySelector('.btn-ai');
     if (!keywords) {
-        alert('Veuillez saisir quelques mots-clés !');
+        document.getElementById('ai-keywords').focus();
         return;
     }
-
-    btn.disabled = true;
-    btn.innerText = 'L\'IA réfléchit... ✨';
-
+    bouton.disabled = true;
     try {
-        const response = await fetch(`/admin/produits/${productId}/ai-description`, {
+        const reponse = await fetch(`/admin/produits/${productId}/ai-description`, {
             method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-CSRF-TOKEN': '{{ csrf_token() }}'
-            },
-            body: JSON.stringify({ keywords })
+            headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': jeton },
+            body: JSON.stringify({ keywords }),
         });
-
-        const data = await response.json();
-        if (data.description) {
-            document.getElementById('edit-description').value = data.description;
-        }
+        const data = await reponse.json();
+        if (data.description) document.getElementById('edit-description').value = data.description;
     } catch (e) {
-        alert('Erreur lors de la génération.');
+        alert('La description n\'a pas pu être générée.');
     } finally {
-        btn.disabled = false;
-        btn.innerText = 'Générer la description';
+        bouton.disabled = false;
     }
 }
 
-// Fermer modale en cliquant l'overlay
-document.querySelectorAll('.modal-overlay').forEach(overlay => {
-    overlay.addEventListener('click', function(e) {
-        if (e.target === this) this.style.display = 'none';
-    });
-});
+// Fenêtre d'ajout : une première ligne de tarif prête à remplir
+addPricingRow('pricing-container-add', 'Au mètre', '');
+
+// Fermer une fenêtre en cliquant sur le voile
+document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
 </script>
 
 @endsection

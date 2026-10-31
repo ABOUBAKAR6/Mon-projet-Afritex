@@ -12,7 +12,9 @@ class InvoiceController extends Controller
     public function download(Commande $commande)
     {
         // Verify if the user is allowed to download this invoice
-        if (Auth::id() !== $commande->user_id && !Auth::user()->role === 'admin') {
+        // Le client de la commande, ou l'équipe ayant le droit « commandes ».
+        // (L'ancien test « !role === 'admin' » était toujours faux : toute facture était téléchargeable.)
+        if (Auth::id() !== $commande->user_id && !Auth::user()->can('manage-orders')) {
             abort(403);
         }
 

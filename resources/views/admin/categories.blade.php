@@ -1,194 +1,111 @@
-@extends('layouts.app')
+@extends('layouts.admin')
+@section('title', 'Catégories · AfriTex')
 @section('content')
+@php
+    $totalProduits = $categories->sum(fn ($c) => $c->produits->count());
+    $fenetre = 'm-auto w-[min(32rem,calc(100vw-2rem))] bg-carte p-0 text-encre shadow-[0_24px_60px_-24px_oklch(0.2_0.03_40/0.5)] backdrop:bg-[oklch(0.2_0.03_40/0.55)]';
+@endphp
 
-<div style="padding:40px; background:#f9f5f0; min-height:100vh;">
+<x-admin-entete titre="Catégories" :description="count($categories) . ' familles de tissus, ' . $totalProduits . ' produits au total'">
+    <button type="button" onclick="document.getElementById('modal-ajouter').showModal()" class="btn btn-brun"><x-icone nom="plus" /> Ajouter une catégorie</button>
+</x-admin-entete>
 
-    <!-- HEADER -->
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:32px;">
-        <div>
-            <h2 style="font-family:Georgia,serif; font-size:32px; color:#4A1B0C; margin:0;">📂 Catégories de tissus</h2>
-            <p style="color:#7a6a5a; font-size:14px; margin-top:4px;">{{ count($categories) }} catégorie(s) au total</p>
-        </div>
-        <button onclick="document.getElementById('modal-ajouter').style.display='flex'"
-            style="background:linear-gradient(135deg, #8B4513, #C8963E); color:white; border:none; padding:12px 24px; border-radius:12px; cursor:pointer; font-size:14px; font-weight:600; display:flex; align-items:center; gap:8px; box-shadow:0 4px 15px rgba(139,69,19,0.3); transition:all 0.2s ease;"
-            onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 8px 20px rgba(139,69,19,0.4)'"
-            onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(139,69,19,0.3)'">
-            Ajouter une catégorie
-        </button>
-    </div>
-
-    <!-- STATS -->
-    <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:32px;">
-        <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(139,69,19,0.06); display:flex; align-items:center; gap:16px;">
-            <div style="width:48px; height:48px; background:linear-gradient(135deg, #8B4513, #C8963E); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px;">📂</div>
-            <div>
-                <div style="font-size:28px; font-weight:700; color:#4A1B0C;">{{ count($categories) }}</div>
-                <div style="font-size:13px; color:#7a6a5a;">Total catégories</div>
-            </div>
-        </div>
-        <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(139,69,19,0.06); display:flex; align-items:center; gap:16px;">
-            <div style="width:48px; height:48px; background:linear-gradient(135deg, #059669, #34d399); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px;">Produits</div>
-            <div>
-                <div style="font-size:28px; font-weight:700; color:#4A1B0C;">{{ $categories->sum(fn($c) => $c->produits->count()) }}</div>
-                <div style="font-size:13px; color:#7a6a5a;">Total produits</div>
-            </div>
-        </div>
-        <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 10px rgba(139,69,19,0.06); display:flex; align-items:center; gap:16px;">
-            <div style="width:48px; height:48px; background:linear-gradient(135deg, #3b82f6, #60a5fa); border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:22px;">📊</div>
-            <div>
-                <div style="font-size:28px; font-weight:700; color:#4A1B0C;">{{ round($categories->avg(fn($c) => $c->produits->count())) }}</div>
-                <div style="font-size:13px; color:#7a6a5a;">Moy. produits/catégorie</div>
-            </div>
+<section class="bg-carte" aria-label="Liste des catégories">
+    <div class="p-4">
+        <label for="search" class="sr-only">Rechercher une catégorie</label>
+        <div class="relative sm:max-w-sm">
+            <x-icone nom="recherche" class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-encre-3" />
+            <input type="search" id="search" class="champ pl-10" placeholder="Rechercher une catégorie" oninput="filterCategories()">
         </div>
     </div>
-
-    <!-- TABLE -->
-    <div style="background:white; border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(139,69,19,0.08);">
-        <div style="padding:20px 24px; border-bottom:1px solid #e8ddd3; display:flex; justify-content:space-between; align-items:center;">
-            <h3 style="color:#4A1B0C; margin:0; font-size:16px;">Liste des catégories</h3>
-            <input type="text" id="search" placeholder="Rechercher..." onkeyup="filterCategories()" 
-                style="padding:8px 14px; border:1px solid #e8ddd3; border-radius:8px; font-size:13px; width:200px;">
-        </div>
-        <table style="width:100%; border-collapse:collapse;" id="categoriesTable">
+    <div class="overflow-x-auto">
+        <table class="tableau" id="categoriesTable">
             <thead>
-                <tr style="background:#FDF6EE;">
-                    <th style="padding:14px 24px; text-align:left; color:#7a6a5a; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">#</th>
-                    <th style="padding:14px 24px; text-align:left; color:#7a6a5a; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Image</th>
-                    <th style="padding:14px 24px; text-align:left; color:#7a6a5a; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Nom</th>
-                    <th style="padding:14px 24px; text-align:left; color:#7a6a5a; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Nb. produits</th>
-                    <th style="padding:14px 24px; text-align:left; color:#7a6a5a; font-size:12px; text-transform:uppercase; letter-spacing:0.5px;">Actions</th>
+                <tr>
+                    <th scope="col">Catégorie</th>
+                    <th scope="col" class="w-[40%]">Produits</th>
+                    <th scope="col"><span class="sr-only">Actions</span></th>
                 </tr>
             </thead>
             <tbody>
+                @php $maxProduits = max(1, $categories->max(fn ($c) => $c->produits->count())); @endphp
                 @foreach($categories as $categorie)
-                <tr class="cat-row" style="transition:background 0.2s ease;"
-                    onmouseover="this.style.background='#FDF6EE'"
-                    onmouseout="this.style.background='white'">
-                    <td style="padding:16px 24px; color:#7a6a5a; font-size:14px; border-bottom:1px solid #f5f0eb;">{{ $categorie->id }}</td>
-                    <td style="padding:16px 24px; border-bottom:1px solid #f5f0eb;">
-                        <div style="width:44px; height:44px; background:linear-gradient(135deg, #F5E6D3, #EDD5B8); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:20px; overflow:hidden;">
-                            @if($categorie->image)
-                                <img src="{{ asset($categorie->image) }}" style="width:100%; height:100%; object-fit:cover;">
-                            @else
-                                <span class="text-sm text-gray-400">Image non disponible</span>
-                            @endif
-                        </div>
-                    </td>
-                    <td style="padding:16px 24px; border-bottom:1px solid #f5f0eb;">
-                        <div style="font-weight:600; color:#4A1B0C; font-size:15px;">{{ $categorie->nom }}</div>
-                    </td>
-                    <td style="padding:16px 24px; border-bottom:1px solid #f5f0eb;">
-                        <span style="background:#FEF3C7; color:#92400e; padding:4px 12px; border-radius:20px; font-size:12px; font-weight:600;">
-                            {{ $categorie->produits->count() }} produit(s)
-                        </span>
-                    </td>
-                    <td style="padding:16px 24px; border-bottom:1px solid #f5f0eb;">
-                        <div style="display:flex; gap:8px;">
-                            <button onclick="openEditModal({{ $categorie->id }}, '{{ $categorie->nom }}')"
-                                style="background:#EFF6FF; color:#1d4ed8; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s ease;"
-                                onmouseover="this.style.background='#1d4ed8'; this.style.color='white'"
-                                onmouseout="this.style.background='#EFF6FF'; this.style.color='#1d4ed8'">
-                                Modifier
-                            </button>
-                            <form method="POST" action="{{ route('admin.categories.destroy', $categorie->id) }}" 
-                                onsubmit="return confirm('Supprimer cette catégorie ?')" style="display:inline;">
-                                @csrf @method('DELETE')
-                                <button type="submit"
-                                    style="background:#FEE2E2; color:#dc2626; border:none; padding:8px 14px; border-radius:8px; cursor:pointer; font-size:13px; font-weight:500; transition:all 0.2s ease;"
-                                    onmouseover="this.style.background='#dc2626'; this.style.color='white'"
-                                    onmouseout="this.style.background='#FEE2E2'; this.style.color='#dc2626'">
-                                    Supprimer
-                                </button>
-                            </form>
-                        </div>
-                    </td>
-                </tr>
+                    @php $nb = $categorie->produits->count(); @endphp
+                    <tr class="cat-row" data-nom="{{ mb_strtolower($categorie->nom) }}">
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <span class="flex size-12 shrink-0 items-center justify-center overflow-hidden bg-papier-2">
+                                    @if($categorie->image)
+                                        <img src="{{ asset($categorie->image) }}" alt="" loading="lazy" class="h-full w-full object-cover">
+                                    @else
+                                        <span class="titre-display text-brun-trait">{{ mb_substr($categorie->nom, 0, 1) }}</span>
+                                    @endif
+                                </span>
+                                <span class="font-medium">{{ $categorie->nom }}</span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="flex items-center gap-3">
+                                <span class="chiffres w-8 shrink-0 text-right">{{ $nb }}</span>
+                                <span class="h-2 flex-1 bg-papier-2" aria-hidden="true"><span class="block h-full rounded-r-[4px] bg-brun" style="width: {{ round(($nb / $maxProduits) * 100) }}%"></span></span>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="flex items-center justify-end gap-1">
+                                <button type="button" class="btn btn-fantome btn-sm" onclick="openEditModal({{ $categorie->id }}, @js($categorie->nom))"><x-icone nom="crayon" /> Modifier</button>
+                                <form method="POST" action="{{ route('admin.categories.destroy', $categorie->id) }}" onsubmit="return confirm(@js('Supprimer la catégorie « ' . $categorie->nom . ' » ?'))">
+                                    @csrf @method('DELETE')
+                                    <button type="submit" class="btn btn-sm text-danger hover:bg-danger-doux"><x-icone nom="corbeille" /><span class="sr-only">Supprimer {{ $categorie->nom }}</span></button>
+                                </form>
+                            </div>
+                        </td>
+                    </tr>
                 @endforeach
             </tbody>
         </table>
     </div>
-</div>
+</section>
 
-<!-- MODAL AJOUTER -->
-<div id="modal-ajouter" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:white; border-radius:20px; padding:32px; width:500px; max-width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-            <h3 style="font-family:Georgia,serif; font-size:22px; color:#4A1B0C; margin:0;">Ajouter une catégorie</h3>
-            <button onclick="document.getElementById('modal-ajouter').style.display='none'" style="background:none; border:none; font-size:16px; cursor:pointer; color:#7a6a5a;">Fermer</button>
-        </div>
-        <form method="POST" action="{{ route('admin.categories.store') }}" enctype="multipart/form-data">
+@foreach([['modal-ajouter', 'Nouvelle catégorie', route('admin.categories.store'), 'Ajouter la catégorie', false], ['modal-modifier', 'Modifier la catégorie', '', 'Enregistrer', true]] as [$id, $titre, $action, $bouton, $modifier])
+    <dialog id="{{ $id }}" class="{{ $fenetre }}" aria-labelledby="titre-{{ $id }}">
+        <form method="POST" action="{{ $action }}" @if($modifier) id="form-modifier" @endif enctype="multipart/form-data" class="p-6 sm:p-8">
             @csrf
-            <div style="margin-bottom:16px;">
-                <label style="display:block; font-size:14px; color:#4A1B0C; margin-bottom:8px; font-weight:500;">Nom de la catégorie</label>
-                <input type="text" name="nom" required placeholder="Ex: Grain de Diamant"
-                    style="width:100%; padding:12px; border:1px solid #e8ddd3; border-radius:8px; font-size:14px;">
+            @if($modifier) @method('PUT') @endif
+            <div class="flex items-start justify-between gap-4">
+                <h2 id="titre-{{ $id }}" class="titre-display text-[1.5rem]">{{ $titre }}</h2>
+                <button type="button" onclick="this.closest('dialog').close()" class="-m-2 flex size-11 items-center justify-center text-encre-2 hover:bg-papier-2"><x-icone nom="fermer" /><span class="sr-only">Fermer</span></button>
             </div>
-            <div style="margin-bottom:24px;">
-                <label style="display:block; font-size:14px; color:#4A1B0C; margin-bottom:8px; font-weight:500;">Image (optionnel)</label>
-                <input type="file" name="image" accept="image/*"
-                    style="width:100%; padding:12px; border:1px solid #e8ddd3; border-radius:8px; font-size:14px;">
+            <div class="mt-6">
+                <label for="{{ $id }}-nom" class="etiquette">Nom de la catégorie</label>
+                <input type="text" name="nom" id="{{ $modifier ? 'edit-nom' : $id . '-nom' }}" required class="champ" placeholder="Grain de diamant">
             </div>
-            <div style="display:flex; gap:12px;">
-                <button type="button" onclick="document.getElementById('modal-ajouter').style.display='none'"
-                    style="flex:1; background:#f5f0eb; color:#7a6a5a; border:none; padding:12px; border-radius:8px; cursor:pointer; font-size:14px;">
-                    Annuler
-                </button>
-                <button type="submit"
-                    style="flex:2; background:#8B4513; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600;">
-                    Ajouter
-                </button>
+            <div class="mt-5">
+                <label for="{{ $id }}-image" class="etiquette">Image <span class="font-normal text-encre-2">(facultative)</span></label>
+                <input type="file" name="image" id="{{ $id }}-image" accept="image/*" class="champ py-2">
+            </div>
+            <div class="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+                <button type="button" class="btn btn-contour" onclick="this.closest('dialog').close()">Annuler</button>
+                <button type="submit" class="btn btn-brun">{{ $bouton }}</button>
             </div>
         </form>
-    </div>
-</div>
-
-<!-- MODAL MODIFIER -->
-<div id="modal-modifier" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.5); z-index:1000; align-items:center; justify-content:center;">
-    <div style="background:white; border-radius:20px; padding:32px; width:500px; max-width:90%; box-shadow:0 20px 60px rgba(0,0,0,0.3);">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
-            <h3 style="font-family:Georgia,serif; font-size:22px; color:#4A1B0C; margin:0;">Modifier la catégorie</h3>
-            <button onclick="document.getElementById('modal-modifier').style.display='none'" style="background:none; border:none; font-size:24px; cursor:pointer; color:#7a6a5a;">Fermer</button>
-        </div>
-        <form method="POST" id="form-modifier" enctype="multipart/form-data">
-            @csrf @method('PUT')
-            <div style="margin-bottom:16px;">
-                <label style="display:block; font-size:14px; color:#4A1B0C; margin-bottom:8px; font-weight:500;">Nom de la catégorie</label>
-                <input type="text" name="nom" id="edit-nom" required
-                    style="width:100%; padding:12px; border:1px solid #e8ddd3; border-radius:8px; font-size:14px;">
-            </div>
-            <div style="margin-bottom:24px;">
-                <label style="display:block; font-size:14px; color:#4A1B0C; margin-bottom:8px; font-weight:500;">Image (optionnel)</label>
-                <input type="file" name="image" accept="image/*"
-                    style="width:100%; padding:12px; border:1px solid #e8ddd3; border-radius:8px; font-size:14px;">
-            </div>
-            <div style="display:flex; gap:12px;">
-                <button type="button" onclick="document.getElementById('modal-modifier').style.display='none'"
-                    style="flex:1; background:#f5f0eb; color:#7a6a5a; border:none; padding:12px; border-radius:8px; cursor:pointer; font-size:14px;">
-                    Annuler
-                </button>
-                <button type="submit"
-                    style="flex:2; background:#8B4513; color:white; border:none; padding:12px; border-radius:8px; cursor:pointer; font-size:14px; font-weight:600;">
-                    Modifier
-                </button>
-            </div>
-        </form>
-    </div>
-</div>
+    </dialog>
+@endforeach
 
 <script>
 function openEditModal(id, nom) {
     document.getElementById('edit-nom').value = nom;
     document.getElementById('form-modifier').action = '/admin/categories/' + id;
-    document.getElementById('modal-modifier').style.display = 'flex';
+    document.getElementById('modal-modifier').showModal();
 }
 
 function filterCategories() {
-    const search = document.getElementById('search').value.toLowerCase();
-    document.querySelectorAll('.cat-row').forEach(row => {
-        const nom = row.querySelector('td:nth-child(3)').textContent.toLowerCase();
-        row.style.display = nom.includes(search) ? '' : 'none';
+    const terme = document.getElementById('search').value.toLowerCase().trim();
+    document.querySelectorAll('.cat-row').forEach((ligne) => {
+        ligne.style.display = ligne.dataset.nom.includes(terme) ? '' : 'none';
     });
 }
+
+document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
 </script>
 
 @endsection

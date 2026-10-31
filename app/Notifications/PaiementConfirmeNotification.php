@@ -12,7 +12,8 @@ class PaiementConfirmeNotification extends Notification
 
     public function via($notifiable): array
     {
-        return ['database', 'mail'];
+        // Notification dans le compte uniquement : l'e-mail est CommandeRecueMail (Commande::envoyerConfirmation)
+        return ['database'];
     }
 
     public function toMail($notifiable): MailMessage

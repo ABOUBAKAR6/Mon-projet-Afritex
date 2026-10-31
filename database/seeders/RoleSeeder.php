@@ -20,6 +20,7 @@ class RoleSeeder extends Seeder
         $permissions = [
             'manage-products' => 'Gérer les produits',
             'manage-orders' => 'Gérer les commandes',
+            'manage-categories' => 'Gérer les catégories',
             'manage-users' => 'Gérer les utilisateurs',
             'view-dashboard' => 'Voir le tableau de bord',
             'update-stock' => 'Mettre à jour le stock',

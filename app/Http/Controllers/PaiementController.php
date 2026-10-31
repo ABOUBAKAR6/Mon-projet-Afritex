@@ -47,22 +47,37 @@ class PaiementController extends Controller
             $commande->update(['statut' => 'en_attente']);
             $this->decrementStock($commande);
 
-            $commande->user->notify(new PaiementConfirmeNotification($paiement));
+            // Notification dans le compte du client (l'e-mail part via envoyerConfirmation)
+            try {
+                $commande->user->notify(new PaiementConfirmeNotification($paiement));
+            } catch (\Throwable $e) {
+                report($e);
+            }
+            $commande->envoyerConfirmation();
 
+            $moment = $commande->estEnBoutique() ? 'au retrait en boutique' : 'à la livraison';
             return redirect()->route('accueil')
-                            ->with('success', '✅ Commande confirmée ! Préparez ' . number_format($commande->total, 0, ',', ' ') . ' FCFA à la livraison !');
+                            ->with('success', 'Commande reçue ! Un e-mail de confirmation vous a été envoyé. Préparez ' . number_format($commande->total, 0, ',', ' ') . ' F ' . $moment . '.');
         }
+
+        // Le formulaire envoie le moyen de paiement (« mobile_money », « carte ») ; on garde le nom de la passerelle
+        // dans le paiement, car le retour (callback) choisit la passerelle d'après ce nom.
+        $passerelle = match ($request->methode) {
+            'mobile_money', 'fedapay' => 'fedapay',
+            'carte', 'stripe' => 'stripe',
+            default => null,
+        };
 
         try {
             // Choisir la passerelle de paiement
-            $gateway = match($request->methode) {
+            $gateway = match($passerelle) {
                 'stripe' => $this->stripeService,
                 'fedapay' => $this->fedapayService,
                 default => throw new \Exception('Méthode de paiement non supportée.'),
             };
 
-            $currency = ($request->methode === 'stripe') ? 'usd' : 'XOF';
-            $amount = ($request->methode === 'stripe') ? ($commande->total / 655) : $commande->total; // Approximation XOF to USD
+            $currency = ($passerelle === 'stripe') ? 'usd' : 'XOF';
+            $amount = ($passerelle === 'stripe') ? ($commande->total / 655) : $commande->total; // Approximation XOF to USD
 
             $paymentUrl = $gateway->createPayment($amount, $currency, [
                 'order_id' => $commande->id
@@ -72,7 +87,7 @@ class PaiementController extends Controller
             Paiement::create([
                 'commande_id' => $commande->id,
                 'montant' => $commande->total,
-                'methode' => $request->methode,
+                'methode' => $passerelle,
                 'statut' => 'en_attente',
                 'reference' => 'PAY-' . strtoupper(uniqid()),
             ]);
@@ -128,9 +143,10 @@ class PaiementController extends Controller
                 try {
                     $commande->user->notify(new PaiementConfirmeNotification($paiement));
                 } catch (\Exception $e) {}
+                $commande->envoyerConfirmation();
 
                 return redirect()->route('accueil')
-                    ->with('success', '🎉 Paiement confirmé ! Merci pour votre commande AfriTex !');
+                    ->with('success', 'Paiement confirmé ! Un e-mail de confirmation vous a été envoyé avec le lien de suivi.');
             } else {
                 $paiement->update(['statut' => 'echoue']);
                 return redirect()->route('paiement', $commande->id)

@@ -90,7 +90,8 @@ class CommandeController extends Controller
                 $panier,
                 $coupon,
                 $request->adresse_livraison,
-                auth()->id()
+                auth()->id(),
+                $request->mode_livraison === 'boutique' ? 'boutique' : 'domicile'
             );
 
             return redirect()->route('paiement', $commande->id);

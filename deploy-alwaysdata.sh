@@ -37,6 +37,9 @@ fi
 
 mkdir -p storage/framework/{cache/data,views,sessions,testing} storage/logs storage/app/public
 
+grep -q '^APP_KEY=' .env || echo "APP_KEY=" >> .env
+php artisan key:generate --force 2>&1 | grep -v "already" || true
+
 echo "=== 2/4 Base de donnees ==="
 php artisan migrate --force
 php artisan storage:link || true

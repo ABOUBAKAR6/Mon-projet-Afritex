@@ -18,7 +18,8 @@ class CleEspace
         $fournie = (string) ($request->query('cle') ?: $request->input('cle'));
 
         if ($cle === '' || ! hash_equals($cle, $fournie)) {
-            abort(404);
+            // Sans la clé : le visiteur est renvoyé discrètement vers la page publique
+            return redirect()->route('accueil');
         }
 
         return $next($request);

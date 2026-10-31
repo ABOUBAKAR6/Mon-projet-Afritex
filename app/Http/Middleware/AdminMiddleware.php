@@ -23,6 +23,7 @@ class AdminMiddleware
             return $next($request);
         }
 
-        return redirect('/')->with('error', 'Accès refusé. Vous n\'avez pas les droits d\'administrateur.');
+        // L'administration n'existe pas pour le public (ni visiteur, ni client connecté)
+        abort(404);
     }
 }

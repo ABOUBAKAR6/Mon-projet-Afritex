@@ -25,11 +25,11 @@ return Application::configure(basePath: dirname(__DIR__))
             'cle-espace' => \App\Http\Middleware\CleEspace::class,
         ]);
 
-        // Un visiteur non connecté qui ouvre l'administration est envoyé vers l'espace de gestion
-        // (avec sa clé secrète, la page reste invisible du public), pas vers la connexion de la boutique.
+        // Visiteur non connecté sur l'administration : 404, seule la porte secrète /espace-client permet l'accès.
+        // Partout ailleurs (ex. profil boutique), redirection classique vers la connexion.
         $middleware->redirectGuestsTo(function (\Illuminate\Http\Request $request) {
             if ($request->is('admin', 'admin/*')) {
-                return route('espace.connexion', ['cle' => config('espace.cle')]);
+                abort(404);
             }
 
             return route('login');

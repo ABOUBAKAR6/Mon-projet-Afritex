@@ -45,6 +45,9 @@ npm run build
 rm -rf node_modules
 
 echo "=== 4/4 Caches ==="
-php artisan optimize
+php artisan config:cache
+php artisan event:cache
+php artisan route:cache
+php artisan view:cache || true
 
 echo "DEPLOIEMENT OK - $(date)"

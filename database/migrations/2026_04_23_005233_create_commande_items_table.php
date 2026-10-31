@@ -10,8 +10,8 @@ return new class extends Migration
     {
         Schema::create('commande_items', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('commande_id')->constrained('commandes');
-            $table->foreignId('produit_id')->constrained('produits');
+            $table->unsignedBigInteger('commande_id')->index();
+            $table->unsignedBigInteger('produit_id')->index();
             $table->enum('type_commande', [
                 'metre', 'rouleau', 'pantalon',
                 'chemise_courte', 'chemise_longue',

@@ -35,6 +35,8 @@ if [ ! -f .env ]; then
     exit 0
 fi
 
+mkdir -p storage/framework/{cache/data,views,sessions,testing} storage/logs storage/app/public
+
 echo "=== 2/4 Base de donnees ==="
 php artisan migrate --force
 php artisan storage:link || true

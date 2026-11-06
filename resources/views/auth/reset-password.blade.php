@@ -13,12 +13,12 @@
         </div>
         <div>
             <x-input-label for="password" value="Nouveau mot de passe" />
-            <x-text-input id="password" type="password" name="password" required autocomplete="new-password" />
+            <x-champ-mot-de-passe id="password" name="password" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password')" />
         </div>
         <div>
             <x-input-label for="password_confirmation" value="Confirmer le mot de passe" />
-            <x-text-input id="password_confirmation" type="password" name="password_confirmation" required autocomplete="new-password" />
+            <x-champ-mot-de-passe id="password_confirmation" name="password_confirmation" required autocomplete="new-password" />
             <x-input-error :messages="$errors->get('password_confirmation')" />
         </div>
 

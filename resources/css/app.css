@@ -293,6 +293,16 @@
         color: var(--encre-3);
     }
 
+    /* Mot de passe : notre bouton œil remplace celui qu'Edge ajoute de lui-même */
+    .champ-mdp::-ms-reveal {
+        display: none;
+    }
+
+    /* Le contour de focus du bouton œil reste dans le champ */
+    .voir-mdp:focus-visible {
+        outline-offset: -4px;
+    }
+
     .champ:focus {
         border-color: var(--brun);
         outline: 2px solid var(--brun);

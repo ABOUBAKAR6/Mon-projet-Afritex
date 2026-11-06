@@ -6,7 +6,7 @@
         @csrf
         <div>
             <x-input-label for="password" value="Mot de passe" />
-            <x-text-input id="password" type="password" name="password" required autocomplete="current-password" />
+            <x-champ-mot-de-passe id="password" name="password" required autocomplete="current-password" />
             <x-input-error :messages="$errors->get('password')" />
         </div>
         <x-primary-button class="btn-lg w-full">Confirmer</x-primary-button>

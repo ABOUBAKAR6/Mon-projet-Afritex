@@ -35,7 +35,7 @@
                 </div>
                 <div>
                     <x-input-label for="password" value="Mot de passe" />
-                    <x-text-input id="password" type="password" name="password" required autocomplete="current-password" />
+                    <x-champ-mot-de-passe id="password" name="password" required autocomplete="current-password" />
                     <x-input-error :messages="$errors->get('password')" />
                 </div>
                 <label for="remember" class="flex min-h-11 cursor-pointer items-center gap-3">

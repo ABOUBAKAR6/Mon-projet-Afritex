@@ -20,7 +20,7 @@
                     <a class="mb-1.5 text-[0.9rem] text-brun hover:underline" href="{{ route('password.request') }}">Mot de passe oublié ?</a>
                 @endif
             </div>
-            <x-text-input id="password" type="password" name="password" required autocomplete="current-password" />
+            <x-champ-mot-de-passe id="password" name="password" required autocomplete="current-password" />
             <x-input-error :messages="$errors->get('password')" />
         </div>
 

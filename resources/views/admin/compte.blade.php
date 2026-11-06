@@ -84,17 +84,17 @@
             @csrf @method('PUT')
             <div class="sm:col-span-2 sm:max-w-[calc(50%-0.625rem)]">
                 <label for="current_password" class="etiquette">Mot de passe actuel</label>
-                <input type="password" name="current_password" id="current_password" required autocomplete="current-password" class="champ">
+                <x-champ-mot-de-passe name="current_password" id="current_password" required autocomplete="current-password" />
                 <x-input-error :messages="$errors->motDePasse->get('current_password')" class="mt-2" />
             </div>
             <div>
                 <label for="password" class="etiquette">Nouveau mot de passe</label>
-                <input type="password" name="password" id="password" required autocomplete="new-password" class="champ">
+                <x-champ-mot-de-passe name="password" id="password" required autocomplete="new-password" />
                 <x-input-error :messages="$errors->motDePasse->get('password')" class="mt-2" />
             </div>
             <div>
                 <label for="password_confirmation" class="etiquette">Confirmer le nouveau mot de passe</label>
-                <input type="password" name="password_confirmation" id="password_confirmation" required autocomplete="new-password" class="champ">
+                <x-champ-mot-de-passe name="password_confirmation" id="password_confirmation" required autocomplete="new-password" />
             </div>
             <div class="sm:col-span-2">
                 <button type="submit" class="btn btn-brun">Changer le mot de passe</button>

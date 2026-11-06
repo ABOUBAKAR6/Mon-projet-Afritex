@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Paiement · AfriTex')
+@section('title', 'Paiement · ' . boutique('nom'))
 @if(str_contains($commande->adresse_livraison ?? '', 'GPS:'))
     @push('tete')
         <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -153,7 +153,7 @@
                         </span>
                         <span class="min-w-0 flex-1">
                             <span class="block truncate font-medium">{{ $item->produit->nom ?? 'Produit' }}</span>
-                            <span class="block text-[0.88rem] text-encre-2"><span class="chiffres">{{ $item->quantite }}</span> × {{ ucfirst(str_replace('_', ' ', $item->type_commande)) }}</span>
+                            <span class="block text-[0.88rem] text-encre-2"><span class="chiffres">{{ $item->quantiteLisible() }}</span> × {{ $item->libelleFormat() }}</span>
                         </span>
                         <span class="chiffres whitespace-nowrap font-medium">{{ number_format($item->sous_total, 0, ',', ' ') }} F</span>
                     </li>

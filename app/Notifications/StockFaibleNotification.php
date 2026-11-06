@@ -18,7 +18,7 @@ class StockFaibleNotification extends Notification
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('AfriTex — Stock faible ⚠️')
+            ->subject(boutique('nom').' — Stock faible ⚠️')
             ->greeting('Bonjour '.$notifiable->name)
             ->line('Le stock du produit suivant est faible :')
             ->line('Produit : **'.$this->produit->nom.'**')

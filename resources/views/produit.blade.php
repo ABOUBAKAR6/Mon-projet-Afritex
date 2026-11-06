@@ -1,6 +1,6 @@
 @extends('layouts.app')
-@section('title', ($produit->meta_title ?: $produit->nom) . ' · AfriTex')
-@section('meta_description', $produit->meta_description ?: 'Achetez ' . $produit->nom . ' chez AfriTex : au mètre, au rouleau ou en confection, livré partout en Côte d\'Ivoire.')
+@section('title', ($produit->meta_title ?: $produit->nom) . ' · ' . boutique('nom'))
+@section('meta_description', $produit->meta_description ?: 'Achetez ' . $produit->nom . ' chez '.boutique('nom').' : au mètre, au rouleau ou en confection, livré partout en Côte d\'Ivoire.')
 @section('content')
 @php
     // Formats de vente acceptés par le panier (CartService::addItem) et leur prix
@@ -258,7 +258,7 @@
                         <figcaption class="flex items-center gap-3">
                             <span aria-hidden="true" class="titre-display flex size-10 items-center justify-center rounded-full bg-brun-doux text-brun">{{ mb_strtoupper(mb_substr($avis->user?->name ?? 'C', 0, 1)) }}</span>
                             <span>
-                                <span class="block font-medium">{{ $avis->user?->name ?? 'Client AfriTex' }}</span>
+                                <span class="block font-medium">{{ $avis->user?->name ?? 'Client' }}</span>
                                 <span class="block text-[0.88rem] text-encre-2">{{ $avis->created_at->diffForHumans() }}</span>
                             </span>
                         </figcaption>

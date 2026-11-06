@@ -28,12 +28,20 @@ class PaiementController extends Controller
 
     public function index(Commande $commande)
     {
+        if ($refus = $this->refuserSiNonPayable($commande)) {
+            return $refus;
+        }
+
         $commande->load('items.produit');
         return view('paiement', compact('commande'));
     }
 
     public function payer(Request $request, Commande $commande)
     {
+        if ($refus = $this->refuserSiNonPayable($commande)) {
+            return $refus;
+        }
+
         // Cas particulier : paiement en espèces (Cash on Delivery)
         if ($request->methode === 'especes') {
             $paiement = Paiement::create([
@@ -157,6 +165,26 @@ class PaiementController extends Controller
             return redirect()->route('accueil')
                 ->with('error', 'Erreur lors de la vérification du paiement : ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Seul le client de la commande la paie, et seulement si elle est à payer :
+     * ni la commande d'un autre, ni un devis pas encore chiffré ou accepté, ni une commande déjà réglée.
+     */
+    private function refuserSiNonPayable(Commande $commande)
+    {
+        abort_unless($commande->user_id === auth()->id(), 403);
+
+        if ($commande->estAPayer()) {
+            return null;
+        }
+
+        $retour = $commande->est_pro ? route('pro.commande', $commande) : route('commandes.show', $commande);
+        $message = $commande->estDevis()
+            ? "Ce devis doit d'abord être chiffré par la boutique puis accepté avant le paiement."
+            : "Cette commande n'est plus à payer.";
+
+        return redirect($retour)->with('error', $message);
     }
 
     private function decrementStock(Commande $commande)

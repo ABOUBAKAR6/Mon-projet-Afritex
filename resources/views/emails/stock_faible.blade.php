@@ -11,5 +11,5 @@ Voir le produit
 
 Merci de votre confiance,
 
-L'équipe AfriTex
+L'équipe {{ boutique('nom') }}
 @endcomponent

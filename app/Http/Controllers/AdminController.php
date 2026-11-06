@@ -26,48 +26,83 @@ class AdminController extends Controller
             return redirect()->route(auth()->user()->premiereSectionAdmin());
         }
 
-        $today = now()->toDateString();
-        $total_produits = Produit::count();
-        $total_commandes = Commande::count();
-        $total_categories = Categorie::count();
+        // Période suivie : les 30 derniers jours, aujourd'hui compris, comparés aux 30 jours d'avant
+        $debut = now()->subDays(29)->startOfDay();
+        $debutPrecedent = $debut->copy()->subDays(30);
 
-        $ca_total = Commande::where('statut', 'confirmee')->sum('total');
-        $ca_jour = Commande::where('statut', 'confirmee')
-                            ->whereDate('created_at', $today)
-                            ->sum('total');
+        // Ventes = commandes confirmées jusqu'à la livraison (ni devis, ni en attente, ni annulées)
+        $ventes = Commande::whereIn('statut', Commande::STATUTS_VENDUS)
+            ->where('created_at', '>=', $debut)
+            ->get(['id', 'total', 'statut', 'est_pro', 'created_at']);
+        $ca = (int) $ventes->sum('total');
+        $caPrecedent = (int) Commande::whereIn('statut', Commande::STATUTS_VENDUS)
+            ->whereBetween('created_at', [$debutPrecedent, $debut])->sum('total');
 
-        $commandes_recentes = Commande::with('user')->latest()->take(5)->get();
+        // Chiffre d'affaires jour par jour (courbe)
+        $caParJour = [];
+        for ($i = 29; $i >= 0; $i--) {
+            $caParJour[now()->subDays($i)->toDateString()] = 0;
+        }
+        foreach ($ventes as $vente) {
+            $caParJour[$vente->created_at->toDateString()] += (int) $vente->total;
+        }
 
-        // --- STATS AVANCÉES ---
+        // Commandes reçues (hors devis et annulées), par tranches de 3 jours : 10 barres
+        $tranches = array_fill(0, 10, 0);
+        Commande::whereNotIn('statut', [...Commande::STATUTS_DEVIS, 'annulee'])
+            ->where('created_at', '>=', $debut)
+            ->pluck('created_at')
+            ->each(function ($date) use (&$tranches, $debut) {
+                $tranches[min(9, intdiv((int) $debut->diffInDays($date), 3))]++;
+            });
 
-        // 1. Top 5 des produits les plus vendus (par quantité)
-        $top_produits = \DB::table('commande_items')
+        // À traiter : une ligne par étape, avec le lien vers la liste filtrée
+        $parStatut = Commande::selectRaw('statut, count(*) as total')->groupBy('statut')->pluck('total', 'statut');
+
+        // Encaissement : paiements reçus sur les ventes de la période
+        $encaisse = (int) \App\Models\Paiement::whereIn('commande_id', $ventes->pluck('id'))
+            ->whereIn('statut', ['paye', 'confirme'])->sum('montant');
+
+        // Moyens de paiement utilisés sur la période (hors échecs)
+        $paiements = \App\Models\Paiement::where('created_at', '>=', $debut)
+            ->where('statut', '!=', 'echoue')
+            ->selectRaw('methode, count(*) as total')->groupBy('methode')->pluck('total', 'methode');
+
+        // Produits les plus vendus : quantités des seules ventes (les devis non acceptés ne comptent pas)
+        $topProduits = \DB::table('commande_items')
+            ->join('commandes', 'commande_items.commande_id', '=', 'commandes.id')
             ->join('produits', 'commande_items.produit_id', '=', 'produits.id')
-            ->select('produits.nom', \DB::raw('SUM(commande_items.quantite) as total_vendu'))
+            ->whereIn('commandes.statut', Commande::STATUTS_VENDUS)
+            ->where('commandes.created_at', '>=', $debut)
+            ->select('produits.nom', \DB::raw('SUM(commande_items.quantite) as total_vendu'), \DB::raw('SUM(commande_items.sous_total) as montant'))
             ->groupBy('produits.id', 'produits.nom')
-            ->orderByDesc('total_vendu')
+            ->orderByDesc('montant')
             ->take(5)
             ->get();
 
-        // 2. Alertes de stock (produits < 5 unités)
-        $stocks_faibles = Produit::where('stock', '<', 5)->where('disponible', 1)->take(5)->get();
-
-        // 3. Évolution du CA sur les 7 derniers jours (pour graphique)
-        $ca_evolution = [];
-        for ($i = 6; $i >= 0; $i--) {
-            $date = now()->subDays($i)->toDateString();
-            $montant = Commande::where('statut', 'confirmee')
-                                ->whereDate('created_at', $date)
-                                ->sum('total');
-            $ca_evolution[$date] = $montant;
-        }
-
-        return view('admin.dashboard', compact(
-            'total_produits', 'total_commandes',
-            'total_categories', 'commandes_recentes',
-            'ca_total', 'ca_jour', 'top_produits', 'stocks_faibles', 'ca_evolution'
-        ));
+        return view('admin.dashboard', [
+            'ca' => $ca,
+            'caPrecedent' => $caPrecedent,
+            'caParJour' => $caParJour,
+            'aEncaisser' => (int) Commande::where('statut', 'en_attente')->sum('total'),
+            'nbVentes' => $ventes->count(),
+            'nbLivrees' => $ventes->where('statut', 'livree')->count(),
+            'caDetail' => (int) $ventes->where('est_pro', false)->sum('total'),
+            'caGros' => (int) $ventes->where('est_pro', true)->sum('total'),
+            'tranches' => $tranches,
+            'debut' => $debut,
+            'parStatut' => $parStatut,
+            'prosEnAttente' => \App\Models\ComptePro::where('statut', 'en_attente')->count(),
+            'encaisse' => $encaisse,
+            'paiements' => $paiements,
+            'topProduits' => $topProduits,
+            'stocksFaibles' => Produit::where('disponible', true)->where('stock', '<', self::SEUIL_STOCK)->orderBy('stock')->take(5)->get(['id', 'nom', 'stock', 'image']),
+            'commandesRecentes' => Commande::with('user.comptePro')->latest()->take(6)->get(),
+        ]);
     }
+
+    // Sous ce stock, un produit en vente est signalé sur le tableau de bord
+    private const SEUIL_STOCK = 5;
 
     public function produits()
     {
@@ -82,27 +117,42 @@ class AdminController extends Controller
         return view('admin.produits.ajouter', compact('categories'));
     }
 
-   public function commandes()
-{
-    $commandes = Commande::with('user')->latest()->paginate(15);
-    
-    $today = now()->toDateString();
-    $toutesCommandes = Commande::all();
+    public function commandes(Request $request)
+    {
+        // Filtres de la page (onglets, recherche, date) : appliqués ici, sinon la liste restait complète
+        $recherche = trim((string) $request->query('search', ''));
+        $commandes = Commande::with(['user', 'paiement', 'items'])
+            ->when($request->filled('statut'), fn ($q) => $q->where('statut', $request->query('statut')))
+            ->when($request->filled('date'), fn ($q) => $q->whereDate('created_at', $request->query('date')))
+            ->when($recherche !== '', function ($q) use ($recherche) {
+                $numero = (int) ltrim(preg_replace('/\D+/', '', $recherche), '0');
+                $q->where(function ($q) use ($recherche, $numero) {
+                    $q->whereHas('user', fn ($u) => $u->where('name', 'like', "%{$recherche}%")->orWhere('email', 'like', "%{$recherche}%"));
+                    if ($numero > 0) {
+                        $q->orWhere('id', $numero);
+                    }
+                });
+            })
+            ->latest()
+            ->paginate(15)
+            ->withQueryString();
 
-    $stats = [
-        'total' => $toutesCommandes->count(),
-        'en_attente' => $toutesCommandes->where('statut', 'en_attente')->count(),
-        'confirmee' => $toutesCommandes->where('statut', 'confirmee')->count(),
-        'livree' => $toutesCommandes->where('statut', 'livree')->count(),
-        'annulee' => $toutesCommandes->where('statut', 'annulee')->count(),
-        'chiffre_affaires' => $toutesCommandes->where('statut', 'confirmee')->sum('total'),
-        'ca_jour' => Commande::where('statut', 'confirmee')
-                             ->whereDate('created_at', $today)
-                             ->sum('total'),
-    ];
+        $parStatut = Commande::selectRaw('statut, count(*) as total')->groupBy('statut')->pluck('total', 'statut');
 
-    return view('admin.commandes', compact('commandes', 'stats'));
-}
+        $stats = [
+            'total' => $parStatut->sum(),
+            'devis_demande' => $parStatut['devis_demande'] ?? 0,
+            'en_attente' => $parStatut['en_attente'] ?? 0,
+            'confirmee' => $parStatut['confirmee'] ?? 0,
+            'en_preparation' => $parStatut['en_preparation'] ?? 0,
+            'expedie' => $parStatut['expedie'] ?? 0,
+            'livree' => $parStatut['livree'] ?? 0,
+            'annulee' => $parStatut['annulee'] ?? 0,
+            'ca_jour' => Commande::whereIn('statut', Commande::STATUTS_VENDUS)->whereDate('created_at', now()->toDateString())->sum('total'),
+        ];
+
+        return view('admin.commandes', compact('commandes', 'stats'));
+    }
 
     public function categories()
     {
@@ -141,6 +191,17 @@ class AdminController extends Controller
    public function updateStatut(Request $request, $id)
 {
     $commande = Commande::with('user')->findOrFail($id);
+
+    // Un devis pro en cours avance par son chiffrage puis la réponse du revendeur, jamais à la main
+    if (in_array($commande->statut, ['devis_demande', 'devis_envoye'], true)) {
+        return redirect()->route('admin.commande.detail', $commande)
+            ->with('error', 'Ce devis attend son chiffrage ou la réponse du revendeur : son statut ne se change pas à la main.');
+    }
+
+    $request->validate([
+        'statut' => ['required', \Illuminate\Validation\Rule::in(['en_attente', 'confirmee', 'en_preparation', 'expedie', 'livree', 'annulee'])],
+    ]);
+
     $ancienStatut = $commande->statut;
     $commande->update([
         'statut' => $request->statut,
@@ -165,6 +226,8 @@ class AdminController extends Controller
             'tarifications' => 'nullable|array',
             'tarifications.*.label' => 'required_with:tarifications|string|max:255',
             'tarifications.*.prix' => 'nullable|numeric',
+            'prix_pro' => 'nullable|array',
+            'prix_pro.*' => 'nullable|integer|min:0',
             'image' => 'nullable|image|max:' . OptimiseurImage::POIDS_MAX_KO,
         ], ['image.max' => 'La photo dépasse 20 Mo.']);
 
@@ -196,7 +259,8 @@ class AdminController extends Controller
             'prix_metre' => $tarifs[0]['prix'] ?? null, // Keep for legacy display
             'image' => $imagePath,
             'stock' => $request->stock ?? 0,
-            'disponible' => 1
+            'disponible' => 1,
+            'prix_pro' => $this->prixPro($request),
         ]);
 
         return redirect()->route('admin.produits')->with('success', 'Produit ajouté ! ✅');
@@ -206,6 +270,8 @@ class AdminController extends Controller
     {
         $produit = Produit::findOrFail($id);
         $request->validate([
+            'prix_pro' => 'nullable|array',
+            'prix_pro.*' => 'nullable|integer|min:0',
             'image' => 'nullable|image|max:' . OptimiseurImage::POIDS_MAX_KO,
         ], ['image.max' => 'La photo dépasse 20 Mo.']);
 
@@ -228,10 +294,26 @@ class AdminController extends Controller
             'tarifications' => $tarifs,
             'prix_metre' => $tarifs[0]['prix'] ?? $produit->prix_metre, // Legacy
             'stock' => $request->stock ?? 0,
-            'image' => $produit->image
+            'image' => $produit->image,
+            'prix_pro' => $this->prixPro($request),
         ]);
 
         return redirect()->route('admin.produits')->with('success', 'Produit modifié ! ✅');
+    }
+
+    /**
+     * Prix pro saisis dans le formulaire produit : { format: prix } pour les seuls formats remplis,
+     * null si aucun (le tissu n'est alors pas proposé dans l'Espace Pro).
+     */
+    private function prixPro(Request $request): ?array
+    {
+        $prix = collect($request->input('prix_pro', []))
+            ->only(array_keys(Produit::FORMATS))
+            ->map(fn ($valeur) => (int) $valeur)
+            ->filter(fn ($valeur) => $valeur > 0)
+            ->all();
+
+        return $prix ?: null;
     }
 
     public function ajouterImage(Request $request, Produit $produit)

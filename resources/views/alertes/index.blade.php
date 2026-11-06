@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Alertes de stock · AfriTex')
+@section('title', 'Alertes de stock · ' . boutique('nom'))
 @section('content')
 
 <div class="conteneur max-w-4xl pb-20 pt-10 lg:pb-28 lg:pt-14">

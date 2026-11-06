@@ -115,6 +115,11 @@ class CommandeController extends Controller
     {
         abort_unless($commande->user_id === auth()->id(), 403);
 
+        // Commande en gros : son devis, sa réponse et son suivi se trouvent dans l'Espace Pro
+        if ($commande->est_pro) {
+            return redirect()->route('pro.commande', $commande);
+        }
+
         $commande->load(['items.produit', 'paiement']);
 
         return view('commandes.show', compact('commande'));

@@ -40,7 +40,7 @@
             ['texte' => 'Livraison offerte', 'detail' => 'dès 50 000 F d\'achat', 'lien' => route('catalogue')],
             ['texte' => 'Partout en Côte d\'Ivoire', 'detail' => 'livré sous 24 à 72 h', 'lien' => route('faq')],
             ['texte' => 'Mobile Money', 'detail' => 'Orange Money, MTN, Wave, Moov ou paiement à la livraison', 'lien' => route('faq')],
-            ['texte' => 'Gros et détail', 'detail' => 'au mètre, au rouleau ou en confection', 'lien' => route('catalogue')],
+            ['texte' => 'Gros et détail', 'detail' => 'revendeurs : commandez en gros dans l\'Espace Pro', 'lien' => route('pro.accueil')],
             ['texte' => 'Retours', 'detail' => 'acceptés sous 7 jours', 'lien' => route('cgu')],
         ];
     @endphp
@@ -68,8 +68,8 @@
             <a href="{{ route('accueil') }}" class="flex min-w-0 items-center gap-3" @click="menu = false">
                 <x-logo taille="size-10 lg:size-11" class="bg-brun-fonce text-xl text-or" />
                 <span class="min-w-0 leading-tight">
-                    <span class="titre-display block text-[1.2rem] lg:text-[1.4rem]">AfriTex</span>
-                    <span class="block truncate text-[0.8rem] text-encre-2 lg:text-sm">Tissus africains, gros et détail</span>
+                    <span class="titre-display block text-[1.2rem] lg:text-[1.4rem]">{{ boutique('nom') }}</span>
+                    <span class="block truncate text-[0.8rem] text-encre-2 lg:text-sm">{{ boutique('slogan') }}</span>
                 </span>
             </a>
 
@@ -91,7 +91,7 @@
                             <div id="panneau-categories" x-show="ouvert" x-cloak
                                  x-transition:enter="transition duration-200 ease-out-fort" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
                                  x-transition:leave="transition duration-150 ease-out" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
-                                 class="absolute left-1/2 top-full z-dropdown mt-[1.15rem] w-[34rem] -translate-x-1/2 border border-trait bg-carte p-3 shadow-[0_18px_40px_-24px_oklch(0.25_0.04_45/0.45)]">
+                                 class="absolute left-1/2 top-full z-dropdown mt-[1.15rem] w-[34rem] -translate-x-1/2 border border-trait bg-carte p-3 shadow-[0_18px_40px_-24px_oklch(0.25_0.04_var(--teinte-ombre)/0.45)]">
                                 <ul class="grid grid-cols-2 gap-x-2">
                                     @foreach($globalCategories as $cat)
                                         <li>
@@ -130,10 +130,11 @@
                         </button>
                         <div id="menu-compte" x-show="ouvert" x-cloak
                              x-transition:enter="transition duration-200 ease-out-fort" x-transition:enter-start="opacity-0 -translate-y-1" x-transition:enter-end="opacity-100 translate-y-0"
-                             class="absolute right-0 top-full z-dropdown mt-2 w-60 border border-trait bg-carte py-2 shadow-[0_18px_40px_-24px_oklch(0.25_0.04_45/0.45)]">
+                             class="absolute right-0 top-full z-dropdown mt-2 w-60 border border-trait bg-carte py-2 shadow-[0_18px_40px_-24px_oklch(0.25_0.04_var(--teinte-ombre)/0.45)]">
                             <p class="truncate px-4 pb-2 text-sm text-encre-2">{{ Auth::user()->email }}</p>
                             @php
                                 $liensCompte = array_filter([
+                                    ...(Auth::user()->comptePro ? [['pro.accueil', 'Espace Pro', 'ciseaux']] : []),
                                     ['commandes.index', 'Mes commandes', 'colis'],
                                     ['wishlist', 'Mes favoris', 'coeur'],
                                     ['alertes.index', 'Alertes de stock', 'cloche'],
@@ -198,6 +199,11 @@
                             <span class="titre-display">{{ $lien['titre'] }}</span>
                         </a>
                     @endforeach
+                    @php $actifPro = request()->routeIs('pro.*'); @endphp
+                    <a href="{{ route('pro.accueil') }}" @click="menu = false" @if($actifPro) aria-current="page" @endif
+                       class="-mx-3 flex min-h-14 items-center border-b border-trait px-3 text-[1.35rem] transition-colors hover:bg-brun-doux hover:text-brun-fonce {{ $actifPro ? 'bg-brun-doux font-medium text-brun-fonce' : 'text-encre' }}">
+                        <span class="titre-display">Espace Pro</span>
+                    </a>
                     @auth
                         <a href="{{ route('commandes.index') }}" class="-mx-3 flex min-h-14 items-center border-b border-trait px-3 text-[1.35rem] text-encre transition-colors hover:bg-brun-doux hover:text-brun-fonce">
                             <span class="titre-display">Mes commandes</span>
@@ -238,7 +244,7 @@
                  x-transition:enter="transition duration-300 ease-out-fort" x-transition:enter-start="opacity-0 translate-y-3" x-transition:enter-end="opacity-100 translate-y-0"
                  x-transition:leave="transition duration-200 ease-out" x-transition:leave-start="opacity-100" x-transition:leave-end="opacity-0"
                  role="{{ $ton === 'danger' ? 'alert' : 'status' }}"
-                 class="fixed bottom-20 right-4 z-toast flex max-w-sm items-start gap-3 bg-encre px-5 py-4 text-[0.95rem] text-papier shadow-[0_18px_40px_-20px_oklch(0.2_0.03_45/0.6)] lg:bottom-6 lg:right-6">
+                 class="fixed bottom-20 right-4 z-toast flex max-w-sm items-start gap-3 bg-encre px-5 py-4 text-[0.95rem] text-papier shadow-[0_18px_40px_-20px_oklch(0.2_0.03_var(--teinte-ombre)/0.6)] lg:bottom-6 lg:right-6">
                 <span class="mt-0.5 flex size-5 shrink-0 items-center justify-center {{ $ton === 'danger' ? 'bg-danger' : 'bg-succes' }}">
                     <x-icone :nom="$ton === 'danger' ? 'alerte' : 'coche'" class="size-3.5 text-white" />
                 </span>
@@ -292,6 +298,7 @@
                 <p class="{{ $intertitre }}">La boutique</p>
                 <ul class="space-y-0 sm:space-y-2">
                     <li><a href="{{ route('catalogue') }}" class="{{ $lienPied }}">Tout le catalogue</a></li>
+                    <li><a href="{{ route('pro.accueil') }}" class="{{ $lienPied }}">Espace Pro, vente en gros</a></li>
                     <li><a href="{{ route('about') }}" class="{{ $lienPied }}">Notre histoire</a></li>
                     <li><a href="{{ route('faq') }}" class="{{ $lienPied }}">Questions fréquentes</a></li>
                 </ul>
@@ -331,12 +338,12 @@
 
         {{-- Le nom revient en pleine largeur pour clore la page --}}
         <div class="conteneur overflow-hidden">
-            <p aria-hidden="true" class="titre-display select-none text-[clamp(4.5rem,19vw,15rem)] leading-[0.8] tracking-[-0.04em] text-[color:color-mix(in_oklch,var(--or)_30%,var(--brun-fonce))]">AfriTex</p>
+            <p aria-hidden="true" class="titre-display select-none text-[clamp(4.5rem,19vw,15rem)] leading-[0.8] tracking-[-0.04em] text-[color:color-mix(in_oklch,var(--or)_30%,var(--brun-fonce))]">{{ boutique('nom') }}</p>
         </div>
         <div class="border-t border-white/15">
             <div class="conteneur flex flex-col gap-2 py-6 text-sm text-white/70 sm:flex-row sm:justify-between">
-                <span>© {{ date('Y') }} AfriTex. Tous droits réservés.</span>
-                <span>Tissus africains, livrés partout en Côte d'Ivoire.</span>
+                <span>© {{ date('Y') }} {{ boutique('nom') }}. Tous droits réservés.</span>
+                <span>{{ boutique('mot_fin') }}</span>
             </div>
         </div>
     </footer>

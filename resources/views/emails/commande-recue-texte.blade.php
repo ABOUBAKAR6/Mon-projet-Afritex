@@ -27,4 +27,4 @@ PAIEMENT : {!! $reglement[0] !!}
 Retrouvez cette commande dans votre compte : {!! $lienCompte !!}
 Une question ? Répondez simplement à cet e-mail.
 
-AfriTex · Tissus africains, gros et détail · Côte d'Ivoire
+{{ boutique('nom') }} · {{ boutique('slogan') }} · Côte d'Ivoire

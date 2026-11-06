@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Politique de confidentialité · AfriTex')
+@section('title', 'Politique de confidentialité · ' . boutique('nom'))
 @section('content')
 
 <x-en-tete-page titre="Confidentialité" chapeau="Quelles données nous collectons, pourquoi, et comment exercer vos droits." />

@@ -18,7 +18,7 @@ class NouveauClientNotification extends Notification
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('AfriTex — Nouveau client inscrit 🎉')
+            ->subject(boutique('nom').' — Nouveau client inscrit 🎉')
             ->greeting('Bonjour '.$notifiable->name)
             ->line('Un nouveau client vient de s’inscrire.')
             ->line('Nom : **'.$this->client->name.'**')

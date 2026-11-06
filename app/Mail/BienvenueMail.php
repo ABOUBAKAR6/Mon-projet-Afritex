@@ -18,7 +18,7 @@ class BienvenueMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Bienvenue chez AfriTex : votre compte est créé',
+            subject: 'Bienvenue chez '.boutique('nom').' : votre compte est créé',
         );
     }
 

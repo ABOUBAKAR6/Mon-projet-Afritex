@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Préférences · AfriTex')
+@section('title', 'Préférences · ' . boutique('nom'))
 @section('content')
 @php
     $onglet = 'flex min-h-11 items-center gap-2 border-b-2 px-4 text-[0.95rem] font-medium transition-colors';
@@ -99,7 +99,7 @@
         <section class="border border-[color:color-mix(in_oklch,var(--danger)_30%,transparent)] bg-carte p-6 sm:p-8">
             <h2 class="titre-display text-[1.2rem] text-danger">Supprimer mon compte</h2>
             <p class="mt-2 max-w-[60ch] text-encre-2">Votre compte, vos favoris et votre historique seront effacés. Cette action est définitive.</p>
-            <button type="button" onclick="if (confirm('Supprimer définitivement votre compte AfriTex ?')) deleteAccount()" class="btn btn-danger mt-5">Supprimer mon compte</button>
+            <button type="button" onclick="if (confirm('Supprimer définitivement votre compte {{ str_replace("'", '’', boutique('nom')) }} ?')) deleteAccount()" class="btn btn-danger mt-5">Supprimer mon compte</button>
         </section>
     </div>
 </div>
@@ -185,7 +185,7 @@
         const url = URL.createObjectURL(new Blob([JSON.stringify(userData, null, 2)], { type: 'application/json' }));
         const lien = document.createElement('a');
         lien.href = url;
-        lien.download = `mes-donnees-afritex-${new Date().toISOString().split('T')[0]}.json`;
+        lien.download = `mes-donnees-{{ boutique_slug() }}-${new Date().toISOString().split('T')[0]}.json`;
         lien.click();
         URL.revokeObjectURL(url);
     }

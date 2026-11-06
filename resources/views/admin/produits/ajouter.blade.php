@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Ajouter un produit · AfriTex')
+@section('title', 'Ajouter un produit · ' . boutique('nom'))
 @section('content')
 @php
     $prix = [['prix_metre', 'Au mètre'], ['prix_rouleau', 'Au rouleau'], ['prix_pantalon', 'Pantalon'], ['prix_chemise', 'Chemise'], ['prix_tunique', 'Tunique']];
@@ -51,6 +51,7 @@
                     </div>
                 @endforeach
             </div>
+            @include('admin.produits.prix-pro', ['prefixe' => 'page-', 'classe' => 'mt-8 border-t border-trait pt-6'])
         </section>
     </div>
 

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Commande n° ' . str_pad($commande->id, 4, '0', STR_PAD_LEFT) . ' · AfriTex')
+@section('title', 'Commande n° ' . str_pad($commande->id, 4, '0', STR_PAD_LEFT) . ' · ' . boutique('nom'))
 @section('content')
 @php
     $formats = [

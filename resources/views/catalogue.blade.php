@@ -6,7 +6,7 @@
     $allColors = collect($allColors)->filter()->values();
     $tris = ['latest' => 'Les plus récents', 'price_asc' => 'Prix au mètre croissant', 'price_desc' => 'Prix au mètre décroissant'];
 @endphp
-@section('title', $titrePage . ' · AfriTex')
+@section('title', $titrePage . ' · ' . boutique('nom'))
 @section('content')
 
 {{-- Une catégorie ouverte prend sa propre photo comme bandeau --}}

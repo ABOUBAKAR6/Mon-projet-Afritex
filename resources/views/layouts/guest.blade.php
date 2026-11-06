@@ -8,11 +8,11 @@
     <div class="grid min-h-svh lg:grid-cols-[1fr_minmax(28rem,36rem)]">
         <aside class="relative isolate hidden overflow-hidden bg-brun-fonce text-white lg:flex lg:flex-col lg:justify-between lg:p-12 xl:p-16">
             <img src="{{ asset('images/hero-bg.avif') }}" alt="" class="absolute inset-0 -z-10 h-full w-full object-cover">
-            <div aria-hidden="true" class="absolute inset-0 -z-10 bg-[oklch(0.18_0.04_40/0.62)]"></div>
+            <div aria-hidden="true" class="absolute inset-0 -z-10 bg-[oklch(0.18_0.04_var(--teinte-ombre)/0.62)]"></div>
 
             <a href="{{ route('accueil') }}" class="flex items-center gap-3 self-start">
                 <x-logo taille="size-11" class="bg-or text-xl text-brun-fonce" />
-                <span class="titre-display text-[1.4rem]">AfriTex</span>
+                <span class="titre-display text-[1.4rem]">{{ boutique('nom') }}</span>
             </a>
 
             <div class="max-w-lg">
@@ -28,7 +28,7 @@
         <main id="contenu" class="flex flex-col bg-papier px-5 py-8 sm:px-10 lg:px-14 lg:py-12">
             <a href="{{ route('accueil') }}" class="flex items-center gap-3 self-start lg:hidden">
                 <x-logo class="bg-brun-fonce text-xl text-or" />
-                <span class="titre-display text-[1.25rem]">AfriTex</span>
+                <span class="titre-display text-[1.25rem]">{{ boutique('nom') }}</span>
             </a>
             <div class="apparition mx-auto my-auto w-full max-w-md py-10">
                 {{ $slot }}

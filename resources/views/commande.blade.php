@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Livraison · AfriTex')
+@section('title', 'Livraison · ' . boutique('nom'))
 @push('tete')
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 @endpush
@@ -327,7 +327,7 @@ function surPosition(position) {
     if (cercle) {
         cercle.setLatLng([lat, lng]).setRadius(accuracy);
     } else {
-        cercle = L.circle([lat, lng], { radius: accuracy, color: '#8b4513', weight: 1, fillColor: '#8b4513', fillOpacity: 0.12, interactive: false }).addTo(map);
+        cercle = L.circle([lat, lng], { radius: accuracy, color: '{{ couleur('accent') }}', weight: 1, fillColor: '{{ couleur('accent') }}', fillOpacity: 0.12, interactive: false }).addTo(map);
     }
     if (premiere) map.setView([lat, lng], accuracy < 150 ? 17 : 15);
     else map.panTo([lat, lng]);

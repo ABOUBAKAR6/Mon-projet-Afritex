@@ -35,7 +35,7 @@ class MagicAssistantService
             ])->post($this->apiUrl, [
                 'model' => 'claude-3-5-sonnet-20240620',
                 'max_tokens' => 1024,
-                'system' => "Tu es l'Assistant Magique d'Afritex, le conseiller expert en textiles et tissus les plus prestigieux.
+                'system' => "Tu es l'Assistant Magique d'".boutique('nom').", le conseiller expert en textiles et tissus les plus prestigieux.
                             Ton but est de transformer une simple demande en une expérience d'achat luxueuse.
                             Tu ne te contentes pas de donner des IDs, tu conseilles sur le style, l'occasion (mariage, travail, quotidien) et la qualité.
 

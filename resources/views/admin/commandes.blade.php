@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Commandes · AfriTex')
+@section('title', 'Commandes · ' . boutique('nom'))
 @section('content')
 @php
     $statuts = [
@@ -10,13 +10,18 @@
         'livree' => 'Livrée',
         'annulee' => 'Annulée',
     ];
-    $compteurs = [
+    // Filtre : les statuts de devis en plus (ils ne se choisissent pas à la main dans le menu « Statut » des lignes)
+    $statutsFiltre = ['devis_demande' => 'Devis à chiffrer', 'devis_envoye' => 'Devis envoyé', 'devis_refuse' => 'Devis refusé'] + $statuts;
+    $compteurs = array_values(array_filter([
         ['', 'Toutes', $stats['total'] ?? 0],
+        ($stats['devis_demande'] ?? 0) ? ['devis_demande', 'Devis à chiffrer', $stats['devis_demande']] : null,
         ['en_attente', 'En attente', $stats['en_attente'] ?? 0],
         ['confirmee', 'Confirmées', $stats['confirmee'] ?? 0],
+        ['en_preparation', 'En préparation', $stats['en_preparation'] ?? 0],
+        ['expedie', 'Expédiées', $stats['expedie'] ?? 0],
         ['livree', 'Livrées', $stats['livree'] ?? 0],
         ['annulee', 'Annulées', $stats['annulee'] ?? 0],
-    ];
+    ]));
 @endphp
 
 <x-admin-entete titre="Commandes" description="Suivez chaque commande et faites-la avancer jusqu'à la livraison.">
@@ -51,7 +56,7 @@
         <label for="f-statut" class="etiquette">Statut</label>
         <select id="f-statut" name="statut" class="champ">
             <option value="">Tous</option>
-            @foreach($statuts as $valeur => $libelle)
+            @foreach($statutsFiltre as $valeur => $libelle)
                 <option value="{{ $valeur }}" @selected(request('statut') === $valeur)>{{ $libelle }}</option>
             @endforeach
         </select>
@@ -94,6 +99,7 @@
                         <tr>
                             <td>
                                 <a href="{{ route('admin.commande.detail', $commande) }}" class="chiffres font-semibold text-brun hover:underline">n° {{ str_pad($commande->id, 4, '0', STR_PAD_LEFT) }}</a>
+                                @if($commande->est_pro)<span class="pastille pastille-brun ml-1.5 !py-0.5">Pro</span>@endif
                                 <span class="block text-[0.85rem] text-encre-2">{{ $commande->created_at->format('d/m/Y H:i') }}</span>
                             </td>
                             <td>
@@ -114,12 +120,16 @@
                             <td class="text-right">
                                 <div class="flex items-center justify-end gap-1">
                                     <a href="{{ route('admin.commande.detail', $commande) }}" class="btn btn-fantome btn-sm">Détail</a>
+                                    {{-- Un devis pro en cours avance par son chiffrage et la réponse du revendeur, pas à la main --}}
+                                    @if(in_array($commande->statut, ['devis_demande', 'devis_envoye'], true))
+                                        <a href="{{ route('admin.commande.detail', $commande) }}" class="btn btn-contour btn-sm">{{ $commande->statut === 'devis_demande' ? 'Chiffrer' : 'Modifier' }}</a>
+                                    @else
                                     <div class="relative" x-data="{ ouvert: false }" @click.outside="ouvert = false" @keydown.escape="ouvert = false">
                                         <button type="button" @click="ouvert = !ouvert" :aria-expanded="ouvert" class="btn btn-contour btn-sm">
                                             Statut <x-icone nom="chevron-bas" />
                                         </button>
                                         <div x-show="ouvert" x-cloak x-transition.origin.top.right
-                                             class="absolute right-0 top-full z-dropdown mt-1 w-52 border border-trait bg-carte py-1 text-left shadow-[0_18px_40px_-24px_oklch(0.25_0.04_45/0.45)]">
+                                             class="absolute right-0 top-full z-dropdown mt-1 w-52 border border-trait bg-carte py-1 text-left shadow-[0_18px_40px_-24px_oklch(0.25_0.04_var(--teinte-ombre)/0.45)]">
                                             <p class="px-3.5 py-2 text-[0.85rem] text-encre-2">Passer la commande en :</p>
                                             @foreach($statuts as $valeur => $libelle)
                                                 @continue($valeur === $commande->statut)
@@ -133,6 +143,7 @@
                                             @endforeach
                                         </div>
                                     </div>
+                                    @endif
                                 </div>
                             </td>
                         </tr>

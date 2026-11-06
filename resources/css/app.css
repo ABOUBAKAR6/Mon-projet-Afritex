@@ -47,6 +47,10 @@
 
     --input: color-mix(in oklch, var(--brun) 14%, oklch(0.78 0 0));
     --ease-out-fort: cubic-bezier(0.23, 1, 0.32, 1);
+
+    /* Teinte des ombres et des voiles sur photo (celle du brun foncé) ;
+       une autre boutique la reçoit de sa couleur foncée, voir partials/tete */
+    --teinte-ombre: 40;
 }
 
 @layer base {

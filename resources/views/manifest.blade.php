@@ -1,10 +1,10 @@
 {
-    "name": "AfriTex - Tissus Africains",
-    "short_name": "AfriTex",
+    "name": @json(boutique('nom').' - '.boutique('slogan')),
+    "short_name": @json(boutique('nom')),
     "start_url": "/",
     "display": "standalone",
-    "background_color": "#4A1B0C",
-    "theme_color": "#C8963E",
+    "background_color": "{{ couleur('foncee') }}",
+    "theme_color": "{{ couleur('seconde') }}",
     "icons": [
         {
             "src": "/favicon.ico",

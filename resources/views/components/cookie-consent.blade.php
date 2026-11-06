@@ -1,6 +1,6 @@
 {{-- Bandeau de consentement aux cookies : carte compacte, au-dessus de la barre d'accès rapide sur téléphone --}}
 <div id="cookieConsent" role="dialog" aria-live="polite" aria-labelledby="cookieConsentTitre"
-     class="fixed inset-x-3 bottom-[4.75rem] z-toast hidden max-w-md bg-encre p-5 text-[0.95rem] text-white shadow-[0_18px_40px_-20px_oklch(0.2_0.03_45/0.6)] sm:inset-x-auto sm:left-6 lg:bottom-6">
+     class="fixed inset-x-3 bottom-[4.75rem] z-toast hidden max-w-md bg-encre p-5 text-[0.95rem] text-white shadow-[0_18px_40px_-20px_oklch(0.2_0.03_var(--teinte-ombre)/0.6)] sm:inset-x-auto sm:left-6 lg:bottom-6">
     <p id="cookieConsentTitre" class="font-semibold">Cookies et confidentialité</p>
     <p class="mt-1.5 text-white/80">Nous utilisons des cookies pour votre panier, votre session et vos préférences. La mesure d'audience est facultative.</p>
     <div class="mt-4 flex flex-wrap gap-2">

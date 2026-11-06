@@ -23,6 +23,7 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'admin' => \App\Http\Middleware\AdminMiddleware::class,
             'cle-espace' => \App\Http\Middleware\CleEspace::class,
+            'pro' => \App\Http\Middleware\EstProValide::class,
         ]);
 
         // Visiteur non connecté sur l'administration : 404, seule la porte secrète /espace-client permet l'accès.

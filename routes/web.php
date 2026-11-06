@@ -20,6 +20,8 @@ use App\Http\Controllers\LoyaltyController;
 use App\Http\Controllers\EspaceGestionController;
 use App\Http\Controllers\Admin\CompteController;
 use App\Http\Controllers\Admin\EquipeController;
+use App\Http\Controllers\Admin\ProController as AdminProController;
+use App\Http\Controllers\ProController;
 
 // ===== PAGES PUBLIQUES =====
 Route::get('/', [ProduitController::class, 'index'])->name('accueil');
@@ -27,11 +29,33 @@ Route::get('/catalogue', [ProduitController::class, 'catalogue'])->name('catalog
 Route::get('/produit/{slug}', [ProduitController::class, 'show'])->name('produit.show');
 Route::get('/track/{tracking_number}', [CommandeController::class, 'track'])->name('track');
 Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
+Route::get('/robots.txt', fn () => response()->view('robots')->header('Content-Type', 'text/plain'))->name('robots');
+Route::get('/manifest.webmanifest', fn () => response()->view('manifest')->header('Content-Type', 'application/manifest+json'))->name('manifest');
 Route::get('/privacy', [LegalController::class, 'rgpd'])->name('privacy');
 Route::get('/cgu', [LegalController::class, 'cgu'])->name('cgu');
 Route::get('/a-propos', [PageController::class, 'about'])->name('about');
 Route::get('/faq', [PageController::class, 'faq'])->name('faq');
 Route::post('/stripe/webhook', [\App\Http\Controllers\StripeWebhookController::class, 'handle'])->name('stripe.webhook');
+
+// ===== ESPACE PRO (vente en gros) =====
+// Accueil : présentation et connexion, état de la demande, ou tableau de bord du revendeur validé.
+Route::get('/pro', [ProController::class, 'accueil'])->name('pro.accueil');
+Route::get('/pro/inscription', [ProController::class, 'inscription'])->name('pro.inscription');
+Route::post('/pro/inscription', [ProController::class, 'inscrire'])->middleware('throttle:5,1')->name('pro.inscription.envoyer');
+
+// Revendeurs validés par la boutique seulement
+Route::middleware(['auth', 'pro'])->prefix('pro')->name('pro.')->group(function () {
+    Route::get('/commander', [ProController::class, 'commander'])->name('commander');
+    Route::post('/commander', [ProController::class, 'envoyerCommande'])->middleware('throttle:10,1')->name('commander.envoyer');
+    Route::get('/commandes', [ProController::class, 'commandes'])->name('commandes');
+    Route::get('/commandes/{commande}', [ProController::class, 'commande'])->name('commande');
+    Route::post('/commandes/{commande}/accepter', [ProController::class, 'accepter'])->name('commande.accepter');
+    Route::post('/commandes/{commande}/refuser', [ProController::class, 'refuser'])->name('commande.refuser');
+    Route::post('/commandes/{commande}/modification', [ProController::class, 'demanderModification'])->middleware('throttle:10,1')->name('commande.modification');
+    Route::get('/compte', [ProController::class, 'compte'])->name('compte');
+    Route::patch('/compte', [ProController::class, 'majCompte'])->name('compte.maj');
+    Route::get('/tarifs.pdf', [ProController::class, 'catalogue'])->name('catalogue');
+});
 
 // ===== PAGES CLIENT =====
 Route::get('/paiement/{commande}/callback', [PaiementController::class, 'callback'])->name('paiement.callback');
@@ -103,6 +127,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::get('/commandes/{commande}', [AdminController::class, 'commandeDetail'])->name('admin.commande.detail');
         Route::patch('/commandes/{commande}/statut', [AdminController::class, 'updateStatut'])->name('admin.commande.statut');
         Route::put('/commandes/{commande}/statut', [AdminController::class, 'updateStatut'])->name('admin.commandes.statut');
+        Route::post('/commandes/{commande}/devis', [AdminProController::class, 'envoyerDevis'])->name('admin.commande.devis');
     });
 
     Route::middleware('can:manage-products')->group(function () {
@@ -123,6 +148,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
     });
 
     Route::get('/users', [AdminController::class, 'utilisateurs'])->middleware('can:manage-users')->name('admin.users');
+
+    Route::middleware('can:manage-pros')->group(function () {
+        Route::get('/pros', [AdminProController::class, 'index'])->name('admin.pros');
+        Route::post('/pros/{compte}/valider', [AdminProController::class, 'valider'])->name('admin.pros.valider');
+        Route::post('/pros/{compte}/refuser', [AdminProController::class, 'refuser'])->name('admin.pros.refuser');
+    });
 
     // Mon compte : chaque membre de l'équipe gère son propre profil
     Route::get('/compte', [CompteController::class, 'edit'])->name('admin.compte');

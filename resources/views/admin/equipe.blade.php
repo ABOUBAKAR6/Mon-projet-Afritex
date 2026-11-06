@@ -1,8 +1,8 @@
 @extends('layouts.admin')
-@section('title', 'Équipe · AfriTex')
+@section('title', 'Équipe · ' . boutique('nom'))
 @section('content')
 @php
-    $fenetre = 'm-auto w-[min(36rem,calc(100vw-2rem))] bg-carte p-0 text-encre shadow-[0_24px_60px_-24px_oklch(0.2_0.03_40/0.5)] backdrop:bg-[oklch(0.2_0.03_40/0.55)]';
+    $fenetre = 'm-auto w-[min(36rem,calc(100vw-2rem))] bg-carte p-0 text-encre shadow-[0_24px_60px_-24px_oklch(0.2_0.03_var(--teinte-ombre)/0.5)] backdrop:bg-[oklch(0.2_0.03_var(--teinte-ombre)/0.55)]';
     $erreursCreation = $errors->creation;
 @endphp
 

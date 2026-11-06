@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Facture AfriTex</title>
+    <title>Facture {{ boutique('nom') }}</title>
     <style>
         body { font-family: 'DejaVu Sans', sans-serif; font-size: 12px; color: #333; }
         .header { text-align: center; margin-bottom: 30px; }
@@ -18,7 +18,7 @@
 </head>
 <body>
     <div class="header">
-        <h1>AfriTex</h1>
+        <h1>{{ boutique('nom') }}</h1>
         <p>Vêtements et Tissus de Qualité</p>
     </div>
 
@@ -64,7 +64,7 @@
 
     <div class="footer">
         Merci pour votre confiance !<br>
-        AfriTex - Boutique en ligne officielle.
+        {{ boutique('nom') }} - Boutique en ligne officielle.
     </div>
 </body>
 </html>

@@ -19,7 +19,7 @@ class CommandeRecueMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'Commande ' . $this->numero() . ' bien reçue · AfriTex',
+            subject: 'Commande ' . $this->numero() . ' bien reçue · ' . boutique('nom'),
         );
     }
 

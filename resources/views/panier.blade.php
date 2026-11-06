@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Mon panier · AfriTex')
+@section('title', 'Mon panier · ' . boutique('nom'))
 @section('content')
 @php
     $formats = [

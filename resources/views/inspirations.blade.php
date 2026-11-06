@@ -1,8 +1,8 @@
 @extends('layouts.app')
-@section('title', 'Inspirations · AfriTex')
+@section('title', 'Inspirations · ' . boutique('nom'))
 @section('content')
 
-<x-en-tete-page titre="Inspirations" chapeau="Robes, boubous, chemises : les créations cousues par nos clients dans les tissus AfriTex." />
+<x-en-tete-page titre="Inspirations" chapeau="Robes, boubous, chemises : les créations cousues par nos clients dans les tissus {{ boutique('nom') }}." />
 
 <div class="conteneur pb-20 pt-10 lg:pb-28 lg:pt-14">
     <div class="grid items-start gap-10 lg:grid-cols-[22rem_1fr] lg:gap-14">

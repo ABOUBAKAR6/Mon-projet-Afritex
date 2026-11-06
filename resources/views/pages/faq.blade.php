@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Questions fréquentes · AfriTex')
+@section('title', 'Questions fréquentes · ' . boutique('nom'))
 @section('content')
 @php
     $lienWhatsapp = config('services.whatsapp.numero') ? 'https://wa.me/' . config('services.whatsapp.numero') : null;

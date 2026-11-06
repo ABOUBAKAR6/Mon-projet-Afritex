@@ -1,9 +1,9 @@
-const CACHE_NAME = 'afritex-cache-v1';
+const CACHE_NAME = 'boutique-cache-v1';
 const urlsToCache = [
   '/',
   '/css/app.css',
   '/js/app.js',
-  '/manifest.json'
+  '/manifest.webmanifest'
 ];
 
 self.addEventListener('install', event => {

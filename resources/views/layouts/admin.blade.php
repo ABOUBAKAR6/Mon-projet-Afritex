@@ -12,10 +12,13 @@
         ['admin.produits', 'Produits', 'boutique', ['admin.produits', 'admin.produits.*'], 'manage-products'],
         ['admin.categories', 'Catégories', 'dossier', ['admin.categories'], 'manage-categories'],
         ['admin.users', 'Utilisateurs', 'utilisateurs', ['admin.users'], 'manage-users'],
+        ['admin.pros', 'Comptes pro', 'ciseaux', ['admin.pros'], 'manage-pros'],
         ['admin.equipe', 'Équipe', 'bouclier', ['admin.equipe'], 'proprietaire'],
         ['admin.compte', 'Mon compte', 'reglages', ['admin.compte'], null],
     ])->filter(fn ($entree) => $entree[4] === null || Auth::user()->can($entree[4]));
-    $enAttente = Auth::user()->can('manage-orders') ? \App\Models\Commande::where('statut', 'en_attente')->count() : 0;
+    // À traiter : commandes en attente et devis pro à chiffrer ; demandes de comptes pro à examiner
+    $enAttente = Auth::user()->can('manage-orders') ? \App\Models\Commande::whereIn('statut', ['en_attente', 'devis_demande'])->count() : 0;
+    $prosEnAttente = Auth::user()->can('manage-pros') ? \App\Models\ComptePro::where('statut', 'en_attente')->count() : 0;
 @endphp
 {{-- Back-office AfriTex : menu « nuit » en brun foncé, page active soulignée d'un trait or (comme Église) --}}
 <body class="bg-papier text-[0.98rem] text-encre" x-data="{ menu: false }" @keydown.escape.window="menu = false">
@@ -26,14 +29,14 @@
     <header class="sticky top-0 z-sticky flex h-16 items-center justify-between bg-brun-fonce px-4 text-white lg:hidden">
         <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-2.5">
             <x-logo taille="size-9" class="bg-or text-brun-fonce" />
-            <span class="titre-display">AfriTex · Admin</span>
+            <span class="titre-display">{{ boutique('nom') }} · Admin</span>
         </a>
         <button type="button" @click="menu = true" aria-controls="menu-admin" :aria-expanded="menu" class="-mr-2 flex size-11 items-center justify-center hover:bg-white/10">
             <x-icone nom="menu" class="size-6" /><span class="sr-only">Ouvrir le menu</span>
         </button>
     </header>
 
-    <div x-show="menu" x-cloak @click="menu = false" x-transition.opacity class="fixed inset-0 z-overlay bg-[oklch(0.2_0.03_40/0.5)] lg:hidden"></div>
+    <div x-show="menu" x-cloak @click="menu = false" x-transition.opacity class="fixed inset-0 z-overlay bg-[oklch(0.2_0.03_var(--teinte-ombre)/0.5)] lg:hidden"></div>
 
     {{-- Menu latéral --}}
     <aside id="menu-admin"
@@ -43,7 +46,7 @@
             <a href="{{ route('admin.dashboard') }}" class="flex items-center gap-3">
                 <x-logo class="bg-or text-lg text-brun-fonce" />
                 <span class="leading-tight">
-                    <span class="titre-display block text-[1.15rem] text-white">AfriTex</span>
+                    <span class="titre-display block text-[1.15rem] text-white">{{ boutique('nom') }}</span>
                     <span class="block text-[0.82rem] text-or-doux">Administration</span>
                 </span>
             </a>
@@ -62,7 +65,10 @@
                             <x-icone :nom="$icone" class="size-[1.15rem] {{ $actif ? 'text-or' : '' }}" />
                             <span class="flex-1">{{ $titre }}</span>
                             @if($route === 'admin.commandes' && $enAttente > 0)
-                                <span class="chiffres min-w-6 bg-or px-1.5 text-center text-[0.78rem] font-semibold leading-6 text-brun-fonce" title="Commandes en attente">{{ $enAttente }}</span>
+                                <span class="chiffres min-w-6 bg-or px-1.5 text-center text-[0.78rem] font-semibold leading-6 text-brun-fonce" title="Commandes en attente et devis à chiffrer">{{ $enAttente }}</span>
+                            @endif
+                            @if($route === 'admin.pros' && $prosEnAttente > 0)
+                                <span class="chiffres min-w-6 bg-or px-1.5 text-center text-[0.78rem] font-semibold leading-6 text-brun-fonce" title="Demandes de comptes pro à examiner">{{ $prosEnAttente }}</span>
                             @endif
                             @if($actif)<span aria-hidden="true" class="absolute inset-x-3 bottom-0 h-0.5 bg-or-doux"></span>@endif
                         </a>

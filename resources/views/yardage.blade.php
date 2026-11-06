@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Calculateur de métrage · AfriTex')
+@section('title', 'Calculateur de métrage · ' . boutique('nom'))
 @section('content')
 @php
     $vetements = ['robe_longue' => 'Robe longue', 'robe_courte' => 'Robe courte', 'chemise' => 'Chemise', 'pantalon' => 'Pantalon', 'tunique' => 'Tunique'];

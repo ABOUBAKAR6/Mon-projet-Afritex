@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-    @include('partials.tete', ['titre' => 'Espace de gestion · AfriTex'])
+    @include('partials.tete', ['titre' => 'Espace de gestion · ' . boutique('nom')])
     <meta name="robots" content="noindex, nofollow">
 </head>
 {{-- Connexion à l'espace de gestion : séparée de la boutique, fond « nuit » comme le back-office d'Église --}}
@@ -12,14 +12,14 @@
         <div class="apparition flex items-center gap-3 text-white">
             <x-logo taille="size-11" class="bg-or text-xl text-brun-fonce" />
             <span class="leading-tight">
-                <span class="titre-display block text-[1.3rem]">AfriTex</span>
+                <span class="titre-display block text-[1.3rem]">{{ boutique('nom') }}</span>
                 <span class="block text-[0.9rem] text-or-doux">Espace de gestion</span>
             </span>
         </div>
 
         <div class="apparition mt-8 w-full max-w-md bg-carte p-7 sm:p-10" style="animation-delay: 80ms">
             <h1 class="titre-display text-[1.9rem]">Connexion</h1>
-            <p class="mt-2 text-encre-2">Réservé à l'équipe AfriTex : commandes, produits, catégories et comptes.</p>
+            <p class="mt-2 text-encre-2">Réservé à l'équipe {{ boutique('nom') }} : commandes, produits, catégories et comptes.</p>
 
             @if (session('status'))
                 <x-auth-session-status class="mt-6" :status="session('status')" />

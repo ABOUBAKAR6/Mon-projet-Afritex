@@ -1,6 +1,6 @@
 Bienvenue, {{ $utilisateur->name }}
 
-Votre compte AfriTex a bien été créé. Vous pouvez dès maintenant commander vos tissus au mètre, au rouleau ou en confection, et suivre vos commandes depuis votre compte.
+Votre compte {{ boutique('nom') }} a bien été créé. Vous pouvez dès maintenant commander vos tissus au mètre, au rouleau ou en confection, et suivre vos commandes depuis votre compte.
 
 Votre identifiant : {{ $utilisateur->email }}
 C'est avec cette adresse que vous vous connectez.
@@ -13,4 +13,4 @@ Découvrir le catalogue : {{ $lienCatalogue }}
 
 Vous n'êtes pas à l'origine de cette inscription ? Ignorez ce message, ou répondez-nous pour que nous supprimions le compte.
 
-AfriTex · Tissus africains, gros et détail · Côte d'Ivoire
+{{ boutique('nom') }} · {{ boutique('slogan') }} · Côte d'Ivoire

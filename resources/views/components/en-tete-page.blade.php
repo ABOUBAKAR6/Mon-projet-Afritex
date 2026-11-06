@@ -10,10 +10,10 @@
     @if($vignette)
         {{-- Flou + léger agrandissement : masque la basse définition et évite le liseré clair sur les bords --}}
         <img src="{{ asset($vignette) }}" alt="" class="absolute inset-0 -z-10 h-full w-full scale-110 object-cover blur-2xl">
-        <div aria-hidden="true" class="absolute inset-0 -z-10 bg-[oklch(0.18_0.04_40/0.7)]"></div>
+        <div aria-hidden="true" class="absolute inset-0 -z-10 bg-[oklch(0.18_0.04_var(--teinte-ombre)/0.7)]"></div>
     @elseif($image && file_exists(public_path($image)))
         <img src="{{ asset($image) }}" alt="" class="absolute inset-0 -z-10 h-full w-full object-cover">
-        <div aria-hidden="true" class="absolute inset-0 -z-10 bg-[oklch(0.18_0.04_40/0.72)]"></div>
+        <div aria-hidden="true" class="absolute inset-0 -z-10 bg-[oklch(0.18_0.04_var(--teinte-ombre)/0.72)]"></div>
     @endif
     <div @class([
         'conteneur w-full py-12 lg:py-16',
@@ -38,7 +38,7 @@
         </div>
         @if($vignette)
             <img src="{{ asset($vignette) }}" alt="{{ $titre }}" fetchpriority="high"
-                 class="apparition mx-auto hidden aspect-[4/5] w-52 border-[6px] border-white/90 object-cover shadow-[0_24px_50px_-20px_oklch(0.1_0.03_40/0.8)] md:block lg:w-60"
+                 class="apparition mx-auto hidden aspect-[4/5] w-52 border-[6px] border-white/90 object-cover shadow-[0_24px_50px_-20px_oklch(0.1_0.03_var(--teinte-ombre)/0.8)] md:block lg:w-60"
                  style="animation-delay: 120ms">
         @endif
     </div>

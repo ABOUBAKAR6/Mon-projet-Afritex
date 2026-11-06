@@ -88,7 +88,7 @@
             </ul>
 
             <p class="text-gray-700 mt-4">
-                Pour exercer ces droits, contactez-nous à <strong>privacy@afritex.ci</strong>
+                Pour exercer ces droits, contactez-nous à <strong>{{ boutique('email_privacy') }}</strong>
             </p>
         </section>
 
@@ -115,9 +115,13 @@
                 Pour toute question concernant cette politique :
             </p>
             <div class="bg-gray-100 p-4 rounded-lg space-y-2">
-                <p><strong>Email :</strong> privacy@afritex.ci</p>
-                <p><strong>Téléphone :</strong> +225 XX XX XX XX</p>
-                <p><strong>Adresse :</strong> [Votre adresse en Côte d'Ivoire]</p>
+                <p><strong>Email :</strong> {{ boutique('email_privacy') }}</p>
+                @if(boutique('telephone'))
+                <p><strong>Téléphone :</strong> {{ boutique('telephone') }}</p>
+                @endif
+                @if(boutique('adresse'))
+                <p><strong>Adresse :</strong> {{ boutique('adresse') }}</p>
+                @endif
             </div>
         </section>
 

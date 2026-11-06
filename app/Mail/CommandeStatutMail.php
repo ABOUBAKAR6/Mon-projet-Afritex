@@ -25,7 +25,7 @@ class CommandeStatutMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: '📦 Votre commande AfriTex #' . str_pad($this->commande->id, 4, '0', STR_PAD_LEFT) . ' — Statut mis à jour',
+            subject: '📦 Votre commande ' . boutique('nom') . ' #' . str_pad($this->commande->id, 4, '0', STR_PAD_LEFT) . ' — Statut mis à jour',
         );
     }
 

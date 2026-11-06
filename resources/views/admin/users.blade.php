@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Utilisateurs · AfriTex')
+@section('title', 'Utilisateurs · ' . boutique('nom'))
 @section('content')
 
 <x-admin-entete titre="Utilisateurs" description="Les comptes de la boutique et leur rôle." />

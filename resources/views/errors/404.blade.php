@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Page introuvable · AfriTex')
+@section('title', 'Page introuvable · ' . boutique('nom'))
 @section('content')
 
 <section class="relative isolate overflow-hidden bg-brun-fonce text-white">

@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Mon compte · AfriTex')
+@section('title', 'Mon compte · ' . boutique('nom'))
 @section('content')
 @php
     // Réglages en deux colonnes : intitulé et aide à gauche, formulaire à droite
@@ -108,7 +108,7 @@
              x-data="televersementImage(512, 'image/png')">
         <div>
             <h2 id="titre-logo" class="titre-display text-[1.3rem]">Logo de la boutique</h2>
-            <p class="mt-1.5 text-[0.95rem] text-encre-2">Remplace le « A » dans l'en-tête de la boutique, sur les pages de connexion et dans l'onglet du navigateur. Une image carrée, PNG à fond transparent de préférence. Les grandes images sont réduites automatiquement.</p>
+            <p class="mt-1.5 text-[0.95rem] text-encre-2">Remplace le « {{ boutique_initiale() }} » dans l'en-tête de la boutique, sur les pages de connexion et dans l'onglet du navigateur. Une image carrée, PNG à fond transparent de préférence. Les grandes images sont réduites automatiquement.</p>
         </div>
         <div>
             {{-- Aperçu sur les deux fonds où le logo apparaît : en-tête clair de la boutique, menu brun de l'administration --}}
@@ -116,12 +116,12 @@
                 <div class="flex items-center gap-3 bg-papier p-4">
                     <img x-show="apercu" x-cloak :src="apercu" alt="" class="size-11 object-contain">
                     <span x-show="!apercu"><x-logo taille="size-11" class="bg-brun-fonce text-xl text-or" /></span>
-                    <span class="titre-display text-[1.15rem]">AfriTex</span>
+                    <span class="titre-display text-[1.15rem]">{{ boutique('nom') }}</span>
                 </div>
                 <div class="flex items-center gap-3 bg-brun-fonce p-4 text-white">
                     <img x-show="apercu" x-cloak :src="apercu" alt="" class="size-11 object-contain">
                     <span x-show="!apercu"><x-logo taille="size-11" class="bg-or text-xl text-brun-fonce" /></span>
-                    <span class="titre-display text-[1.15rem]">AfriTex</span>
+                    <span class="titre-display text-[1.15rem]">{{ boutique('nom') }}</span>
                 </div>
             </div>
             <p class="mt-2 text-[0.88rem] text-encre-2">Aperçu sur la boutique (à gauche) et dans l'administration (à droite).</p>
@@ -139,7 +139,7 @@
                 </div>
             </form>
             @if($logoPresent)
-                <form method="POST" action="{{ route('admin.compte.logo.supprimer') }}" class="mt-2" x-show="!apercu" onsubmit="return confirm('Retirer le logo et revenir au « A » ?')">
+                <form method="POST" action="{{ route('admin.compte.logo.supprimer') }}" class="mt-2" x-show="!apercu" onsubmit="return confirm('Retirer le logo et revenir au « {{ boutique_initiale() }} » ?')">
                     @csrf @method('DELETE')
                     <button type="submit" class="btn btn-sm text-danger hover:bg-danger-doux"><x-icone nom="corbeille" /> Retirer le logo</button>
                 </form>

@@ -1,5 +1,5 @@
 @extends('layouts.app')
-@section('title', 'Suivi de commande · AfriTex')
+@section('title', 'Suivi de commande · ' . boutique('nom'))
 @section('content')
 
 <x-en-tete-page titre="Suivi de commande" :chapeau="'Numéro de suivi ' . $commande->tracking_number" />

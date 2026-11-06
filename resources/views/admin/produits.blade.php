@@ -1,5 +1,5 @@
 @extends('layouts.admin')
-@section('title', 'Produits · AfriTex')
+@section('title', 'Produits · ' . boutique('nom'))
 @section('content')
 @php
     // Données de chaque produit pour pré-remplir la fenêtre « Modifier » (tarifs réels, sinon anciennes colonnes de prix)
@@ -25,6 +25,7 @@
             'meta_description' => $p->meta_description,
             'image' => $p->image ? asset($p->image) : null,
             'tarifs' => $tarifs,
+            'prix_pro' => (object) ($p->prix_pro ?? []),
             'photos' => $p->images->map(fn ($i) => ['id' => $i->id, 'url' => asset($i->chemin)])->values(),
         ]];
     });
@@ -99,7 +100,7 @@
 </section>
 
 @php
-    $fenetre = 'm-auto w-[min(44rem,calc(100vw-2rem))] max-h-[calc(100svh-2rem)] overflow-y-auto bg-carte p-0 text-encre shadow-[0_24px_60px_-24px_oklch(0.2_0.03_40/0.5)] backdrop:bg-[oklch(0.2_0.03_40/0.55)]';
+    $fenetre = 'm-auto w-[min(44rem,calc(100vw-2rem))] max-h-[calc(100svh-2rem)] overflow-y-auto bg-carte p-0 text-encre shadow-[0_24px_60px_-24px_oklch(0.2_0.03_var(--teinte-ombre)/0.5)] backdrop:bg-[oklch(0.2_0.03_var(--teinte-ombre)/0.55)]';
 @endphp
 
 {{-- FENÊTRE : AJOUTER --}}
@@ -125,6 +126,7 @@
             <div id="pricing-container-add" class="space-y-2"></div>
             <button type="button" class="btn btn-contour btn-sm mt-3" onclick="addPricingRow('pricing-container-add')"><x-icone nom="plus" /> Ajouter un tarif</button>
         </fieldset>
+        @include('admin.produits.prix-pro', ['prefixe' => 'a-'])
         <div class="mt-6 grid gap-5 sm:grid-cols-[10rem_1fr]">
             <div><label for="a-stock" class="etiquette">Stock</label><input id="a-stock" type="number" min="0" name="stock" class="champ chiffres" value="0"></div>
             <div><label for="a-image" class="etiquette">Photo principale</label><input id="a-image" type="file" name="image" accept="image/*" class="champ py-2"></div>
@@ -158,6 +160,7 @@
             <div id="pricing-container-edit" class="space-y-2"></div>
             <button type="button" class="btn btn-contour btn-sm mt-3" onclick="addPricingRow('pricing-container-edit')"><x-icone nom="plus" /> Ajouter un tarif</button>
         </fieldset>
+        @include('admin.produits.prix-pro', ['prefixe' => 'edit-'])
 
         <div class="mt-6">
             <label for="edit-description" class="etiquette">Description</label>
@@ -257,6 +260,10 @@ function openEditProduit(id) {
     const conteneur = document.getElementById('pricing-container-edit');
     conteneur.innerHTML = '';
     (p.tarifs.length ? p.tarifs : [{ label: 'Au mètre', prix: '' }]).forEach((t) => addPricingRow('pricing-container-edit', t.label, t.prix));
+
+    @foreach(array_keys(\App\Models\Produit::FORMATS) as $cle)
+    document.getElementById('edit-pro-{{ $cle }}').value = p.prix_pro[@js($cle)] ?? '';
+    @endforeach
 
     const apercu = document.getElementById('edit-img-preview');
     apercu.classList.toggle('hidden', !p.image);

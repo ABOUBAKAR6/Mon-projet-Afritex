@@ -17,12 +17,12 @@ class CommandePasseeNotification extends Notification
     public function toMail($notifiable): MailMessage
     {
         return (new MailMessage)
-            ->subject('AfriTex — Votre commande #'.$this->commande->id.' est confirmée !')
+            ->subject(boutique('nom').' — Votre commande #'.$this->commande->id.' est confirmée !')
             ->greeting('Bonjour '.$notifiable->name.' !')
             ->line('Nous avons bien reçu votre commande.')
             ->line('Montant total : **'.$this->commande->total.' FCFA**')
             ->action('Voir ma commande', url('/commandes/'.$this->commande->id))
-            ->line('Merci pour votre confiance — AfriTex 🎉');
+            ->line('Merci pour votre confiance — '.boutique('nom').' 🎉');
     }
 
     public function toArray($notifiable): array

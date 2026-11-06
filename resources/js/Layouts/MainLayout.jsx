@@ -1,8 +1,9 @@
 import React from 'react';
-import { Link } from '@inertiajs/react';
+import { Link, usePage } from '@inertiajs/react';
 import AnimatedNav from '../Components/Header/AnimatedNav';
 
 export default function MainLayout({ children, auth }) {
+    const nomBoutique = usePage().props.boutique?.nom ?? 'AfriTex';
     return (
         <div className="min-h-screen bg-afri-beige selection:bg-afri-gold selection:text-white">
             {/* PROMO BAR PREMIUM */}
@@ -24,7 +25,7 @@ export default function MainLayout({ children, auth }) {
                 <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-4 gap-16 mb-20 relative z-10">
                     {/* Brand Column */}
                     <div className="col-span-1 md:col-span-1 space-y-6">
-                        <div className="serif text-3xl font-bold tracking-tight">AfriTex.</div>
+                        <div className="serif text-3xl font-bold tracking-tight">{nomBoutique}.</div>
                         <p className="text-afri-cream/60 text-sm leading-relaxed max-w-xs">
                             L'excellence du textile africain. Nous sélectionnons les matières les plus nobles pour sublimer vos créations.
                         </p>
@@ -73,7 +74,7 @@ export default function MainLayout({ children, auth }) {
                 </div>
 
                 <div className="max-w-7xl mx-auto pt-10 border-t border-afri-gold/10 flex flex-col md:flex-row justify-between items-center gap-6 text-[10px] uppercase tracking-widest text-afri-cream/50 font-medium">
-                    <span>© 2026 AfriTex — Tous droits réservés</span>
+                    <span>© {new Date().getFullYear()} {nomBoutique} — Tous droits réservés</span>
                     <span className="flex items-center gap-2">Fait avec <span className="text-afri-gold">❤️</span> en Côte d'Ivoire</span>
                 </div>
             </footer>

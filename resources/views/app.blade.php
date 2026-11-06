@@ -4,7 +4,7 @@
         <meta charset="utf-8">
         <meta name="viewport" content="width=device-width, initial-scale=1">
 
-        <title inertia>{{ config('app.name', 'AfriTex') }}</title>
+        <title inertia>{{ boutique('nom') }}</title>
 
         <!-- Fonts -->
         <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -59,12 +59,12 @@
 
         <script>
             function acceptCookies() {
-                localStorage.setItem('afritex_cookies_accepted', 'true');
+                localStorage.setItem('{{ boutique_slug() }}_cookies_accepted', 'true');
                 document.getElementById('cookie-banner').classList.add('hidden');
             }
 
             document.addEventListener('DOMContentLoaded', () => {
-                if (!localStorage.getItem('afritex_cookies_accepted')) {
+                if (!localStorage.getItem('{{ boutique_slug() }}_cookies_accepted')) {
                     document.getElementById('cookie-banner').classList.remove('hidden');
                 }
             });

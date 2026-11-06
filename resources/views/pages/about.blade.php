@@ -1,12 +1,12 @@
 @extends('layouts.app')
-@section('title', 'Notre histoire · AfriTex')
+@section('title', 'Notre histoire · ' . boutique('nom'))
 @section('content')
 @php
     $photos = \App\Models\Produit::whereNotNull('image')->inRandomOrder()->take(3)->get(['nom', 'image'])
         ->filter(fn ($p) => file_exists(public_path($p->image)))->values();
 @endphp
 
-<x-en-tete-page titre="Notre histoire" chapeau="AfriTex est née d'une envie simple : rendre les plus beaux tissus africains accessibles à chaque couturier, au mètre comme au rouleau." />
+<x-en-tete-page titre="Notre histoire" chapeau="{{ boutique('nom') }} est née d'une envie simple : rendre les plus beaux tissus africains accessibles à chaque couturier, au mètre comme au rouleau." />
 
 <div class="conteneur pb-20 pt-16 lg:pb-28 lg:pt-24">
     <section class="grid items-center gap-14 lg:grid-cols-2 lg:gap-20" aria-labelledby="titre-matiere">
@@ -20,7 +20,7 @@
         <div class="revele" style="--delai: 120ms">
             <x-titre-bloc intitule="La matière" titre="Une passion pour le tissu" id="titre-matiere" />
             <div class="mt-6 space-y-4 text-[1.05rem] lg:text-[1.12rem]">
-                <p>AfriTex est né d'une volonté simple mais ambitieuse : sublimer la richesse des textiles africains en les proposant sous un angle contemporain.</p>
+                <p>{{ boutique('nom') }} est né d'une volonté simple mais ambitieuse : sublimer la richesse des textiles africains en les proposant sous un angle contemporain.</p>
                 <p class="text-encre-2">Nous sélectionnons des étoffes dont la qualité, la finesse et le motif racontent une histoire. Chaque fil, chaque trame est choisi pour sa capacité à faire d'un vêtement une pièce dont on se souvient.</p>
             </div>
         </div>
@@ -44,7 +44,7 @@
 <section class="bg-brun-fonce py-20 text-white lg:py-28">
     <figure class="conteneur revele max-w-4xl text-center">
         <blockquote class="titre-display text-[1.8rem] leading-snug sm:text-[2.3rem]">« Le textile est le langage silencieux de l'élégance. »</blockquote>
-        <figcaption class="mt-6 text-or-doux">La maison AfriTex</figcaption>
+        <figcaption class="mt-6 text-or-doux">La maison {{ boutique('nom') }}</figcaption>
     </figure>
 </section>
 

@@ -1,9 +1,9 @@
 @extends('layouts.admin')
-@section('title', 'Catégories · AfriTex')
+@section('title', 'Catégories · ' . boutique('nom'))
 @section('content')
 @php
     $totalProduits = $categories->sum(fn ($c) => $c->produits->count());
-    $fenetre = 'm-auto w-[min(32rem,calc(100vw-2rem))] bg-carte p-0 text-encre shadow-[0_24px_60px_-24px_oklch(0.2_0.03_40/0.5)] backdrop:bg-[oklch(0.2_0.03_40/0.55)]';
+    $fenetre = 'm-auto w-[min(32rem,calc(100vw-2rem))] bg-carte p-0 text-encre shadow-[0_24px_60px_-24px_oklch(0.2_0.03_var(--teinte-ombre)/0.5)] backdrop:bg-[oklch(0.2_0.03_var(--teinte-ombre)/0.55)]';
 @endphp
 
 <x-admin-entete titre="Catégories" :description="count($categories) . ' familles de tissus, ' . $totalProduits . ' produits au total'">

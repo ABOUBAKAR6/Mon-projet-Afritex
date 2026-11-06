@@ -101,7 +101,7 @@ class CompteController extends Controller
         $this->supprimerFichier(Parametre::valeur('logo'));
         Parametre::definir('logo', null);
 
-        return back()->with('success', 'Le logo a été retiré : la boutique affiche de nouveau le « A ».');
+        return back()->with('success', 'Le logo a été retiré : la boutique affiche de nouveau le « '.boutique_initiale().' ».');
     }
 
     // Nom aléatoire (jamais celui d'origine), image redressée, réduite et compressée en WebP

@@ -29,12 +29,19 @@ class User extends Authenticatable
         'manage-products' => ['libelle' => 'Produits', 'aide' => 'Ajouter, modifier, supprimer, photos et stock', 'route' => 'admin.produits'],
         'manage-categories' => ['libelle' => 'Catégories', 'aide' => 'Créer et modifier les familles de tissus', 'route' => 'admin.categories'],
         'manage-users' => ['libelle' => 'Clients', 'aide' => 'Voir la liste des comptes', 'route' => 'admin.users'],
+        'manage-pros' => ['libelle' => 'Comptes pro', 'aide' => 'Examiner les demandes de revendeurs, valider ou refuser', 'route' => 'admin.pros'],
     ];
 
     // Le propriétaire de la boutique : tous les droits, y compris l'équipe
     public function estProprietaire(): bool
     {
         return $this->role === 'admin';
+    }
+
+    // Le compte pro part avec l'utilisateur, même sur une base sans clés étrangères (MyISAM)
+    protected static function booted(): void
+    {
+        static::deleting(fn (User $user) => $user->comptePro()->delete());
     }
 
     public function estSecretaire(): bool
@@ -91,5 +98,17 @@ class User extends Authenticatable
     public function alertesStock()
     {
         return $this->hasMany(AlerteStock::class);
+    }
+
+    // Espace Pro : demande ou compte revendeur
+    public function comptePro()
+    {
+        return $this->hasOne(ComptePro::class);
+    }
+
+    // Revendeur validé par la boutique : voit les prix pro et commande en gros
+    public function estProValide(): bool
+    {
+        return (bool) $this->comptePro?->estValide();
     }
 }

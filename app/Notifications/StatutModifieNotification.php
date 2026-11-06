@@ -27,13 +27,13 @@ class StatutModifieNotification extends Notification
         $statut = $statuts[$this->commande->statut] ?? $this->commande->statut;
 
         return (new MailMessage)
-            ->subject('AfriTex — Mise à jour de votre commande #' . str_pad($this->commande->id, 4, '0', STR_PAD_LEFT))
+            ->subject(boutique('nom').' — Mise à jour de votre commande #' . str_pad($this->commande->id, 4, '0', STR_PAD_LEFT))
             ->greeting('Bonjour ' . $notifiable->name . ' !')
             ->line('Le statut de votre commande a été mis à jour.')
             ->line('**Commande #' . str_pad($this->commande->id, 4, '0', STR_PAD_LEFT) . '**')
             ->line('**Nouveau statut : ' . $statut . '**')
             ->line('**Montant : ' . number_format($this->commande->total, 0, ',', ' ') . ' FCFA**')
             ->action('Voir ma commande', url('/'))
-            ->line('Merci de votre confiance chez AfriTex ! 🧵');
+            ->line('Merci de votre confiance chez '.boutique('nom').' ! 🧵');
     }
 }

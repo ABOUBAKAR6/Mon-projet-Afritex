@@ -19,7 +19,7 @@ class PaiementConfirmeNotification extends Notification
     public function toMail($notifiable): MailMessage
     {
         $isPending = $this->paiement->statut === 'en_attente';
-        $subject = $isPending ? 'AfriTex — Commande enregistrée 📦' : 'AfriTex — Paiement confirmé ✅';
+        $subject = $isPending ? boutique('nom').' — Commande enregistrée 📦' : boutique('nom').' — Paiement confirmé ✅';
         $message = $isPending
             ? 'Votre commande a été enregistrée. Le paiement se fera à la livraison.'
             : 'Votre paiement a été confirmé avec succès.';

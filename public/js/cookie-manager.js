@@ -2,7 +2,7 @@
 class CookieManager {
     constructor() {
         this.consentKey = 'cookieConsent';
-        this.panierKey = 'panierAfriTex';
+        this.panierKey = 'panier_' + (window.BOUTIQUE?.slug || 'boutique');
         this.preferencesKey = 'userPreferences';
     }
 

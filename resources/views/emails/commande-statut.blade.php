@@ -5,16 +5,16 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Mise à jour de votre commande</title>
 </head>
-<body style="margin:0; padding:0; background:#f5f0eb; font-family:Arial, sans-serif;">
+<body style="margin:0; padding:0; background:{{ couleur('surface') }}; font-family:Arial, sans-serif;">
 
     <div style="max-width:600px; margin:40px auto; background:white;
                 border-radius:16px; overflow:hidden; box-shadow:0 4px 20px rgba(0,0,0,0.1);">
 
         {{-- EN-TÊTE --}}
-        <div style="background:linear-gradient(135deg, #8B4513, #4A1B0C);
+        <div style="background:linear-gradient(135deg, {{ couleur('accent') }}, {{ couleur('foncee') }});
                     padding:32px; text-align:center;">
             <h1 style="color:white; margin:0; font-size:24px; letter-spacing:1px;">
-                🧵 AfriTex
+                🧵 {{ boutique('nom') }}
             </h1>
             <p style="color:rgba(255,255,255,0.8); margin:8px 0 0;">
                 Vente de tissus de qualité
@@ -33,10 +33,10 @@
             </p>
 
             {{-- NUMÉRO COMMANDE --}}
-            <div style="background:#FDF6EE; border-left:4px solid #8B4513;
+            <div style="background:{{ couleur('papier') }}; border-left:4px solid {{ couleur('accent') }};
                         padding:16px; border-radius:8px; margin:24px 0;">
-                <div style="font-size:13px; color:#7a6a5a; margin-bottom:4px;">Numéro de commande</div>
-                <div style="font-size:22px; font-weight:bold; color:#4A1B0C;">
+                <div style="font-size:13px; color:{{ couleur('texte_doux') }}; margin-bottom:4px;">Numéro de commande</div>
+                <div style="font-size:22px; font-weight:bold; color:{{ couleur('foncee') }};">
                     #{{ str_pad($commande->id, 4, '0', STR_PAD_LEFT) }}
                 </div>
             </div>
@@ -65,7 +65,7 @@
                 </div>
 
                 {{-- Flèche --}}
-                <div style="font-size:24px; color:#8B4513;">→</div>
+                <div style="font-size:24px; color:{{ couleur('accent') }};">→</div>
 
                 {{-- Nouveau statut --}}
                 <div style="flex:1; padding:12px; border-radius:10px; color:white;
@@ -96,7 +96,7 @@
             @elseif($commande->statut === 'livree')
                 <p style="color:#555; background:#e8f5e9; padding:12px; border-radius:8px;">
                     📦 Votre commande a été <strong>livrée</strong> avec succès !
-                    Merci pour votre confiance chez AfriTex. 🙏
+                    Merci pour votre confiance chez {{ boutique('nom') }}. 🙏
                 </p>
             @elseif($commande->statut === 'annulee')
                 <p style="color:#555; background:#ffebee; padding:12px; border-radius:8px;">
@@ -106,8 +106,8 @@
             @endif
 
             {{-- RÉCAPITULATIF COMMANDE --}}
-            <div style="margin:24px 0; border:1px solid #e8ddd3; border-radius:10px; overflow:hidden;">
-                <div style="background:#FDF6EE; padding:12px 16px; font-weight:bold; color:#4A1B0C;">
+            <div style="margin:24px 0; border:1px solid {{ couleur('trait') }}; border-radius:10px; overflow:hidden;">
+                <div style="background:{{ couleur('papier') }}; padding:12px 16px; font-weight:bold; color:{{ couleur('foncee') }};">
                     📋 Récapitulatif
                 </div>
                 <div style="padding:16px;">
@@ -125,10 +125,10 @@
                             </td>
                         </tr>
                         @endforeach
-                        <tr style="border-top:2px solid #e8ddd3;">
-                            <td style="padding:10px 0; font-weight:bold; color:#4A1B0C;">TOTAL</td>
+                        <tr style="border-top:2px solid {{ couleur('trait') }};">
+                            <td style="padding:10px 0; font-weight:bold; color:{{ couleur('foncee') }};">TOTAL</td>
                             <td style="padding:10px 0; text-align:right; font-weight:bold;
-                                       font-size:18px; color:#8B4513;">
+                                       font-size:18px; color:{{ couleur('accent') }};">
                                 {{ number_format($commande->total, 0, ',', ' ') }} F CFA
                             </td>
                         </tr>
@@ -138,14 +138,14 @@
 
             <p style="color:#777; font-size:13px; line-height:1.6;">
                 Pour toute question, répondez à cet email ou contactez notre équipe.<br>
-                Merci de faire confiance à <strong>AfriTex</strong> ! 🧵
+                Merci de faire confiance à <strong>{{ boutique('nom') }}</strong> ! 🧵
             </p>
         </div>
 
         {{-- PIED DE PAGE --}}
-        <div style="background:#4A1B0C; padding:20px; text-align:center;">
+        <div style="background:{{ couleur('foncee') }}; padding:20px; text-align:center;">
             <p style="color:rgba(255,255,255,0.7); font-size:12px; margin:0;">
-                © {{ date('Y') }} AfriTex — Tous droits réservés
+                © {{ date('Y') }} {{ boutique('nom') }} — Tous droits réservés
             </p>
         </div>
     </div>

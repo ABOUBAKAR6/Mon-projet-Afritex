@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Parametre;
+use App\Services\OptimiseurImage;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
@@ -48,14 +49,14 @@ class CompteController extends Controller
     public function updatePhoto(Request $request): RedirectResponse
     {
         $request->validate([
-            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
+            'photo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:'.OptimiseurImage::POIDS_MAX_KO],
         ], [
-            'photo.max' => 'La photo ne doit pas dépasser 2 Mo.',
+            'photo.max' => 'La photo ne doit pas dépasser 20 Mo.',
         ]);
 
         $admin = $request->user();
         $this->supprimerFichier($admin->photo);
-        $admin->update(['photo' => $this->enregistrer($request->file('photo'), 'images/profils')]);
+        $admin->update(['photo' => $this->enregistrer($request->file('photo'), 'images/profils', OptimiseurImage::PORTRAIT)]);
 
         return back()->with('success', 'Votre photo de profil est à jour.');
     }
@@ -84,13 +85,13 @@ class CompteController extends Controller
     public function updateLogo(Request $request): RedirectResponse
     {
         $request->validate([
-            'logo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:1024'],
+            'logo' => ['required', 'image', 'mimes:jpg,jpeg,png,webp', 'max:'.OptimiseurImage::POIDS_MAX_KO],
         ], [
-            'logo.max' => 'Le logo ne doit pas dépasser 1 Mo.',
+            'logo.max' => 'Le logo ne doit pas dépasser 20 Mo.',
         ]);
 
         $this->supprimerFichier(Parametre::valeur('logo'));
-        Parametre::definir('logo', $this->enregistrer($request->file('logo'), 'images/site'));
+        Parametre::definir('logo', $this->enregistrer($request->file('logo'), 'images/site', OptimiseurImage::LOGO));
 
         return back()->with('success', 'Le logo de la boutique est à jour.');
     }
@@ -103,13 +104,10 @@ class CompteController extends Controller
         return back()->with('success', 'Le logo a été retiré : la boutique affiche de nouveau le « A ».');
     }
 
-    // Nom aléatoire : jamais le nom d'origine du fichier (espaces, accents, collisions)
-    private function enregistrer(UploadedFile $fichier, string $dossier): string
+    // Nom aléatoire (jamais celui d'origine), image redressée, réduite et compressée en WebP
+    private function enregistrer(UploadedFile $fichier, string $dossier, int $cote): string
     {
-        $nom = Str::random(24) . '.' . $fichier->extension();
-        $fichier->move(public_path($dossier), $nom);
-
-        return $dossier . '/' . $nom;
+        return app(OptimiseurImage::class)->enregistrer($fichier, $dossier, $cote);
     }
 
     private function supprimerFichier(?string $chemin): void

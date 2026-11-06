@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Categorie;
+use App\Services\OptimiseurImage;
 use Illuminate\Http\Request;
 
 class CategorieController extends Controller
@@ -17,17 +18,13 @@ class CategorieController extends Controller
     {
         $request->validate([
             'nom' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
-        ]);
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:' . OptimiseurImage::POIDS_MAX_KO,
+        ], ['image.max' => "L'image dépasse 20 Mo."]);
 
-        $imagePath = null;
-
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
-            $image->move(public_path('images/categories'), $imageName);
-            $imagePath = 'images/categories/' . $imageName;
-        }
+        // Image acceptée jusqu'à 20 Mo, puis réduite et compressée pour l'affichage
+        $imagePath = $request->hasFile('image')
+            ? app(OptimiseurImage::class)->enregistrer($request->file('image'), 'images/categories', OptimiseurImage::CATEGORIE)
+            : null;
 
         Categorie::create([
             'nom' => $request->nom,
@@ -44,17 +41,15 @@ class CategorieController extends Controller
 
         $request->validate([
             'nom' => 'required|string|max:255',
-            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:2048'
-        ]);
+            'image' => 'nullable|image|mimes:jpg,jpeg,png,webp|max:' . OptimiseurImage::POIDS_MAX_KO,
+        ], ['image.max' => "L'image dépasse 20 Mo."]);
 
         if ($request->hasFile('image')) {
+            $nouvelle = app(OptimiseurImage::class)->enregistrer($request->file('image'), 'images/categories', OptimiseurImage::CATEGORIE);
             if ($categorie->image && file_exists(public_path($categorie->image))) {
                 unlink(public_path($categorie->image));
             }
-            $image = $request->file('image');
-            $imageName = time() . '_' . $image->getClientOriginalName();
-            $image->move(public_path('images/categories'), $imageName);
-            $categorie->image = 'images/categories/' . $imageName;
+            $categorie->image = $nouvelle;
         }
 
         $categorie->update(['nom' => $request->nom, 'image' => $categorie->image]);

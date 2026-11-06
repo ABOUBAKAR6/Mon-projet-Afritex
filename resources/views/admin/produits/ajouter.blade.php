@@ -68,7 +68,7 @@
                     <x-icone nom="image" class="size-10" x-show="!apercu" />
                 </div>
                 <input id="image" type="file" name="image" accept="image/*" class="champ py-2" @change="apercu = $event.target.files[0] ? URL.createObjectURL($event.target.files[0]) : null" aria-describedby="aide-image">
-                <p id="aide-image" class="aide">Image de 2 Mo au maximum.</p>
+                <p id="aide-image" class="aide">Jusqu'à 20 Mo : la photo est compressée automatiquement.</p>
                 @error('image')<p class="erreur">{{ $message }}</p>@enderror
             </div>
         </section>

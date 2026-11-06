@@ -7,6 +7,7 @@ use App\Models\Categorie;
 use App\Models\Commande;
 use App\Models\Review;
 use App\Services\MagicAssistantService;
+use App\Services\OptimiseurImage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 
@@ -164,17 +165,13 @@ class AdminController extends Controller
             'tarifications' => 'nullable|array',
             'tarifications.*.label' => 'required_with:tarifications|string|max:255',
             'tarifications.*.prix' => 'nullable|numeric',
-            'image' => 'nullable|image|max:2048',
-        ]);
+            'image' => 'nullable|image|max:' . OptimiseurImage::POIDS_MAX_KO,
+        ], ['image.max' => 'La photo dépasse 20 Mo.']);
 
-        $imagePath = null;
-        if ($request->hasFile('image')) {
-            $image = $request->file('image');
-            $extension = $image->getClientOriginalExtension();
-            $imageName = time() . '_' . Str::random(10) . '.' . $extension;
-            $image->move(public_path('images/produits'), $imageName);
-            $imagePath = 'images/produits/' . $imageName;
-        }
+        // Photo de téléphone acceptée jusqu'à 20 Mo, redressée et compressée pour l'affichage
+        $imagePath = $request->hasFile('image')
+            ? app(OptimiseurImage::class)->enregistrer($request->file('image'), 'images/produits')
+            : null;
 
         // Handle dynamic pricing
         $tarifs = $request->input('tarifications', []);
@@ -208,16 +205,16 @@ class AdminController extends Controller
     public function editProduit(Request $request, $id)
     {
         $produit = Produit::findOrFail($id);
+        $request->validate([
+            'image' => 'nullable|image|max:' . OptimiseurImage::POIDS_MAX_KO,
+        ], ['image.max' => 'La photo dépasse 20 Mo.']);
 
         if ($request->hasFile('image')) {
+            $nouvelle = app(OptimiseurImage::class)->enregistrer($request->file('image'), 'images/produits');
             if ($produit->image && file_exists(public_path($produit->image))) {
                 unlink(public_path($produit->image));
             }
-            $image = $request->file('image');
-            $extension = $image->getClientOriginalExtension();
-            $imageName = time() . '_' . Str::random(10) . '.' . $extension;
-            $image->move(public_path('images/produits'), $imageName);
-            $produit->image = 'images/produits/' . $imageName;
+            $produit->image = $nouvelle;
         }
 
         $tarifs = $request->input('tarifications', []);
@@ -239,16 +236,17 @@ class AdminController extends Controller
 
     public function ajouterImage(Request $request, Produit $produit)
     {
-        if ($request->hasFile('images')) {
-            foreach ($request->file('images') as $image) {
-                // Générer un nom court et unique pour éviter les erreurs de chemin trop long sur Git
-                $extension = $image->getClientOriginalExtension();
-                $imageName = time() . '_' . Str::random(10) . '.' . $extension;
-                $image->move(public_path('images/produits'), $imageName);
+        $request->validate([
+            'images' => 'nullable|array',
+            'images.*' => 'image|max:' . OptimiseurImage::POIDS_MAX_KO,
+        ], ['images.*.max' => 'Une des photos dépasse 20 Mo.', 'images.*.image' => 'Un des fichiers n\'est pas une image.']);
 
+        if ($request->hasFile('images')) {
+            $optimiseur = app(OptimiseurImage::class);
+            foreach ($request->file('images') as $image) {
                 \App\Models\ProduitImage::create([
                     'produit_id' => $produit->id,
-                    'chemin' => 'images/produits/' . $imageName,
+                    'chemin' => $optimiseur->enregistrer($image, 'images/produits'),
                 ]);
             }
         }

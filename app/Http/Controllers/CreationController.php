@@ -19,11 +19,13 @@ class CreationController extends Controller
     {
         $request->validate([
             'product_id' => 'required|exists:produits,id',
-            'image' => 'required|image|max:2048',
+            'image' => 'required|image|max:' . \App\Services\OptimiseurImage::POIDS_MAX_KO,
             'caption' => 'nullable|string|max:500',
-        ]);
+        ], ['image.max' => 'La photo dépasse 20 Mo.']);
 
-        $path = $request->file('image')->store('creations', 'public');
+        // Photo de téléphone acceptée, réduite et compressée avant d'être partagée
+        $path = 'creations/' . app(\App\Services\OptimiseurImage::class)
+            ->enregistrerDans($request->file('image'), storage_path('app/public/creations'));
 
         ProductCreation::create([
             'user_id' => auth()->id(),

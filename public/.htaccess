@@ -1,3 +1,12 @@
+# Envoi de photos jusqu'à 20 Mo (compressées ensuite) : pour Apache avec mod_php (WAMP).
+# Ignoré sans mod_php ; en FastCGI, c'est public/.user.ini qui s'applique.
+<IfModule mod_php.c>
+    php_value upload_max_filesize 20M
+    php_value post_max_size 100M
+    php_value memory_limit 512M
+    php_value max_execution_time 120
+</IfModule>
+
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>
         Options -MultiViews -Indexes

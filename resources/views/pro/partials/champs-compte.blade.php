@@ -55,12 +55,18 @@
     </div>
 
     @if($categories->isNotEmpty())
-        <fieldset class="sm:col-span-2">
+        <fieldset class="sm:col-span-2"
+                  x-data="{ tout: false, cases() { return [...this.$root.querySelectorAll('[data-famille]')] }, maj() { this.tout = this.cases().every(c => c.checked) }, basculer(v) { this.cases().forEach(c => c.checked = v); this.tout = v } }"
+                  x-init="maj()" @change="maj()">
             <legend class="etiquette">Les tissus que vous achetez le plus <span class="font-normal text-encre-2">(facultatif)</span></legend>
             <div class="flex flex-wrap gap-2">
+                <label class="choix min-h-11 gap-2.5 px-3.5 py-2">
+                    <input type="checkbox" class="size-4 accent-[var(--brun)]" :checked="tout" @change.stop="basculer($event.target.checked)">
+                    <span class="text-[0.95rem] font-medium">Tout sélectionner</span>
+                </label>
                 @foreach($categories as $categorie)
                     <label class="choix min-h-11 gap-2.5 px-3.5 py-2">
-                        <input type="checkbox" name="familles[]" value="{{ $categorie->id }}" class="size-4 accent-[var(--brun)]" @checked(in_array($categorie->id, $famillesChoisies, true))>
+                        <input type="checkbox" name="familles[]" value="{{ $categorie->id }}" data-famille class="size-4 accent-[var(--brun)]" @checked(in_array($categorie->id, $famillesChoisies, true))>
                         <span class="text-[0.95rem]">{{ $categorie->nom }}</span>
                     </label>
                 @endforeach

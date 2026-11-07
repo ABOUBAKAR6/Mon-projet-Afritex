@@ -271,29 +271,29 @@
     {{-- PIED DE PAGE --}}
     <footer class="sans-impression relative isolate overflow-hidden bg-brun-fonce pb-16 text-white lg:pb-0">
         <div class="border-b border-white/15">
-            <div class="conteneur grid gap-5 py-8 md:grid-cols-[1fr_auto] md:items-end lg:py-10">
+            <div class="conteneur grid gap-4 py-6 sm:gap-5 sm:py-8 md:grid-cols-[1fr_auto] md:items-end lg:py-10">
                 <div>
-                    <p class="text-or-doux">Un métrage à calculer, une commande en gros, un conseil sur un tissu ?</p>
+                    <p class="text-[0.92rem] text-or-doux sm:text-base">Un métrage à calculer, une commande en gros, un conseil sur un tissu ?</p>
                     @if($lienWhatsapp)
-                        <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="titre-display mt-1 inline-block text-[clamp(1.75rem,3.6vw,2.5rem)] text-or transition-colors hover:text-or-clair">Écrivez-nous sur WhatsApp</a>
+                        <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="titre-display mt-1 inline-block text-[clamp(1.4rem,3.6vw,2.5rem)] leading-tight text-or transition-colors hover:text-or-clair">Écrivez-nous sur WhatsApp</a>
                     @else
-                        <a href="{{ route('faq') }}" class="titre-display mt-1 inline-block text-[clamp(1.75rem,3.6vw,2.5rem)] text-or transition-colors hover:text-or-clair">Nous sommes là pour vous aider</a>
+                        <a href="{{ route('faq') }}" class="titre-display mt-1 inline-block text-[clamp(1.4rem,3.6vw,2.5rem)] leading-tight text-or transition-colors hover:text-or-clair">Nous sommes là pour vous aider</a>
                     @endif
                 </div>
-                <div class="flex flex-col gap-3 sm:flex-row">
+                <div class="flex flex-wrap gap-2 sm:gap-3">
                     @if($lienWhatsapp)
-                        <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-clair btn-lg"><x-icone nom="message" /> WhatsApp</a>
+                        <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-clair sm:btn-lg"><x-icone nom="message" /> WhatsApp</a>
                     @endif
-                    <a href="{{ route('catalogue') }}" class="btn btn-or btn-lg">Voir le catalogue</a>
+                    <a href="{{ route('catalogue') }}" class="btn btn-or sm:btn-lg">Voir le catalogue</a>
                 </div>
             </div>
         </div>
 
         @php
-            $lienPied = 'inline-flex min-h-11 items-center text-white/80 transition-colors hover:text-or sm:min-h-0';
-            $intertitre = 'mb-3 text-[0.8125rem] font-medium uppercase tracking-[0.08em] text-or-doux';
+            $lienPied = 'inline-flex min-h-9 items-center text-[0.92rem] leading-snug text-white/80 transition-colors hover:text-or sm:min-h-0 sm:text-base';
+            $intertitre = 'mb-1.5 text-[0.75rem] font-medium uppercase tracking-[0.08em] text-or-doux sm:mb-3 sm:text-[0.8125rem]';
         @endphp
-        <div class="conteneur grid grid-cols-2 gap-x-6 gap-y-8 py-10 md:grid-cols-4 lg:gap-12 lg:py-12">
+        <div class="conteneur grid grid-cols-2 gap-x-5 gap-y-5 py-6 sm:gap-x-6 sm:gap-y-8 sm:py-10 md:grid-cols-4 lg:gap-12 lg:py-12">
             <div>
                 <p class="{{ $intertitre }}">La boutique</p>
                 <ul class="space-y-0 sm:space-y-2">
@@ -311,7 +311,8 @@
                     @endforeach
                 </ul>
             </div>
-            <div>
+            {{-- Au téléphone, la barre du bas donne déjà le panier, les commandes et la connexion --}}
+            <div class="hidden sm:block">
                 <p class="{{ $intertitre }}">Mon compte</p>
                 <ul class="space-y-0 sm:space-y-2">
                     @auth
@@ -324,7 +325,8 @@
                     @endauth
                 </ul>
             </div>
-            <div>
+            {{-- Au téléphone, ces liens passent dans la ligne des mentions, en bas --}}
+            <div class="hidden sm:block">
                 <p class="{{ $intertitre }}">Informations</p>
                 <ul class="space-y-0 sm:space-y-2">
                     <li><a href="{{ route('cgu') }}" class="{{ $lienPied }}">Conditions générales</a></li>
@@ -336,14 +338,18 @@
             </div>
         </div>
 
-        {{-- Le nom revient en pleine largeur pour clore la page --}}
-        <div class="conteneur overflow-hidden">
+        {{-- Le nom revient en pleine largeur pour clore la page (pas au téléphone : il rallongeait le pied de page) --}}
+        <div class="conteneur hidden overflow-hidden sm:block">
             <p aria-hidden="true" class="titre-display select-none text-[clamp(4.5rem,19vw,15rem)] leading-[0.8] tracking-[-0.04em] text-[color:color-mix(in_oklch,var(--or)_30%,var(--brun-fonce))]">{{ boutique('nom') }}</p>
         </div>
         <div class="border-t border-white/15">
-            <div class="conteneur flex flex-col gap-2 py-6 text-sm text-white/70 sm:flex-row sm:justify-between">
+            <div class="conteneur flex flex-col gap-1 py-4 text-[0.8rem] text-white/70 sm:flex-row sm:justify-between sm:gap-2 sm:py-6 sm:text-sm">
                 <span>© {{ date('Y') }} {{ boutique('nom') }}. Tous droits réservés.</span>
-                <span>{{ boutique('mot_fin') }}</span>
+                <span class="hidden sm:inline">{{ boutique('mot_fin') }}</span>
+                <span class="flex flex-wrap gap-x-5 sm:hidden">
+                    <a href="{{ route('cgu') }}" class="inline-flex min-h-9 items-center underline decoration-white/30 underline-offset-4 hover:text-or">Conditions générales</a>
+                    <a href="{{ route('privacy') }}" class="inline-flex min-h-9 items-center underline decoration-white/30 underline-offset-4 hover:text-or">Confidentialité</a>
+                </span>
             </div>
         </div>
     </footer>

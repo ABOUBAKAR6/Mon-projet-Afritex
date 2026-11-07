@@ -64,7 +64,8 @@
         ],
     ];
 @endphp
-<div class="conteneur relative z-10 -mt-20 lg:-mt-24">
+{{-- Pas au téléphone : il n'y montrait que le bloc Livraison, retiré à la demande de la boutique --}}
+<div class="conteneur relative z-10 -mt-20 hidden md:block lg:-mt-24">
     <div class="grid bg-carte md:grid-cols-3 md:divide-x md:divide-trait">
         @foreach($blocs as $i => $bloc)
             <div class="group filet relative flex-col p-7 transition-colors duration-200 hover:bg-brun-doux lg:p-8 {{ $i === 0 ? 'flex' : 'hidden md:flex' }}">
@@ -79,7 +80,7 @@
 
 {{-- FAMILLES DE TISSUS --}}
 @if($categories->isNotEmpty())
-<section class="pt-20 lg:pt-28" aria-labelledby="titre-categories">
+<section class="pt-10 md:pt-20 lg:pt-28" aria-labelledby="titre-categories">
     <div class="conteneur">
         <div class="revele flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
             <x-titre-bloc intitule="Nos tissus" titre="Choisissez votre famille de tissu" id="titre-categories" />

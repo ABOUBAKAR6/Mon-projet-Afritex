@@ -9,15 +9,20 @@
 @section('title', $titrePage . ' · ' . boutique('nom'))
 @section('content')
 
-{{-- Une catégorie ouverte prend sa propre photo comme bandeau --}}
+{{-- Téléphone : pas de bandeau, on arrive directement sur les familles et les tissus (titre gardé pour les lecteurs d'écran) --}}
+<h1 class="sr-only sm:hidden">{{ $titrePage }}</h1>
+
+{{-- Une catégorie ouverte prend sa propre photo comme bandeau (tablette et ordinateur) --}}
+<div class="hidden sm:block">
 <x-en-tete-page :titre="$titrePage"
     :ariane="$categorieActive ? [['Catalogue', route('catalogue')]] : []"
     :vignette="$categorieActive?->image"
     :chapeau="$categorieActive
         ? 'Notre sélection ' . $categorieActive->nom . ' : au mètre, au rouleau ou en confection. Affinez par prix ou par couleur.'
         : 'Tissus au mètre, au rouleau ou en confection. Choisissez une famille, puis affinez par prix ou par couleur.'" />
+</div>
 
-<div class="conteneur py-10 lg:py-14">
+<div class="conteneur pb-10 pt-4 sm:py-10 lg:py-14">
     {{-- Familles de tissus : accès direct --}}
     <nav aria-label="Familles de tissus" class="defilement-discret -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
         <ul class="flex w-max gap-2 sm:w-auto sm:flex-wrap">

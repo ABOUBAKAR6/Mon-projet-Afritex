@@ -703,3 +703,30 @@
         }
     }
 }
+
+/*
+ | Téléphone (sous 640 px) : espacements verticaux resserrés dans le contenu des pages,
+ | à la demande de la boutique. Une seule règle pour tout le site : les grands écarts
+ | (mt-20, py-16, pb-20…) sont réduits ; les variantes sm:, md:, lg: reprennent la main
+ | dès la tablette. L'en-tête, le pied de page et la barre du bas ne sont pas touchés.
+ */
+@media (max-width: 639.98px) {
+    main .mt-10 { margin-top: 1.5rem; }
+    main .mt-12,
+    main .mt-16 { margin-top: 2rem; }
+    main .mt-20,
+    main .mt-24 { margin-top: 2.5rem; }
+    main .mb-12 { margin-bottom: 2rem; }
+    main .pt-10 { padding-top: 1.75rem; }
+    main .pt-12,
+    main .pt-16 { padding-top: 2rem; }
+    main .pb-10 { padding-bottom: 1.75rem; }
+    main .pb-20 { padding-bottom: 2.5rem; }
+    main .py-12,
+    main .py-14 { padding-top: 2rem; padding-bottom: 2rem; }
+    main .py-16,
+    main .py-20 { padding-top: 2.5rem; padding-bottom: 2.5rem; }
+    main .gap-10 { gap: 1.5rem; }
+    main .gap-14 { gap: 2rem; }
+    main .min-h-\[16rem\] { min-height: 12rem; }
+}

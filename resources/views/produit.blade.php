@@ -37,8 +37,9 @@
     ])->filter();
 @endphp
 
-<div class="conteneur pb-8 pt-6 sm:pb-20 lg:pb-28 lg:pt-8">
-    <nav aria-label="Fil d'Ariane" class="flex flex-wrap items-center gap-1.5 text-[0.9rem] text-encre-2">
+<div class="conteneur pb-8 pt-4 sm:pb-20 sm:pt-6 lg:pb-28 lg:pt-8">
+    {{-- Fil d'Ariane : pas au téléphone (la famille, au-dessus du titre, ramène à la liste) --}}
+    <nav aria-label="Fil d'Ariane" class="hidden flex-wrap items-center gap-1.5 text-[0.9rem] text-encre-2 sm:flex">
         <a href="{{ route('accueil') }}" class="hover:text-brun hover:underline">Accueil</a>
         <x-icone nom="chevron-droite" class="size-3.5" />
         <a href="{{ route('catalogue') }}" class="hover:text-brun hover:underline">Catalogue</a>
@@ -51,10 +52,10 @@
     </nav>
 
     {{-- Sur téléphone : titre, puis photo, puis achat. Sur ordinateur : photo à gauche, titre et achat à droite. --}}
-    <div class="mt-6 grid gap-8 lg:grid-cols-12 lg:gap-x-16 lg:gap-y-0">
+    <div class="grid gap-8 sm:mt-6 lg:grid-cols-12 lg:gap-x-16 lg:gap-y-0">
         <div class="lg:col-span-5 lg:col-start-8 lg:row-start-1">
             @if($produit->categorie)
-                <p class="intitule">{{ $produit->categorie->nom }}</p>
+                <a href="{{ route('catalogue', ['categorie_id' => $produit->categorie->id]) }}" class="intitule inline-block hover:underline">{{ $produit->categorie->nom }}</a>
             @endif
             <h1 class="titre-display mt-2 text-[2.1rem] sm:text-[2.6rem]">{{ $produit->nom }}</h1>
 

@@ -43,7 +43,7 @@
 
         <div class="mt-8 grid items-start gap-8 lg:grid-cols-[1fr_24rem] lg:gap-12">
             {{-- ARTICLES --}}
-            <ul class="divide-y divide-trait bg-carte">
+            <ul class="min-w-0 divide-y divide-trait bg-carte">
                 @foreach($panier as $index => $item)
                     <li class="revele grid grid-cols-[5rem_1fr] gap-4 p-4 sm:grid-cols-[6.5rem_1fr_auto] sm:items-center sm:gap-6 sm:p-5" style="--delai: {{ min($index, 5) * 60 }}ms">
                         <div class="aspect-square overflow-hidden bg-papier-2">
@@ -78,10 +78,11 @@
             </ul>
 
             {{-- RÉCAPITULATIF --}}
-            <aside class="revele bg-carte p-6 lg:sticky lg:top-28" style="--delai: 120ms" aria-labelledby="titre-recap">
+            <aside class="revele min-w-0 bg-carte p-5 sm:p-6 lg:sticky lg:top-28" style="--delai: 120ms" aria-labelledby="titre-recap">
                 <h2 id="titre-recap" class="titre-display text-[1.3rem]">Récapitulatif</h2>
 
-                <form method="POST" action="{{ route('panier.coupon.appliquer') }}" class="mt-5">
+                {{-- Téléphone : récapitulatif réduit au total (code promo, livraison et remarques retirés à la demande de la boutique) --}}
+                <form method="POST" action="{{ route('panier.coupon.appliquer') }}" class="mt-5 hidden sm:block">
                     @csrf
                     <label for="coupon" class="etiquette">Code promo</label>
                     <div class="flex gap-2">
@@ -94,7 +95,7 @@
                     @endif
                 </form>
 
-                <dl class="mt-6 space-y-2.5 border-t border-trait pt-5 text-[0.98rem]">
+                <dl class="mt-4 space-y-2.5 text-[0.98rem] sm:mt-6 sm:border-t sm:border-trait sm:pt-5">
                     <div class="flex justify-between gap-4"><dt class="text-encre-2">Sous-total</dt><dd class="chiffres">{{ number_format($subtotal, 0, ',', ' ') }} F</dd></div>
                     @if($discount > 0)
                         <div class="flex justify-between gap-4"><dt class="text-encre-2">Réduction</dt><dd class="chiffres text-succes">− {{ number_format($discount, 0, ',', ' ') }} F</dd></div>
@@ -106,13 +107,13 @@
                     </div>
                 </dl>
 
-                <p class="mt-5 flex items-start gap-2.5 bg-papier-2 p-4 text-[0.92rem] text-encre-2">
+                <p class="mt-5 hidden items-start gap-2.5 bg-papier-2 p-4 text-[0.92rem] text-encre-2 sm:flex">
                     <x-icone nom="livraison" class="mt-0.5 size-4 shrink-0 text-brun" />
                     Livraison partout en Côte d'Ivoire sous 24 à 72 h, ou retrait gratuit en boutique.
                 </p>
 
                 {{-- Remarques pour la boutique : enregistrées en tapant, jointes à la commande, envoyables sur WhatsApp --}}
-                <div class="mt-6 border-t border-trait pt-5"
+                <div class="mt-5 sm:mt-6 sm:border-t sm:border-trait sm:pt-5"
                      x-data="{
                          texte: @js($remarques ?? ''),
                          dernier: @js($remarques ?? ''),
@@ -129,13 +130,13 @@
                              return 'https://wa.me/' + @js((string) $numeroWhatsapp) + '?text=' + encodeURIComponent(@js($debutMessage) + fin);
                          }
                      }">
-                    <label for="remarques" class="etiquette">Vos remarques pour la boutique <span class="font-normal text-encre-2">(facultatif)</span></label>
+                    <label for="remarques" class="etiquette hidden sm:block">Vos remarques pour la boutique <span class="font-normal text-encre-2">(facultatif)</span></label>
                     <textarea id="remarques" rows="3" maxlength="1000" x-model="texte" @input.debounce.800ms="enregistrer()" @blur="enregistrer()"
-                              class="champ min-h-0" placeholder="Ex. : même bain de teinture pour les deux tissus, livraison après 17 h"></textarea>
-                    <p class="aide" x-text="etat" aria-live="polite">Elles partent avec votre commande.</p>
+                              class="champ hidden min-h-0 sm:block" placeholder="Ex. : même bain de teinture pour les deux tissus, livraison après 17 h"></textarea>
+                    <p class="aide hidden sm:block" x-text="etat" aria-live="polite">Elles partent avec votre commande.</p>
                     @if($numeroWhatsapp)
                         <a href="https://wa.me/{{ $numeroWhatsapp }}?text={{ rawurlencode($debutMessage) }}" :href="lien()" @click="enregistrer()" target="_blank" rel="noopener noreferrer"
-                           class="btn btn-contour mt-3 w-full"><x-icone nom="message" /> Envoyer au propriétaire sur WhatsApp</a>
+                           class="btn btn-contour w-full sm:mt-3"><x-icone nom="message" /> Envoyer au propriétaire sur WhatsApp</a>
                     @endif
                 </div>
 

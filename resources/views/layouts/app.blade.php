@@ -134,7 +134,7 @@
                             <p class="truncate px-4 pb-2 text-sm text-encre-2">{{ Auth::user()->email }}</p>
                             @php
                                 $liensCompte = array_filter([
-                                    ...(Auth::user()->comptePro ? [['pro.accueil', 'Espace Pro', 'ciseaux']] : []),
+                                    ['pro.accueil', 'Espace Pro', 'boutique'],
                                     ['commandes.index', 'Mes commandes', 'colis'],
                                     ['wishlist', 'Mes favoris', 'coeur'],
                                     ['alertes.index', 'Alertes de stock', 'cloche'],

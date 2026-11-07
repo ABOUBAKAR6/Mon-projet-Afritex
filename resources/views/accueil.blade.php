@@ -83,12 +83,12 @@
 @if($categories->isNotEmpty())
 <section class="pt-10 md:pt-20 lg:pt-28" aria-labelledby="titre-categories">
     <div class="conteneur">
-        <div class="revele flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div class="revele flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
             <x-titre-bloc intitule="Nos tissus" titre="Choisissez votre famille de tissu" id="titre-categories" />
             <a href="{{ route('catalogue') }}" class="lien-fleche shrink-0">Tout le catalogue <x-icone nom="fleche" /></a>
         </div>
 
-        <ul class="mt-10 grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
+        <ul class="mt-6 grid grid-cols-2 gap-2 sm:mt-10 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
             @foreach($categories as $cat)
                 <li class="revele" style="--delai: {{ min($loop->index, 9) * 50 }}ms">
                     <a href="{{ route('catalogue', ['categorie_id' => $cat->id]) }}" class="group filet relative block bg-carte">
@@ -112,9 +112,9 @@
 @endif
 
 {{-- SÉLECTION --}}
-<section class="pt-20 lg:pt-28" aria-labelledby="titre-selection">
+<section class="pt-8 sm:pt-20 lg:pt-28" aria-labelledby="titre-selection">
     <div class="conteneur">
-        <div class="revele flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
+        <div class="revele flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between sm:gap-4">
             <x-titre-bloc intitule="La sélection" titre="Les tissus les plus demandés" id="titre-selection" />
             <a href="{{ route('catalogue') }}" class="lien-fleche shrink-0">Voir les {{ $nbProduits }} tissus <x-icone nom="fleche" /></a>
         </div>
@@ -122,7 +122,7 @@
         @if($vedettes->isEmpty())
             <p class="mt-10 bg-carte p-10 text-center text-encre-2">Les premiers tissus arrivent bientôt dans la boutique.</p>
         @else
-            <div class="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+            <div class="mt-6 grid gap-3 sm:mt-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
                 @foreach($vedettes as $produit)
                     <x-carte-produit :produit="$produit" :grand="$loop->first"
                         class="revele {{ $loop->first ? 'sm:col-span-2 lg:row-span-2' : '' }}" style="--delai: {{ $loop->index * 70 }}ms" />

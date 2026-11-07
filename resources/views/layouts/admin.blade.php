@@ -173,6 +173,26 @@ document.addEventListener('click', (e) => {
     window.location.href = cible.dataset.lien;
 });
 </script>
+<script>
+// Formulaires avec photo : l'envoi peut être long depuis une tablette ou un téléphone.
+// Les boutons se bloquent (« Envoi en cours… ») pour qu'un second appui ne renvoie pas le formulaire.
+// setTimeout : le bouton cliqué est encore compté dans l'envoi avant d'être bloqué.
+document.addEventListener('submit', (e) => {
+    const formulaire = e.target;
+    if (e.defaultPrevented || !(formulaire instanceof HTMLFormElement) || formulaire.enctype !== 'multipart/form-data') return;
+    setTimeout(() => formulaire.querySelectorAll('button[type="submit"], button:not([type])').forEach((bouton) => {
+        bouton.dataset.texte = bouton.innerHTML;
+        bouton.disabled = true;
+        bouton.textContent = 'Envoi en cours…';
+    }));
+});
+// Retour arrière du navigateur : boutons rendus utilisables
+window.addEventListener('pageshow', () => document.querySelectorAll('button[data-texte]').forEach((bouton) => {
+    bouton.disabled = false;
+    bouton.innerHTML = bouton.dataset.texte;
+    delete bouton.dataset.texte;
+}));
+</script>
 @stack('scripts')
 </body>
 </html>

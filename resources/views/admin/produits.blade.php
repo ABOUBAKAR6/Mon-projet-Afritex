@@ -35,6 +35,17 @@
     <button type="button" onclick="document.getElementById('modal-ajouter').showModal()" class="btn btn-brun"><x-icone nom="plus" /> Ajouter un produit</button>
 </x-admin-entete>
 
+@if($errors->any())
+    {{-- Les fenêtres se ferment au rechargement : le motif du refus s'affiche ici --}}
+    <div class="mb-6 flex items-start gap-3 bg-danger-doux p-5 text-danger" role="alert">
+        <x-icone nom="alerte" class="mt-0.5 size-5 shrink-0" />
+        <div>
+            <p class="font-semibold">Le produit n'a pas été enregistré.</p>
+            <ul class="mt-1 space-y-0.5 text-[0.95rem]">@foreach($errors->all() as $erreur)<li>{{ $erreur }}</li>@endforeach</ul>
+        </div>
+    </div>
+@endif
+
 <section class="bg-carte" aria-label="Liste des produits">
     <div class="flex flex-col gap-3 p-4 sm:flex-row sm:items-center sm:justify-between">
         <label for="search" class="sr-only">Rechercher un produit</label>

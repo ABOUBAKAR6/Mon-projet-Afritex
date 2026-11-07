@@ -219,7 +219,7 @@ class AdminController extends Controller
     public function ajouterProduit(Request $request)
     {
         $request->validate([
-            'nom' => 'required|string|max:255',
+            'nom' => ['required', 'string', 'max:255', $this->nomLibre()],
             'categorie_id' => 'required|exists:categories,id',
             'tarifications' => 'nullable|array',
             'tarifications.*.label' => 'required_with:tarifications|string|max:255',
@@ -273,6 +273,7 @@ class AdminController extends Controller
     {
         $produit = Produit::findOrFail($id);
         $request->validate([
+            'nom' => ['required', 'string', 'max:255', $this->nomLibre($produit->id)],
             'prix_pro' => 'nullable|array',
             'prix_pro.*' => 'nullable|integer|min:0',
             'image' => 'nullable|image|max:' . OptimiseurImage::POIDS_MAX_KO,
@@ -306,6 +307,22 @@ class AdminController extends Controller
         }
 
         return redirect()->route('admin.produits')->with('success', 'Produit modifié ! ✅');
+    }
+
+    /**
+     * Deux produits ne peuvent pas avoir le même nom : leur adresse (slug) est tirée du nom
+     * et doit être unique. Sans ce contrôle, la base refusait l'enregistrement (erreur 500),
+     * par exemple quand une photo lente partait deux fois depuis une tablette.
+     */
+    private function nomLibre(?int $sauf = null): \Closure
+    {
+        return function (string $attribut, $valeur, \Closure $refuser) use ($sauf) {
+            $slug = Str::slug((string) $valeur);
+            $existant = Produit::where('slug', $slug)->when($sauf, fn ($q) => $q->whereKeyNot($sauf))->first();
+            if ($slug !== '' && $existant) {
+                $refuser('Un produit nommé « '.$existant->nom.' » existe déjà. Donnez un autre nom (ex. « '.trim((string) $valeur).' bleu ») ou modifiez celui qui existe.');
+            }
+        };
     }
 
     /**

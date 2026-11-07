@@ -309,16 +309,19 @@
     {{-- DANS LA MÊME FAMILLE --}}
     @php $similaires = ($produitsSimilaires ?? collect())->where('id', '!=', $produit->id)->take(4); @endphp
     @if($similaires->isNotEmpty())
-        <section class="mt-20 lg:mt-28" aria-labelledby="titre-similaires">
+        <section class="mt-12 sm:mt-20 lg:mt-28" aria-labelledby="titre-similaires">
             <div class="revele flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <x-titre-bloc intitule="Dans la même famille" titre="Vous aimerez aussi" id="titre-similaires" />
                 @if($produit->categorie)
                     <a href="{{ route('catalogue', ['categorie_id' => $produit->categorie->id]) }}" class="lien-fleche shrink-0">Tout {{ $produit->categorie->nom }} <x-icone nom="fleche" /></a>
                 @endif
             </div>
-            <div class="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+            {{-- Téléphone : rangée qui glisse à l'horizontale jusqu'au bord de l'écran (la carte suivante dépasse) ;
+                 tablette et ordinateur : grille --}}
+            <div tabindex="0" role="region" aria-label="Vous aimerez aussi, défilement horizontal"
+                 class="defilement-discret mt-8 mr-[calc(50%-50vw)] flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-4 motion-safe:scroll-smooth focus-visible:outline-offset-4 sm:mt-10 sm:mr-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 sm:pr-0 lg:grid-cols-4 lg:gap-4">
                 @foreach($similaires as $sim)
-                    <x-carte-produit :produit="$sim" class="revele" style="--delai: {{ $loop->index * 60 }}ms" />
+                    <x-carte-produit :produit="$sim" class="w-[78%] shrink-0 snap-start sm:w-auto" />
                 @endforeach
             </div>
         </section>

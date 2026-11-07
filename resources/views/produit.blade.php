@@ -200,7 +200,8 @@
                     @endif
                 </p>
 
-                <dl class="mt-8 divide-y divide-trait border-y border-trait text-[0.95rem]">
+                {{-- Livraison, paiement, qualité : pas au téléphone (retiré à la demande de la boutique) --}}
+                <dl class="mt-8 hidden divide-y divide-trait border-y border-trait text-[0.95rem] sm:block">
                     <div class="flex gap-4 py-3.5">
                         <x-icone nom="livraison" class="mt-0.5 shrink-0 text-brun" />
                         <div><dt class="font-medium">Livraison partout en Côte d'Ivoire</dt><dd class="text-encre-2">Sous 24 à 72 h, offerte dès 50 000 F d'achat.</dd></div>
@@ -218,9 +219,9 @@
         </div>
     </div>
 
-    {{-- DESCRIPTION ET CARACTÉRISTIQUES --}}
+    {{-- DESCRIPTION ET CARACTÉRISTIQUES (pas au téléphone, retiré à la demande de la boutique) --}}
     @if($produit->description || $caracteristiques->isNotEmpty())
-        <section class="revele mt-20 grid gap-10 lg:mt-28 lg:grid-cols-12 lg:gap-16" aria-labelledby="titre-description">
+        <section class="revele mt-20 hidden gap-10 sm:grid lg:mt-28 lg:grid-cols-12 lg:gap-16" aria-labelledby="titre-description">
             <x-titre-bloc intitule="Le tissu" titre="Description" id="titre-description" class="lg:col-span-4" />
             <div class="lg:col-span-8">
                 @if($produit->description)
@@ -241,7 +242,7 @@
     @endif
 
     {{-- AVIS --}}
-    <section id="avis" class="mt-20 grid gap-10 bg-papier-2 p-6 sm:p-10 lg:mt-28 lg:grid-cols-12 lg:gap-16 lg:p-14" aria-labelledby="titre-avis">
+    <section id="avis" class="mt-12 grid gap-10 bg-papier-2 p-6 sm:mt-20 sm:p-10 lg:mt-28 lg:grid-cols-12 lg:gap-16 lg:p-14" aria-labelledby="titre-avis">
         <div class="revele lg:col-span-4">
             <x-titre-bloc intitule="Avis clients" titre="Ce qu'en disent nos clients" id="titre-avis" />
             @if($nbAvis > 0)

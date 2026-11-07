@@ -37,7 +37,7 @@
     ])->filter();
 @endphp
 
-<div class="conteneur pb-20 pt-6 lg:pb-28 lg:pt-8">
+<div class="conteneur pb-8 pt-6 sm:pb-20 lg:pb-28 lg:pt-8">
     <nav aria-label="Fil d'Ariane" class="flex flex-wrap items-center gap-1.5 text-[0.9rem] text-encre-2">
         <a href="{{ route('accueil') }}" class="hover:text-brun hover:underline">Accueil</a>
         <x-icone nom="chevron-droite" class="size-3.5" />

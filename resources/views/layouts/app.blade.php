@@ -270,7 +270,8 @@
 
     {{-- PIED DE PAGE --}}
     <footer class="sans-impression relative isolate overflow-hidden bg-brun-fonce pb-16 text-white lg:pb-0">
-        <div class="border-b border-white/15">
+        {{-- Bandeau d'aide : pas au téléphone, la barre du bas mène déjà au catalogue --}}
+        <div class="hidden border-b border-white/15 sm:block">
             <div class="conteneur grid gap-4 py-6 sm:gap-5 sm:py-8 md:grid-cols-[1fr_auto] md:items-end lg:py-10">
                 <div>
                     <p class="text-[0.92rem] text-or-doux sm:text-base">Un métrage à calculer, une commande en gros, un conseil sur un tissu ?</p>

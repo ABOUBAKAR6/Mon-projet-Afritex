@@ -162,9 +162,12 @@
                 </div>
                 <a href="{{ route('catalogue') }}" class="lien-fleche shrink-0">Tout le catalogue <x-icone nom="fleche" /></a>
             </div>
-            <div class="mt-8 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+            {{-- Téléphone : rangée qui glisse à l'horizontale jusqu'au bord de l'écran (la carte suivante dépasse) ;
+                 tablette et ordinateur : grille --}}
+            <div tabindex="0" role="region" aria-label="D'autres tissus à découvrir, défilement horizontal"
+                 class="defilement-discret mt-8 mr-[calc(50%-50vw)] flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-4 motion-safe:scroll-smooth focus-visible:outline-offset-4 sm:mr-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 sm:pr-0 lg:grid-cols-4 lg:gap-4">
                 @foreach($autresProduits as $produit)
-                    <x-carte-produit :produit="$produit" class="revele" style="--delai: {{ ($loop->index % 4) * 60 }}ms" />
+                    <x-carte-produit :produit="$produit" class="w-[78%] shrink-0 snap-start sm:w-auto" />
                 @endforeach
             </div>
         </div>

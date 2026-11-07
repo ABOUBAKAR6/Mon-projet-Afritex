@@ -179,8 +179,8 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
 // Route::post('/produits/{id}/modifier', [AdminController::class, 'modifierProduit'])->name('admin.produits.modifier'); // C'était ici, je le déplace dans le groupe.
 
 
-// ===== ESPACE DE GESTION (connexion séparée, invisible du public : clé secrète requise) =====
-Route::prefix('espace-client')->middleware('cle-espace')->group(function () {
+// ===== ESPACE DE GESTION (connexion séparée de la boutique, réservée à l'équipe) =====
+Route::prefix('espace-client')->group(function () {
     Route::get('/', [EspaceGestionController::class, 'create'])->name('espace.connexion');
     Route::post('/', [EspaceGestionController::class, 'store'])->name('espace.connexion.envoyer');
 });

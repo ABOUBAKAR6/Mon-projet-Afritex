@@ -51,7 +51,7 @@ class EspaceGestionController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
 
-        return redirect()->route('espace.connexion', ['cle' => config('espace.cle')])
+        return redirect()->route('espace.connexion')
             ->with('status', 'Vous êtes déconnecté de l\'espace de gestion.');
     }
 }

@@ -9,7 +9,8 @@
 @endphp
 
 {{-- GRAND VISUEL --}}
-<section class="relative isolate flex min-h-[34rem] items-center overflow-hidden bg-brun-fonce text-white sm:min-h-[38rem] lg:min-h-[44rem]">
+{{-- Téléphone : visuel plus bas (plus de bande d'accès rapides à chevaucher, voir plus bas) --}}
+<section class="relative isolate flex min-h-[20rem] items-center overflow-hidden bg-brun-fonce text-white sm:min-h-[38rem] lg:min-h-[44rem]">
     {{-- Jacquard à motifs : bande 16:9 sur grand écran, cadrage carré sur mobile (hero en portrait) --}}
     <picture class="absolute inset-0 -z-10">
         <source media="(max-width: 639px)" srcset="{{ asset('images/hero-tissu-mobile.avif') }}" type="image/avif">
@@ -23,16 +24,16 @@
     {{-- La trame du jacquard est chargée : on assombrit davantage le centre, là où se trouve le texte --}}
     <div aria-hidden="true" class="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_60%_55%_at_50%_52%,oklch(0.16_0.04_var(--teinte-ombre)/0.62)_0%,oklch(0.16_0.04_var(--teinte-ombre)/0.35)_60%,transparent_100%)]"></div>
 
-    <div class="conteneur pb-28 pt-12 text-center lg:pb-36">
-        <p class="apparition font-display text-[0.8rem] font-semibold uppercase tracking-[0.18em] text-white/85 sm:text-[0.85rem]">{{ boutique('slogan') }}</p>
-        <h1 class="titre-display apparition mx-auto mt-5 max-w-[16ch] text-[2.6rem] leading-[1.1] sm:text-[3.5rem] lg:text-[4.2rem]" style="animation-delay: 80ms">Le meilleur tissu, livré chez vous</h1>
-        <p class="apparition mx-auto mt-5 max-w-[46ch] text-white/85 lg:text-[1.15rem]" style="animation-delay: 160ms">{{ boutique('accroche') }}</p>
-        <div class="apparition mt-9 flex flex-col justify-center gap-3 sm:flex-row" style="animation-delay: 240ms">
+    <div class="conteneur pb-10 pt-8 text-center md:pb-28 md:pt-12 lg:pb-36">
+        <p class="apparition hidden font-display text-[0.85rem] font-semibold uppercase tracking-[0.18em] text-white/85 sm:block">{{ boutique('slogan') }}</p>
+        <h1 class="titre-display apparition mx-auto max-w-[16ch] text-[2.1rem] leading-[1.1] sm:mt-5 sm:text-[3.5rem] lg:text-[4.2rem]" style="animation-delay: 80ms">Le meilleur tissu, livré chez vous</h1>
+        <p class="apparition mx-auto mt-3 max-w-[46ch] text-[0.95rem] text-white/85 sm:mt-5 sm:text-base lg:text-[1.15rem]" style="animation-delay: 160ms">{{ boutique('accroche') }}</p>
+        <div class="apparition mt-6 flex flex-col justify-center gap-3 sm:mt-9 sm:flex-row" style="animation-delay: 240ms">
             <a href="{{ route('catalogue') }}" class="btn btn-brun btn-lg">Voir le catalogue <x-icone nom="fleche" /></a>
             @guest
-                <a href="{{ route('register') }}" class="btn btn-clair btn-lg">Créer un compte</a>
+                <a href="{{ route('register') }}" class="btn btn-clair btn-lg hidden sm:inline-flex">Créer un compte</a>
             @else
-                <a href="{{ route('panier') }}" class="btn btn-clair btn-lg">Mon panier</a>
+                <a href="{{ route('panier') }}" class="btn btn-clair btn-lg hidden sm:inline-flex">Mon panier</a>
             @endguest
         </div>
     </div>

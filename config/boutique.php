@@ -67,4 +67,22 @@ return [
         'trait' => '#eadfd5',
     ],
 
+    /*
+     | Thèmes que le propriétaire choisit dans l'administration (bouton « Couleurs »).
+     | Le choix est enregistré en base (paramètre theme_couleurs) et passe avant le .env.
+     | « D'origine » (aucun thème) = couleurs du .env, sinon celles d'AfriTex.
+     | Contrastes vérifiés : texte blanc sur l'accent, textes sur le fond, accent clair
+     | sur les surfaces sombres, tous au moins 4,5:1.
+     */
+    'themes' => [
+        'indigo' => ['nom' => 'Indigo', 'couleurs' => ['accent' => '#2f4a8a', 'foncee' => '#141d3a', 'seconde' => '#d9a441', 'papier' => '#f7f8fc', 'surface' => '#eceff7', 'encre' => '#161b2e', 'texte' => '#3d4560', 'texte_doux' => '#5b647e', 'trait' => '#dde2ee']],
+        'emeraude' => ['nom' => 'Émeraude', 'couleurs' => ['accent' => '#1d6a4d', 'foncee' => '#0e3125', 'seconde' => '#d4a64a', 'papier' => '#f6faf7', 'surface' => '#e9f1ec', 'encre' => '#13261d', 'texte' => '#36493f', 'texte_doux' => '#56675d', 'trait' => '#d9e6de']],
+        'bordeaux' => ['nom' => 'Bordeaux', 'couleurs' => ['accent' => '#8c1d3a', 'foncee' => '#3b0b19', 'seconde' => '#d8a24a', 'papier' => '#fcf6f6', 'surface' => '#f4e9eb', 'encre' => '#2a1418', 'texte' => '#4f3237', 'texte_doux' => '#6c5055', 'trait' => '#ecdadd']],
+        'prune' => ['nom' => 'Prune', 'couleurs' => ['accent' => '#8b5a99', 'foncee' => '#2b1a31', 'seconde' => '#c4a2cf', 'papier' => '#fcfafc', 'surface' => '#f3ecf5', 'encre' => '#2b1a31', 'texte' => '#5e4f65', 'texte_doux' => '#6f6076', 'trait' => '#e7d9ec']],
+        'terracotta' => ['nom' => 'Terracotta', 'couleurs' => ['accent' => '#a8431c', 'foncee' => '#45190c', 'seconde' => '#e3b04b', 'papier' => '#fdf7f2', 'surface' => '#f6ebe2', 'encre' => '#2e1b12', 'texte' => '#523a2e', 'texte_doux' => '#6d5548', 'trait' => '#eddccf']],
+        'lagune' => ['nom' => 'Lagune', 'couleurs' => ['accent' => '#0e6a70', 'foncee' => '#0a2f33', 'seconde' => '#e0b25a', 'papier' => '#f4fafa', 'surface' => '#e6f1f1', 'encre' => '#102526', 'texte' => '#34494a', 'texte_doux' => '#526768', 'trait' => '#d6e6e6']],
+        'fuchsia' => ['nom' => 'Fuchsia', 'couleurs' => ['accent' => '#a3245e', 'foncee' => '#3d0e25', 'seconde' => '#e8b04f', 'papier' => '#fdf6f9', 'surface' => '#f6e8ef', 'encre' => '#2c1420', 'texte' => '#513442', 'texte_doux' => '#6d5160', 'trait' => '#eed9e3']],
+        'ardoise' => ['nom' => 'Ardoise', 'couleurs' => ['accent' => '#2f3a44', 'foncee' => '#181d22', 'seconde' => '#c9a45c', 'papier' => '#f7f7f6', 'surface' => '#ecedec', 'encre' => '#1b1f23', 'texte' => '#43494f', 'texte_doux' => '#5f656b', 'trait' => '#dfe1e2']],
+    ],
+
 ];

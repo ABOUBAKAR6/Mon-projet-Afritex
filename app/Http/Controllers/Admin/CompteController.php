@@ -96,6 +96,22 @@ class CompteController extends Controller
         return back()->with('success', 'Le logo de la boutique est à jour.');
     }
 
+    // Thème de couleurs de toute la boutique (site public, administration, e-mails)
+    public function updateCouleurs(Request $request): RedirectResponse
+    {
+        $themes = array_keys(config('boutique.themes', []));
+        $donnees = $request->validate([
+            'theme' => ['required', 'string', Rule::in(['origine', ...$themes])],
+        ]);
+
+        $theme = $donnees['theme'] === 'origine' ? null : $donnees['theme'];
+        Parametre::definir('theme_couleurs', $theme);
+
+        $nom = $theme ? config('boutique.themes.'.$theme.'.nom') : 'd\'origine';
+
+        return back()->with('success', 'Couleurs « '.$nom.' » appliquées à toute la boutique.');
+    }
+
     public function destroyLogo(): RedirectResponse
     {
         $this->supprimerFichier(Parametre::valeur('logo'));

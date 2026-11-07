@@ -167,6 +167,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::patch('/users/{user}/role', [AdminController::class, 'updateUserRole'])->name('admin.users.role');
         Route::post('/compte/logo', [CompteController::class, 'updateLogo'])->name('admin.compte.logo');
         Route::delete('/compte/logo', [CompteController::class, 'destroyLogo'])->name('admin.compte.logo.supprimer');
+        Route::post('/couleurs', [CompteController::class, 'updateCouleurs'])->name('admin.couleurs');
 
         Route::get('/equipe', [EquipeController::class, 'index'])->name('admin.equipe');
         Route::post('/equipe', [EquipeController::class, 'store'])->name('admin.equipe.store');

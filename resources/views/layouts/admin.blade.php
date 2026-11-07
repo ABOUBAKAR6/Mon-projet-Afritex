@@ -78,6 +78,43 @@
         </nav>
 
         <div class="border-t border-white/10 px-3 py-4">
+            @can('proprietaire')
+                @php
+                    $themeActif = boutique_theme();
+                    $choixCouleurs = ['origine' => ['nom' => 'D\'origine', 'palette' => boutique_palette(null)]]
+                        + collect(config('boutique.themes'))->map(fn ($t, $cle) => ['nom' => $t['nom'], 'palette' => boutique_palette($cle)])->all();
+                    $pastille = fn ($p) => 'background: conic-gradient(from 225deg, ' . $p['foncee'] . ' 0 50%, ' . $p['accent'] . ' 0 85%, ' . $p['seconde'] . ' 0)';
+                @endphp
+                {{-- Couleurs de toute la boutique : un clic applique le thème au site, à l'admin et aux e-mails --}}
+                <div x-data="{ ouvert: false }" @keydown.escape.stop="ouvert = false">
+                    <button type="button" @click="ouvert = !ouvert" :aria-expanded="ouvert" aria-controls="choix-couleurs"
+                            class="flex min-h-11 w-full items-center gap-3 px-3 text-left transition-colors hover:bg-white/10 hover:text-white">
+                        <span class="size-[1.15rem] shrink-0 rounded-full ring-1 ring-white/40" style="{{ $pastille($choixCouleurs[$themeActif ?? 'origine']['palette']) }}" aria-hidden="true"></span>
+                        <span class="flex-1">Couleurs <span class="text-white/55">· {{ $choixCouleurs[$themeActif ?? 'origine']['nom'] }}</span></span>
+                        <x-icone nom="chevron-bas" class="size-4 transition-transform duration-200" x-bind:class="ouvert && 'rotate-180'" />
+                    </button>
+                    <div id="choix-couleurs" x-show="ouvert" x-cloak x-transition.opacity.duration.150ms class="px-3 pb-3 pt-1">
+                        <p class="text-[0.8rem] text-white/60">Toute la boutique change de couleur.</p>
+                        <form method="POST" action="{{ route('admin.couleurs') }}" class="mt-2 grid grid-cols-5 gap-1">
+                            @csrf
+                            @foreach($choixCouleurs as $cle => $choix)
+                                @php $estActif = ($themeActif ?? 'origine') === $cle; @endphp
+                                <button type="submit" name="theme" value="{{ $cle }}" title="{{ $choix['nom'] }}" aria-pressed="{{ $estActif ? 'true' : 'false' }}"
+                                        class="group flex h-11 items-center justify-center">
+                                    <span @class([
+                                            'relative flex size-8 items-center justify-center rounded-full transition-transform duration-150 group-hover:scale-110 group-active:scale-95',
+                                            'ring-2 ring-white ring-offset-2 ring-offset-brun-fonce' => $estActif,
+                                            'ring-1 ring-white/25' => !$estActif,
+                                          ]) style="{{ $pastille($choix['palette']) }}">
+                                        @if($estActif)<x-icone nom="coche" class="size-4 text-white drop-shadow" />@endif
+                                    </span>
+                                    <span class="sr-only">{{ $choix['nom'] }}{{ $estActif ? ' (couleurs actuelles)' : '' }}</span>
+                                </button>
+                            @endforeach
+                        </form>
+                    </div>
+                </div>
+            @endcan
             <a href="{{ route('accueil') }}" class="flex min-h-11 items-center gap-3 px-3 transition-colors hover:bg-white/10 hover:text-white">
                 <x-icone nom="oeil" class="size-[1.15rem]" /> Voir la boutique
             </a>

@@ -25,17 +25,69 @@ if (! function_exists('boutique_initiale')) {
     }
 }
 
-if (! function_exists('boutique_couleur_choisie')) {
+if (! function_exists('boutique_theme')) {
+    /**
+     * Thème de couleurs choisi par le propriétaire dans l'administration (clé de
+     * config('boutique.themes')), ou null : couleurs « d'origine ». Lu une fois par requête.
+     */
+    function boutique_theme(): ?string
+    {
+        static $theme = false;
+
+        if ($theme === false) {
+            try {
+                $choix = \App\Models\Parametre::valeur('theme_couleurs');
+            } catch (\Throwable) {
+                $choix = null; // base indisponible (installation, migration) : couleurs d'origine
+            }
+            $theme = $choix && is_array(config('boutique.themes.'.$choix)) ? $choix : null;
+        }
+
+        return $theme;
+    }
+}
+
+if (! function_exists('boutique_couleur_env')) {
     /**
      * Couleur réglée dans le .env pour ce rôle, ou null (vide ou mal écrite).
      * Seul un hex rrggbb (avec ou sans #) est accepté : la valeur part telle quelle dans le CSS.
      * Dans le .env, écrire "#8b5a99" entre guillemets, ou 8b5a99 : un # nu y ouvre un commentaire.
      */
-    function boutique_couleur_choisie(string $role): ?string
+    function boutique_couleur_env(string $role): ?string
     {
         $valeur = ltrim(strtolower(trim((string) config('boutique.couleurs.'.$role))), '#');
 
         return preg_match('/^[0-9a-f]{6}$/', $valeur) ? '#'.$valeur : null;
+    }
+}
+
+if (! function_exists('boutique_couleur_choisie')) {
+    /**
+     * Couleur qui remplace celle d'origine pour ce rôle : celle du thème choisi dans
+     * l'administration, sinon celle du .env, sinon null (couleur d'origine AfriTex).
+     */
+    function boutique_couleur_choisie(string $role): ?string
+    {
+        if ($theme = boutique_theme()) {
+            return config('boutique.themes.'.$theme.'.couleurs.'.$role);
+        }
+
+        return boutique_couleur_env($role);
+    }
+}
+
+if (! function_exists('boutique_palette')) {
+    /**
+     * Les 9 couleurs d'un thème, ou « d'origine » (.env puis AfriTex) si $theme est null.
+     * Sert aux pastilles du sélecteur de couleurs.
+     */
+    function boutique_palette(?string $theme): array
+    {
+        return collect(config('boutique.couleurs_origine'))
+            ->map(fn ($origine, $role) => $theme
+                ? config('boutique.themes.'.$theme.'.couleurs.'.$role, $origine)
+                : (boutique_couleur_env($role) ?? $origine))
+            ->all();
     }
 }
 

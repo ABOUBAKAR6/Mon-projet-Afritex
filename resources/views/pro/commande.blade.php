@@ -109,10 +109,10 @@
     @endswitch
 
     <div class="mt-8 grid items-start gap-8 lg:grid-cols-[1fr_22rem] lg:gap-12">
-        <section class="bg-carte" aria-labelledby="titre-lignes">
+        <section class="min-w-0 bg-carte" aria-labelledby="titre-lignes">
             <h2 id="titre-lignes" class="titre-display px-6 pt-6 text-[1.3rem]">Tissus commandés</h2>
             <div class="mt-3 overflow-x-auto">
-                <table class="tableau">
+                <table class="tableau tableau-empile">
                     <thead>
                         <tr>
                             <th scope="col">Tissu</th>
@@ -135,10 +135,10 @@
                                         <span class="font-medium">{{ $item->produit->nom ?? 'Tissu retiré du catalogue' }}</span>
                                     </div>
                                 </td>
-                                <td class="whitespace-nowrap">{{ $item->libelleFormat() }}</td>
-                                <td class="chiffres text-right">{{ $item->quantiteLisible() }}</td>
-                                <td class="chiffres whitespace-nowrap text-right">{{ $francs($item->prix_unitaire) }}</td>
-                                <td class="chiffres whitespace-nowrap text-right font-semibold">{{ $francs($item->sous_total) }}</td>
+                                <td class="whitespace-nowrap" data-label="Format">{{ $item->libelleFormat() }}</td>
+                                <td class="chiffres text-right" data-label="Quantité">{{ $item->quantiteLisible() }}</td>
+                                <td class="chiffres whitespace-nowrap text-right" data-label="Prix pro">{{ $francs($item->prix_unitaire) }}</td>
+                                <td class="chiffres whitespace-nowrap text-right font-semibold" data-label="Sous-total">{{ $francs($item->sous_total) }}</td>
                             </tr>
                         @endforeach
                     </tbody>
@@ -162,7 +162,7 @@
             </dl>
         </section>
 
-        <aside class="space-y-4">
+        <aside class="min-w-0 space-y-4">
             <section class="bg-carte p-6" aria-labelledby="titre-livraison">
                 <h2 id="titre-livraison" class="titre-display text-[1.15rem]">Livraison</h2>
                 <dl class="mt-3 space-y-3 text-[0.95rem]">

@@ -82,16 +82,8 @@ class StripeWebhookController extends Controller
             if ($commande->statut !== 'confirmee') {
                 $commande->update(['statut' => 'confirmee']);
 
-                // Décrémentation du stock
-                foreach ($commande->items as $item) {
-                    $produit = $item->produit;
-                    if ($produit) {
-                        $produit->decrement('stock', $item->quantite);
-                        if ($produit->stock <= 0) {
-                            $produit->update(['disponible' => false]);
-                        }
-                    }
-                }
+                // Mètres et rouleaux vendus retirés du stock, avec l'historique (une seule fois par commande)
+                app(\App\Services\GestionStock::class)->sortieCommande($commande);
 
                 // Ajouter des points de fidélité (1 point pour 10 FCFA)
                 $points = (int) ($commande->total / 10);

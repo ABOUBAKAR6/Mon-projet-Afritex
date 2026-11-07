@@ -10,6 +10,7 @@
         ['admin.dashboard', 'Tableau de bord', 'tableau-bord', ['admin.dashboard'], 'view-dashboard'],
         ['admin.commandes', 'Commandes', 'colis', ['admin.commandes', 'admin.commande.detail'], 'manage-orders'],
         ['admin.produits', 'Produits', 'boutique', ['admin.produits', 'admin.produits.*'], 'manage-products'],
+        ['admin.stock', 'Stock', 'regle', ['admin.stock', 'admin.stock.*'], 'manage-products'],
         ['admin.categories', 'Catégories', 'dossier', ['admin.categories'], 'manage-categories'],
         ['admin.users', 'Utilisateurs', 'utilisateurs', ['admin.users'], 'manage-users'],
         ['admin.pros', 'Comptes pro', 'ciseaux', ['admin.pros'], 'manage-pros'],

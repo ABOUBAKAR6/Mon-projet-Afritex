@@ -187,19 +187,9 @@ class PaiementController extends Controller
         return redirect($retour)->with('error', $message);
     }
 
+    // Mètres et rouleaux vendus retirés du stock, avec l'historique (une seule fois par commande)
     private function decrementStock(Commande $commande)
     {
-        DB::transaction(function () use ($commande) {
-            foreach ($commande->items as $item) {
-                $produit = $item->produit;
-                if ($produit) {
-                    $produit->decrement('stock', $item->quantite);
-
-                    if ($produit->stock <= 0) {
-                        $produit->update(['disponible' => false]);
-                    }
-                }
-            }
-        });
+        app(\App\Services\GestionStock::class)->sortieCommande($commande);
     }
 }

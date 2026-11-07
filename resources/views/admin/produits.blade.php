@@ -77,9 +77,9 @@
                         <td data-label="Catégorie">{{ $produit->categorie->nom ?? 'Sans catégorie' }}</td>
                         <td class="chiffres whitespace-nowrap text-right font-medium" data-label="Prix au mètre">{{ $produit->prix_metre ? number_format($produit->prix_metre, 0, ',', ' ') . ' F' : 'Non défini' }}</td>
                         <td data-label="Stock" data-large>
-                            <span class="pastille {{ $produit->stock > 10 ? 'pastille-succes' : ($produit->stock > 0 ? 'pastille-attente' : 'pastille-danger') }}">
-                                {{ $produit->stock > 0 ? $produit->stock . ' en stock' : 'Épuisé' }}
-                            </span>
+                            <a href="{{ route('admin.stock.produit', $produit) }}" title="Gérer le stock" class="pastille {{ ['ok' => 'pastille-succes', 'faible' => 'pastille-attente', 'epuise' => 'pastille-danger'][$produit->etatStock()] }} hover:underline">
+                                {{ $produit->libelleStock() }}
+                            </a>
                         </td>
                         <td>
                             <div class="flex items-center justify-end gap-1.5 sm:gap-2">
@@ -130,7 +130,7 @@
         </fieldset>
         @include('admin.produits.prix-pro', ['prefixe' => 'a-'])
         <div class="mt-6 grid gap-5 sm:grid-cols-[10rem_1fr]">
-            <div><label for="a-stock" class="etiquette">Stock</label><input id="a-stock" type="number" min="0" name="stock" class="champ chiffres" value="0"></div>
+            <div><label for="a-stock" class="etiquette">Rouleaux en stock</label><input id="a-stock" type="number" min="0" name="stock" class="champ chiffres" value="0"></div>
             <div><label for="a-image" class="etiquette">Photo principale</label><input id="a-image" type="file" name="image" accept="image/*" class="champ py-2"></div>
         </div>
         <div class="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
@@ -181,7 +181,7 @@
         </fieldset>
 
         <div class="mt-6 grid gap-5 sm:grid-cols-[10rem_1fr]">
-            <div><label for="edit-stock" class="etiquette">Stock</label><input type="number" min="0" name="stock" id="edit-stock" class="champ chiffres"></div>
+            <div><label for="edit-stock" class="etiquette">Rouleaux en stock</label><input type="number" min="0" name="stock" id="edit-stock" class="champ chiffres"></div>
             <div>
                 <label for="edit-image" class="etiquette">Remplacer la photo principale</label>
                 <div class="flex items-center gap-3">

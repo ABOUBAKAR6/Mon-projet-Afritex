@@ -176,10 +176,10 @@
     <section class="{{ $carte }}" aria-labelledby="titre-stock">
         <div class="flex items-baseline justify-between gap-2">
             <h2 id="titre-stock" class="{{ $intertitre }}"><x-icone nom="alerte" class="size-4 text-brun" /> Stock à surveiller</h2>
-            @can('manage-products')<a href="{{ route('admin.produits') }}" class="lien-fleche text-[0.88rem]">Gérer <x-icone nom="fleche" /></a>@endcan
+            @can('manage-products')<a href="{{ route('admin.stock') }}" class="lien-fleche text-[0.88rem]">Voir le stock <x-icone nom="fleche" /></a>@endcan
         </div>
         @if($stocksFaibles->isEmpty())
-            <p class="mt-6 flex items-center gap-2 bg-succes-doux p-4 text-[0.95rem] text-succes"><x-icone nom="coche" class="size-4" /> Tous les produits en vente ont au moins 5 unités.</p>
+            <p class="mt-6 flex items-center gap-2 bg-succes-doux p-4 text-[0.95rem] text-succes"><x-icone nom="coche" class="size-4" /> Tous les tissus en vente ont au moins {{ \App\Models\Produit::SEUIL_ROULEAUX }} rouleaux.</p>
         @else
             <ul class="mt-4 divide-y divide-trait">
                 @foreach($stocksFaibles as $produit)
@@ -191,16 +191,16 @@
                         </span>
                         <span class="min-w-0 flex-1">
                             @if($voitProduits)
-                                <a href="{{ route('admin.produits', ['modifier' => $produit->id]) }}" class="block truncate text-[0.95rem] font-medium after:absolute after:inset-0 hover:text-brun">{{ $produit->nom }}</a>
+                                <a href="{{ route('admin.stock.produit', $produit) }}" class="block truncate text-[0.95rem] font-medium after:absolute after:inset-0 hover:text-brun">{{ $produit->nom }}</a>
                             @else
                                 <span class="block truncate text-[0.95rem] font-medium">{{ $produit->nom }}</span>
                             @endif
                             <span class="block text-[0.82rem] {{ $produit->stock <= 0 ? 'font-medium text-danger' : 'text-encre-2' }}">
-                                {{ $produit->stock <= 0 ? 'Épuisé' : $produit->stock . ' en stock' }} · seuil 5
+                                {{ $produit->libelleStock() }} · seuil {{ \App\Models\Produit::SEUIL_ROULEAUX }} rouleaux
                             </span>
                         </span>
                         <span class="h-1.5 w-14 shrink-0 bg-papier-2" aria-hidden="true">
-                            <span class="block h-full {{ $produit->stock <= 1 ? 'bg-danger' : 'bg-alerte' }}" style="width: {{ max(4, min(100, $produit->stock / 5 * 100)) }}%"></span>
+                            <span class="block h-full {{ $produit->stock <= 1 ? 'bg-danger' : 'bg-alerte' }}" style="width: {{ max(4, min(100, $produit->stock / \App\Models\Produit::SEUIL_ROULEAUX * 100)) }}%"></span>
                         </span>
                     </li>
                 @endforeach

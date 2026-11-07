@@ -72,7 +72,7 @@
                                     <td>
                                         <span class="block font-medium">{{ $produit->nom ?? 'Produit supprimé' }}</span>
                                         <span class="block text-[0.85rem] text-encre-2">
-                                            <span class="font-medium text-brun">{{ $item->libelleFormat() }}</span>@if($produit) · stock {{ $produit->stock }}@endif
+                                            <span class="font-medium text-brun">{{ $item->libelleFormat() }}</span>@if($produit) · @can('manage-products')<a href="{{ route('admin.stock.produit', $produit) }}" class="hover:text-brun hover:underline">stock {{ $produit->libelleStock() }}</a>@else stock {{ $produit->libelleStock() }}@endcan @endif
                                         </span>
                                     </td>
                                     <td class="text-right" data-label="Quantité">

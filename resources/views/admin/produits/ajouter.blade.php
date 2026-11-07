@@ -59,7 +59,7 @@
         <section class="bg-carte p-6" aria-labelledby="titre-stock">
             <h2 id="titre-stock" class="titre-display text-[1.25rem]">Stock et photo</h2>
             <div class="mt-5">
-                <label for="stock" class="etiquette">Stock initial</label>
+                <label for="stock" class="etiquette">Rouleaux en stock au départ</label>
                 <input id="stock" type="number" min="0" name="stock" value="{{ old('stock', 0) }}" class="champ chiffres">
             </div>
             <div class="mt-5" x-data="{ apercu: null }">

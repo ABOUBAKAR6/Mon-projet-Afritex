@@ -21,6 +21,7 @@ use App\Http\Controllers\EspaceGestionController;
 use App\Http\Controllers\Admin\CompteController;
 use App\Http\Controllers\Admin\EquipeController;
 use App\Http\Controllers\Admin\ProController as AdminProController;
+use App\Http\Controllers\Admin\StockController;
 use App\Http\Controllers\ProController;
 
 // ===== PAGES PUBLIQUES =====
@@ -138,6 +139,12 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::delete('/produits/{id}', [AdminController::class, 'destroyProduit'])->name('admin.produits.destroy');
         Route::post('/produits/{produit}/images', [AdminController::class, 'ajouterImage'])->name('admin.produit.image.ajouter');
         Route::delete('/images/{image}', [AdminController::class, 'supprimerImage'])->name('admin.produit.image.supprimer');
+
+        // Stock : rouleaux et mètres restants, arrivages, retraits, inventaires, historique
+        Route::get('/stock', [StockController::class, 'index'])->name('admin.stock');
+        Route::get('/stock/{produit}', [StockController::class, 'show'])->name('admin.stock.produit');
+        Route::post('/stock/{produit}/mouvement', [StockController::class, 'mouvement'])->name('admin.stock.mouvement');
+        Route::patch('/stock/{produit}/longueur', [StockController::class, 'longueur'])->name('admin.stock.longueur');
     });
 
     Route::middleware('can:manage-categories')->group(function () {

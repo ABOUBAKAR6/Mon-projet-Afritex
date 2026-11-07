@@ -164,12 +164,13 @@
                     </form>
                 @endif
 
-                <p class="mt-5 flex items-center gap-2 text-[0.95rem] {{ $produit->stock > 5 ? 'text-succes' : 'text-alerte' }}">
+                @php $etatStock = $produit->etatStock(); @endphp
+                <p class="mt-5 flex items-center gap-2 text-[0.95rem] {{ $etatStock === 'ok' ? 'text-succes' : 'text-alerte' }}">
                     <span class="size-2 rounded-full bg-current" aria-hidden="true"></span>
-                    @if($produit->stock > 5)
-                        En stock, {{ $produit->stock }} disponibles
-                    @elseif($produit->stock > 0)
-                        Plus que {{ $produit->stock }} en stock
+                    @if($etatStock === 'ok')
+                        En stock
+                    @elseif($etatStock === 'faible')
+                        Stock limité : {{ $produit->libelleStock() }}
                     @else
                         Bientôt de retour en stock
                     @endif

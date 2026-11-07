@@ -23,6 +23,8 @@ class Produit extends Model
         'tarifications',
         'image',
         'stock',
+        'metres_par_rouleau',
+        'metres_entames',
         'disponible',
         'couleurs',
         'prix_pro',
@@ -44,7 +46,63 @@ class Produit extends Model
         'couleurs' => 'array',
         'tarifications' => 'array',
         'prix_pro' => 'array',
+        'stock' => 'integer',
+        'metres_par_rouleau' => 'float',
+        'metres_entames' => 'float',
     ];
+
+    /** Sous ce nombre de rouleaux entiers, le tissu est « à surveiller ». */
+    public const SEUIL_ROULEAUX = 5;
+
+    /*
+     | Stock : « stock » = rouleaux entiers, « metres_entames » = mètres du rouleau ouvert,
+     | « metres_par_rouleau » = longueur d'un rouleau (null tant qu'elle n'est pas connue).
+     | Les mouvements passent par App\Services\GestionStock, qui tient l'historique.
+     */
+
+    /** Mètres en tout (null si la longueur d'un rouleau n'est pas connue). */
+    public function metresTotal(): ?float
+    {
+        return $this->metres_par_rouleau
+            ? round($this->stock * $this->metres_par_rouleau + $this->metres_entames, 2)
+            : null;
+    }
+
+    /** « 24 rouleaux + 12 m », « 1 rouleau », « 8 m », « Épuisé ». */
+    public function libelleStock(): string
+    {
+        $morceaux = [];
+        if ($this->stock > 0) {
+            $morceaux[] = $this->stock.' rouleau'.($this->stock > 1 ? 'x' : '');
+        }
+        if ($this->metres_entames > 0) {
+            $morceaux[] = self::metres($this->metres_entames);
+        }
+
+        return $morceaux ? implode(' + ', $morceaux) : 'Épuisé';
+    }
+
+    /** epuise, faible ou ok. */
+    public function etatStock(): string
+    {
+        if ($this->stock <= 0 && $this->metres_entames <= 0) {
+            return 'epuise';
+        }
+
+        return $this->stock < self::SEUIL_ROULEAUX ? 'faible' : 'ok';
+    }
+
+    /** 12.5 -> « 12,5 m » ; 30 -> « 30 m ». */
+    public static function metres(float $metres): string
+    {
+        // Espace insécable : « 17,5 m » ne se coupe pas en fin de ligne
+        return rtrim(rtrim(number_format($metres, 2, ',', ' '), '0'), ',')."\u{00A0}m";
+    }
+
+    public function mouvementsStock()
+    {
+        return $this->hasMany(MouvementStock::class);
+    }
 
     /** Prix détail d'un format (null s'il n'est pas vendu dans ce format). */
     public function prixDetail(string $format): ?int

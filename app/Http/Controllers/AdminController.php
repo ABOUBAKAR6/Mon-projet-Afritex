@@ -96,13 +96,11 @@ class AdminController extends Controller
             'encaisse' => $encaisse,
             'paiements' => $paiements,
             'topProduits' => $topProduits,
-            'stocksFaibles' => Produit::where('disponible', true)->where('stock', '<', self::SEUIL_STOCK)->orderBy('stock')->take(5)->get(['id', 'nom', 'stock', 'image']),
+            'stocksFaibles' => Produit::where('disponible', true)->where('stock', '<', Produit::SEUIL_ROULEAUX)->orderBy('stock')->take(5)->get(['id', 'nom', 'stock', 'metres_entames', 'metres_par_rouleau', 'image']),
             'commandesRecentes' => Commande::with('user.comptePro')->latest()->take(6)->get(),
         ]);
     }
 
-    // Sous ce stock, un produit en vente est signalé sur le tableau de bord
-    private const SEUIL_STOCK = 5;
 
     public function produits()
     {
@@ -251,17 +249,22 @@ class AdminController extends Controller
             $tarifs = array_filter($legacy, fn($t) => $t['prix'] !== null);
         }
 
-        Produit::create([
+        $produit = Produit::create([
             'categorie_id' => $request->categorie_id,
             'nom' => $request->nom,
             'description' => $request->description,
             'tarifications' => $tarifs,
             'prix_metre' => $tarifs[0]['prix'] ?? null, // Keep for legacy display
             'image' => $imagePath,
-            'stock' => $request->stock ?? 0,
+            'stock' => 0,
             'disponible' => 1,
             'prix_pro' => $this->prixPro($request),
         ]);
+
+        // Rouleaux de départ : passent par le stock pour figurer dans l'historique
+        if ((int) $request->stock > 0) {
+            app(\App\Services\GestionStock::class)->arrivage($produit, (int) $request->stock, 0, 'Stock de départ', $request->user());
+        }
 
         return redirect()->route('admin.produits')->with('success', 'Produit ajouté ! ✅');
     }
@@ -293,10 +296,14 @@ class AdminController extends Controller
             'meta_description' => $request->meta_description,
             'tarifications' => $tarifs,
             'prix_metre' => $tarifs[0]['prix'] ?? $produit->prix_metre, // Legacy
-            'stock' => $request->stock ?? 0,
             'image' => $produit->image,
             'prix_pro' => $this->prixPro($request),
         ]);
+
+        // Rouleaux changés depuis la fiche : enregistré comme un inventaire, dans l'historique
+        if ($request->filled('stock') && (int) $request->stock !== (int) $produit->stock) {
+            app(\App\Services\GestionStock::class)->inventaire($produit, max(0, (int) $request->stock), (float) $produit->metres_entames, 'Modifié depuis la fiche produit', $request->user());
+        }
 
         return redirect()->route('admin.produits')->with('success', 'Produit modifié ! ✅');
     }

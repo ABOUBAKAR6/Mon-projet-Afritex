@@ -124,25 +124,24 @@
                                     @if(in_array($commande->statut, ['devis_demande', 'devis_envoye'], true))
                                         <a href="{{ route('admin.commande.detail', $commande) }}" class="btn btn-contour btn-sm">{{ $commande->statut === 'devis_demande' ? 'Chiffrer' : 'Modifier' }}</a>
                                     @else
-                                    <div class="relative" x-data="{ ouvert: false }" @click.outside="ouvert = false" @keydown.escape="ouvert = false">
-                                        <button type="button" @click="ouvert = !ouvert" :aria-expanded="ouvert" class="btn btn-contour btn-sm">
-                                            Statut <x-icone nom="chevron-bas" />
-                                        </button>
-                                        <div x-show="ouvert" x-cloak x-transition.origin.top.right
-                                             class="absolute left-0 top-full z-dropdown mt-1 w-52 sm:left-auto sm:right-0 border border-trait bg-carte py-1 text-left shadow-[0_18px_40px_-24px_oklch(0.25_0.04_var(--teinte-ombre)/0.45)]">
-                                            <p class="px-3.5 py-2 text-[0.85rem] text-encre-2">Passer la commande en :</p>
-                                            @foreach($statuts as $valeur => $libelle)
-                                                @continue($valeur === $commande->statut)
-                                                <form method="POST" action="{{ route('admin.commande.statut', $commande) }}">
-                                                    @csrf @method('PATCH')
-                                                    <input type="hidden" name="statut" value="{{ $valeur }}">
-                                                    <button type="submit" class="flex min-h-10 w-full items-center px-3.5 transition-colors hover:bg-brun-doux">
-                                                        <x-statut-commande :statut="$valeur" />
-                                                    </button>
-                                                </form>
-                                            @endforeach
-                                        </div>
-                                    </div>
+                                    {{-- Liste native : le navigateur l'ouvre au-dessus de tout, le tableau (qui défile) ne la coupe plus.
+                                         Choisir un statut l'applique tout de suite. --}}
+                                    <form method="POST" action="{{ route('admin.commande.statut', $commande) }}">
+                                        @csrf @method('PATCH')
+                                        <label for="statut-{{ $commande->id }}" class="sr-only">Changer le statut de la commande n° {{ str_pad($commande->id, 4, '0', STR_PAD_LEFT) }}</label>
+                                        <span class="relative inline-flex">
+                                            <select id="statut-{{ $commande->id }}" name="statut" required onchange="this.form.submit()"
+                                                    class="champ min-h-9 w-auto cursor-pointer appearance-none py-1 pl-3 pr-9 text-sm font-semibold">
+                                                <option value="" selected disabled>Changer le statut</option>
+                                                @foreach($statuts as $valeur => $libelle)
+                                                    @continue($valeur === $commande->statut)
+                                                    <option value="{{ $valeur }}">{{ $libelle }}</option>
+                                                @endforeach
+                                            </select>
+                                            <x-icone nom="chevron-bas" class="pointer-events-none absolute right-3 top-1/2 size-4 -translate-y-1/2 text-encre-2" />
+                                        </span>
+                                        <noscript><button type="submit" class="btn btn-contour btn-sm mt-1">Appliquer</button></noscript>
+                                    </form>
                                     @endif
                                 </div>
                             </td>

@@ -133,7 +133,8 @@
 </section>
 
 {{-- COMMENT ACHETER --}}
-<section class="mt-20 bg-papier-2 py-16 lg:mt-28 lg:py-24" aria-labelledby="titre-achat">
+{{-- « Comment acheter » : pas au téléphone (retiré à la demande de la boutique ; la barre du bas mène au catalogue) --}}
+<section class="mt-20 hidden bg-papier-2 py-16 sm:block lg:mt-28 lg:py-24" aria-labelledby="titre-achat">
     <div class="conteneur grid items-center gap-14 lg:grid-cols-2 lg:gap-20">
         <div class="revele relative mb-12 mr-10 sm:mr-16">
             @if($visuels->get(1))

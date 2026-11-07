@@ -38,6 +38,9 @@
 
     $maxVendu = max(1, collect($topProduits)->max('montant'));
     $carte = 'bg-carte p-6';
+    $voitCommandes = Gate::allows('manage-orders');
+    $voitProduits = Gate::allows('manage-products');
+    $voitPros = Gate::allows('manage-pros');
     $intertitre = 'flex items-center gap-2 text-[0.92rem] font-medium text-encre-2';
 @endphp
 
@@ -48,7 +51,7 @@
 
 {{-- 1. VENTES : chiffre d'affaires, commandes reçues, panier moyen --}}
 <div class="grid gap-6 xl:grid-cols-[1.55fr_1fr]">
-    <section class="flex flex-col bg-brun-fonce p-6 text-white sm:p-8" aria-labelledby="titre-ca">
+    <section class="flex flex-col bg-brun-fonce p-6 text-white sm:p-8" aria-labelledby="titre-ca" @if($voitCommandes) data-lien="{{ route('admin.commandes') }}" @endif>
         <div class="flex flex-wrap items-baseline justify-between gap-2">
             <h2 id="titre-ca" class="flex items-center gap-2 text-[0.95rem] font-medium text-or-doux"><x-icone nom="billets" class="size-4" /> Chiffre d'affaires</h2>
             <p class="text-[0.85rem] text-white/65">ventes confirmées · 30 derniers jours</p>
@@ -65,7 +68,11 @@
         </div>
         <p class="mt-2 text-[0.92rem] text-white/75">
             @if($aEncaisser > 0)
-                + <span class="chiffres font-medium text-white">{{ $f($aEncaisser) }} F</span> de commandes en attente de paiement
+                @if($voitCommandes)
+                    <a href="{{ route('admin.commandes', ['statut' => 'en_attente']) }}" class="underline decoration-white/40 underline-offset-4 hover:text-white">+ <span class="chiffres font-medium text-white">{{ $f($aEncaisser) }} F</span> de commandes en attente de paiement</a>
+                @else
+                    + <span class="chiffres font-medium text-white">{{ $f($aEncaisser) }} F</span> de commandes en attente de paiement
+                @endif
             @else
                 Aucune commande en attente de paiement
             @endif
@@ -100,7 +107,7 @@
     </section>
 
     <div class="grid gap-6">
-        <section class="{{ $carte }}" aria-labelledby="titre-commandes">
+        <section class="{{ $carte }}" aria-labelledby="titre-commandes" @if($voitCommandes) data-lien="{{ route('admin.commandes') }}" @endif>
             <div class="flex items-baseline justify-between gap-2">
                 <h2 id="titre-commandes" class="{{ $intertitre }}"><x-icone nom="colis" class="size-4 text-brun" /> Commandes reçues</h2>
                 <p class="text-[0.82rem] text-encre-2">par tranche de 3 jours</p>
@@ -123,15 +130,17 @@
             <div class="mt-2 flex justify-between text-[0.75rem] text-encre-3" aria-hidden="true">
                 <span>{{ $debut->translatedFormat('j M') }}</span><span>Aujourd'hui</span>
             </div>
+            @if($voitCommandes)<a href="{{ route('admin.commandes') }}" class="lien-fleche mt-4 text-[0.88rem]">Voir les commandes <x-icone nom="fleche" /></a>@endif
         </section>
 
-        <section class="{{ $carte }}" aria-labelledby="titre-panier">
+        <section class="{{ $carte }}" aria-labelledby="titre-panier" @if($voitCommandes) data-lien="{{ route('admin.commandes') }}" @endif>
             <div class="flex items-baseline justify-between gap-2">
                 <h2 id="titre-panier" class="{{ $intertitre }}"><x-icone nom="panier" class="size-4 text-brun" /> Panier moyen</h2>
                 <p class="text-[0.82rem] text-encre-2">par vente confirmée</p>
             </div>
             <p class="titre-display chiffres mt-2 text-[2.4rem] leading-none">{{ $f($panierMoyen) }} <span class="text-[1rem] font-normal text-encre-2">F</span></p>
             <p class="mt-2 text-[0.9rem] text-encre-2">{{ $nbVentes }} vente{{ $nbVentes > 1 ? 's' : '' }} confirmée{{ $nbVentes > 1 ? 's' : '' }} sur la période</p>
+            @if($voitCommandes)<a href="{{ route('admin.commandes') }}" class="lien-fleche mt-4 text-[0.88rem]">Voir les commandes <x-icone nom="fleche" /></a>@endif
         </section>
     </div>
 </div>
@@ -174,14 +183,18 @@
         @else
             <ul class="mt-4 divide-y divide-trait">
                 @foreach($stocksFaibles as $produit)
-                    <li class="flex items-center gap-3 py-2.5">
+                    <li class="relative -mx-2 flex items-center gap-3 px-2 py-2.5 transition-colors hover:bg-brun-doux">
                         <span class="size-10 shrink-0 overflow-hidden bg-papier-2">
                             @if($produit->image && file_exists(public_path($produit->image)))
                                 <img src="{{ asset($produit->image) }}" alt="" loading="lazy" class="h-full w-full object-cover">
                             @endif
                         </span>
                         <span class="min-w-0 flex-1">
-                            <span class="block truncate text-[0.95rem] font-medium">{{ $produit->nom }}</span>
+                            @if($voitProduits)
+                                <a href="{{ route('admin.produits', ['modifier' => $produit->id]) }}" class="block truncate text-[0.95rem] font-medium after:absolute after:inset-0 hover:text-brun">{{ $produit->nom }}</a>
+                            @else
+                                <span class="block truncate text-[0.95rem] font-medium">{{ $produit->nom }}</span>
+                            @endif
                             <span class="block text-[0.82rem] {{ $produit->stock <= 0 ? 'font-medium text-danger' : 'text-encre-2' }}">
                                 {{ $produit->stock <= 0 ? 'Épuisé' : $produit->stock . ' en stock' }} · seuil 5
                             </span>
@@ -199,10 +212,10 @@
         <h2 id="titre-encaissement" class="{{ $intertitre }}"><x-icone nom="carte-bancaire" class="size-4 text-brun" /> Encaissement et livraison</h2>
         <p class="mt-1 text-[0.85rem] text-encre-2">Sur les ventes confirmées des 30 derniers jours</p>
         @foreach([
-            ['Encaissé', $pct($encaisse, $ca), $f($encaisse) . ' F sur ' . $f($ca) . ' F', 'bg-brun'],
-            ['Livrées', $pct($nbLivrees, $nbVentes), $nbLivrees . ' sur ' . $nbVentes . ' vente' . ($nbVentes > 1 ? 's' : ''), 'bg-or'],
-        ] as [$libelle, $valeur, $detail, $couleur])
-            <div class="mt-5">
+            ['Encaissé', $pct($encaisse, $ca), $f($encaisse) . ' F sur ' . $f($ca) . ' F', 'bg-brun', route('admin.commandes')],
+            ['Livrées', $pct($nbLivrees, $nbVentes), $nbLivrees . ' sur ' . $nbVentes . ' vente' . ($nbVentes > 1 ? 's' : ''), 'bg-or', route('admin.commandes', ['statut' => 'livree'])],
+        ] as [$libelle, $valeur, $detail, $couleur, $lien])
+            <div class="-mx-2 mt-3 px-2 py-2 transition-colors hover:bg-brun-doux" @if($voitCommandes) data-lien="{{ $lien }}" @endif>
                 <div class="flex items-baseline justify-between gap-3">
                     <span class="font-medium">{{ $libelle }}</span>
                     <span class="titre-display chiffres text-[1.6rem] leading-none">{{ $valeur }} %</span>
@@ -256,11 +269,11 @@
         <section class="{{ $carte }}" aria-labelledby="titre-repartition">
             <h2 id="titre-repartition" class="{{ $intertitre }}"><x-icone nom="boutique" class="size-4 text-brun" /> Détail, gros et paiements</h2>
             <dl class="mt-4 grid grid-cols-2 gap-4">
-                <div>
+                <div class="-m-2 p-2 transition-colors hover:bg-brun-doux" @if($voitCommandes) data-lien="{{ route('admin.commandes') }}" @endif>
                     <dt class="text-[0.85rem] text-encre-2">Détail</dt>
                     <dd class="titre-display chiffres text-[1.6rem] leading-tight">{{ $f($caDetail) }} F</dd>
                 </div>
-                <div>
+                <div class="-m-2 p-2 transition-colors hover:bg-brun-doux" @if($voitPros) data-lien="{{ route('admin.pros') }}" @endif>
                     <dt class="text-[0.85rem] text-encre-2">Gros (Espace Pro)</dt>
                     <dd class="titre-display chiffres text-[1.6rem] leading-tight">{{ $f($caGros) }} F</dd>
                 </div>
@@ -305,9 +318,13 @@
             @else
                 <ol class="mt-4 space-y-3.5">
                     @foreach($topProduits as $top)
-                        <li>
+                        <li class="relative -mx-2 px-2 py-1 transition-colors hover:bg-brun-doux">
                             <div class="flex items-baseline justify-between gap-4 text-[0.92rem]">
-                                <span class="truncate font-medium">{{ $top->nom }}</span>
+                                @if($voitProduits)
+                                    <a href="{{ route('admin.produits', ['modifier' => $top->id]) }}" class="truncate font-medium after:absolute after:inset-0 hover:text-brun">{{ $top->nom }}</a>
+                                @else
+                                    <span class="truncate font-medium">{{ $top->nom }}</span>
+                                @endif
                                 <span class="chiffres shrink-0 text-encre-2">{{ $f($top->montant) }} F</span>
                             </div>
                             <div class="mt-1.5 h-1.5 bg-papier-2" aria-hidden="true">

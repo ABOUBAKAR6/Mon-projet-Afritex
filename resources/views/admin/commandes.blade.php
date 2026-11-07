@@ -96,7 +96,7 @@
                 </thead>
                 <tbody>
                     @foreach($commandes as $commande)
-                        <tr>
+                        <tr data-lien="{{ route('admin.commande.detail', $commande) }}">
                             <td>
                                 <a href="{{ route('admin.commande.detail', $commande) }}" class="chiffres font-semibold text-brun hover:underline">n° {{ str_pad($commande->id, 4, '0', STR_PAD_LEFT) }}</a>
                                 @if($commande->est_pro)<span class="pastille pastille-brun ml-1.5 !py-0.5">Pro</span>@endif

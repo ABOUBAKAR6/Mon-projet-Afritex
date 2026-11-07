@@ -74,7 +74,7 @@ class AdminController extends Controller
             ->join('produits', 'commande_items.produit_id', '=', 'produits.id')
             ->whereIn('commandes.statut', Commande::STATUTS_VENDUS)
             ->where('commandes.created_at', '>=', $debut)
-            ->select('produits.nom', \DB::raw('SUM(commande_items.quantite) as total_vendu'), \DB::raw('SUM(commande_items.sous_total) as montant'))
+            ->select('produits.id', 'produits.nom', \DB::raw('SUM(commande_items.quantite) as total_vendu'), \DB::raw('SUM(commande_items.sous_total) as montant'))
             ->groupBy('produits.id', 'produits.nom')
             ->orderByDesc('montant')
             ->take(5)

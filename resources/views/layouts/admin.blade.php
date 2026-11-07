@@ -124,6 +124,17 @@
     </main>
 </div>
 
+<script>
+// Lignes et cartes entières cliquables (attribut data-lien) : pratique au téléphone.
+// Les liens, boutons, menus et champs à l'intérieur gardent leur propre action.
+document.addEventListener('click', (e) => {
+    const cible = e.target.closest('[data-lien]');
+    if (!cible || e.target.closest('a, button, input, select, textarea, label, summary, details, form, dialog')) return;
+    if (window.getSelection()?.toString()) return;
+    if (e.ctrlKey || e.metaKey) { window.open(cible.dataset.lien, '_blank'); return; }
+    window.location.href = cible.dataset.lien;
+});
+</script>
 @stack('scripts')
 </body>
 </html>

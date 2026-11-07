@@ -327,6 +327,10 @@ addPricingRow('pricing-container-add', 'Au mètre', '');
 
 // Fermer une fenêtre en cliquant sur le voile
 document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
+
+// Ouverture directe d'un produit depuis le tableau de bord : /admin/produits?modifier=12
+const produitAModifier = new URLSearchParams(window.location.search).get('modifier');
+if (produitAModifier) openEditProduit(Number(produitAModifier));
 </script>
 
 @endsection

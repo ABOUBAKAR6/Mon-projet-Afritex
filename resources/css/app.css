@@ -439,6 +439,16 @@
         background: color-mix(in oklch, var(--brun-doux) 60%, transparent);
     }
 
+    /* Ligne ou carte entière cliquable (data-lien, script dans layouts/admin) */
+    [data-lien] {
+        cursor: pointer;
+    }
+
+    [data-lien]:not(tr):hover {
+        outline: 1px solid var(--brun-trait);
+        outline-offset: -1px;
+    }
+
     /* ---------- Texte riche (pages légales, FAQ, à propos) ---------- */
     .prose-afritex {
         max-width: 68ch;

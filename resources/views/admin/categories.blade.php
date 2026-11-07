@@ -19,7 +19,7 @@
         </div>
     </div>
     <div class="overflow-x-auto">
-        <table class="tableau" id="categoriesTable">
+        <table class="tableau tableau-empile" id="categoriesTable">
             <thead>
                 <tr>
                     <th scope="col">Catégorie</th>
@@ -44,7 +44,7 @@
                                 <span class="font-medium">{{ $categorie->nom }}</span>
                             </div>
                         </td>
-                        <td>
+                        <td data-label="Produits" data-large>
                             <div class="flex items-center gap-3">
                                 <span class="chiffres w-8 shrink-0 text-right">{{ $nb }}</span>
                                 <span class="h-2 flex-1 bg-papier-2" aria-hidden="true"><span class="block h-full rounded-r-[4px] bg-brun" style="width: {{ round(($nb / $maxProduits) * 100) }}%"></span></span>

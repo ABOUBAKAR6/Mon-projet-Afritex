@@ -82,7 +82,7 @@
         </div>
     @else
         <div class="overflow-x-auto">
-            <table class="tableau">
+            <table class="tableau tableau-empile">
                 <thead>
                     <tr>
                         <th scope="col">Commande</th>
@@ -102,12 +102,12 @@
                                 @if($commande->est_pro)<span class="pastille pastille-brun ml-1.5 !py-0.5">Pro</span>@endif
                                 <span class="block text-[0.85rem] text-encre-2">{{ $commande->created_at->format('d/m/Y H:i') }}</span>
                             </td>
-                            <td>
+                            <td data-label="Client" data-large>
                                 <span class="block font-medium">{{ $commande->user->name ?? 'Client supprimé' }}</span>
                                 <span class="block text-[0.85rem] text-encre-2">{{ $commande->user->email ?? '' }}</span>
                             </td>
-                            <td class="chiffres text-right">{{ $commande->items->count() }}</td>
-                            <td>
+                            <td class="chiffres text-right" data-label="Articles">{{ $commande->items->count() }}</td>
+                            <td data-label="Paiement">
                                 @if($commande->paiement)
                                     <x-statut-commande :statut="$commande->paiement->statut" />
                                     <span class="mt-1 block text-[0.85rem] text-encre-2">{{ ucfirst(str_replace('_', ' ', $commande->paiement->methode)) }}</span>
@@ -115,8 +115,8 @@
                                     <span class="text-encre-2">Non défini</span>
                                 @endif
                             </td>
-                            <td><x-statut-commande :statut="$commande->statut" /></td>
-                            <td class="chiffres whitespace-nowrap text-right font-semibold">{{ number_format($commande->total, 0, ',', ' ') }} F</td>
+                            <td data-label="Statut"><x-statut-commande :statut="$commande->statut" /></td>
+                            <td class="chiffres whitespace-nowrap text-right font-semibold" data-label="Total">{{ number_format($commande->total, 0, ',', ' ') }} F</td>
                             <td class="text-right">
                                 <div class="flex items-center justify-end gap-1">
                                     <a href="{{ route('admin.commande.detail', $commande) }}" class="btn btn-fantome btn-sm">Détail</a>
@@ -129,7 +129,7 @@
                                             Statut <x-icone nom="chevron-bas" />
                                         </button>
                                         <div x-show="ouvert" x-cloak x-transition.origin.top.right
-                                             class="absolute right-0 top-full z-dropdown mt-1 w-52 border border-trait bg-carte py-1 text-left shadow-[0_18px_40px_-24px_oklch(0.25_0.04_var(--teinte-ombre)/0.45)]">
+                                             class="absolute left-0 top-full z-dropdown mt-1 w-52 sm:left-auto sm:right-0 border border-trait bg-carte py-1 text-left shadow-[0_18px_40px_-24px_oklch(0.25_0.04_var(--teinte-ombre)/0.45)]">
                                             <p class="px-3.5 py-2 text-[0.85rem] text-encre-2">Passer la commande en :</p>
                                             @foreach($statuts as $valeur => $libelle)
                                                 @continue($valeur === $commande->statut)

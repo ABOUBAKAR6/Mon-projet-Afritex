@@ -439,6 +439,86 @@
         background: color-mix(in oklch, var(--brun-doux) 60%, transparent);
     }
 
+    /* Au téléphone, chaque ligne devient une fiche : la 1re cellule en tête,
+       les cellules data-label en grille de 2 (libellé au-dessus de la valeur),
+       data-large ou sans libellé = pleine largeur, pied de tableau en lignes « libellé … montant ». */
+    @media (max-width: 639.98px) {
+        .tableau-empile thead {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            overflow: hidden;
+            clip: rect(0 0 0 0);
+            white-space: nowrap;
+        }
+
+        .tableau-empile,
+        .tableau-empile tbody,
+        .tableau-empile tfoot {
+            display: block;
+            width: 100%;
+        }
+
+        .tableau-empile tbody tr {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 0.85rem 1.25rem;
+            padding: 1.1rem 1.5rem;
+            border-top: 1px solid var(--trait);
+        }
+
+        .tableau-empile tbody td {
+            display: block;
+            min-width: 0;
+            padding: 0;
+            border: 0;
+            text-align: left;
+            overflow-wrap: anywhere;
+        }
+
+        .tableau-empile tbody td:not([data-label]),
+        .tableau-empile tbody td[data-large] {
+            grid-column: 1 / -1;
+        }
+
+        .tableau-empile tbody td[colspan] {
+            text-align: center;
+        }
+
+        .tableau-empile tbody td[data-label]::before {
+            content: attr(data-label);
+            display: block;
+            margin-bottom: 0.2rem;
+            font-size: 0.8rem;
+            color: var(--encre-2);
+        }
+
+        .tableau-empile td .justify-end {
+            justify-content: flex-start;
+        }
+
+        .tableau-empile td .ml-auto {
+            margin-left: 0;
+        }
+
+        .tableau-empile tfoot tr {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 1rem;
+            padding: 0.7rem 1.5rem;
+        }
+
+        .tableau-empile tfoot tr:first-child {
+            border-top: 1px solid var(--trait-fort);
+        }
+
+        .tableau-empile tfoot td {
+            padding: 0;
+            border: 0;
+        }
+    }
+
     /* Ligne ou carte entière cliquable (data-lien, script dans layouts/admin) */
     [data-lien] {
         cursor: pointer;

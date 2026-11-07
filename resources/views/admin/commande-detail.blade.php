@@ -46,7 +46,7 @@
                 @endif
 
                 <div class="overflow-x-auto">
-                    <table class="tableau">
+                    <table class="tableau tableau-empile">
                         <thead>
                             <tr>
                                 <th scope="col">Produit et format</th>
@@ -65,12 +65,12 @@
                                             <span class="font-medium text-brun">{{ $item->libelleFormat() }}</span>@if($produit) · stock {{ $produit->stock }}@endif
                                         </span>
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-right" data-label="Quantité">
                                         <label for="q-{{ $item->id }}" class="sr-only">Quantité, {{ $produit->nom ?? 'produit' }}</label>
                                         <input id="q-{{ $item->id }}" type="number" name="lignes[{{ $item->id }}][quantite]" min="0" max="9999" step="1" inputmode="numeric" required
                                                x-model.number="lignes[{{ $loop->index }}].quantite" class="champ chiffres ml-auto min-h-10 w-20 text-right">
                                     </td>
-                                    <td class="text-right">
+                                    <td class="text-right" data-label="Prix unitaire">
                                         <label for="p-{{ $item->id }}" class="sr-only">Prix unitaire, {{ $produit->nom ?? 'produit' }}</label>
                                         <div class="relative ml-auto w-32">
                                             <input id="p-{{ $item->id }}" type="number" name="lignes[{{ $item->id }}][prix_unitaire]" min="0" step="1" inputmode="numeric" required
@@ -78,7 +78,7 @@
                                             <span class="pointer-events-none absolute right-3 top-1/2 -translate-y-1/2 text-encre-3">F</span>
                                         </div>
                                     </td>
-                                    <td class="chiffres whitespace-nowrap text-right font-semibold" x-text="francs(sousTotal(lignes[{{ $loop->index }}]))">{{ $francs($item->sous_total) }}</td>
+                                    <td class="chiffres whitespace-nowrap text-right font-semibold" data-label="Sous-total" x-text="francs(sousTotal(lignes[{{ $loop->index }}]))">{{ $francs($item->sous_total) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>
@@ -129,7 +129,7 @@
             <section class="bg-carte" aria-labelledby="titre-articles">
                 <h2 id="titre-articles" class="titre-display p-6 pb-4 text-[1.25rem]">Articles commandés</h2>
                 <div class="overflow-x-auto">
-                    <table class="tableau">
+                    <table class="tableau tableau-empile">
                         <thead>
                             <tr>
                                 <th scope="col">Produit</th>
@@ -146,10 +146,10 @@
                                         <span class="block font-medium">{{ $item->produit->nom ?? 'Produit supprimé' }}</span>
                                         <span class="block text-[0.85rem] text-brun">{{ $item->produit?->categorie?->nom }}</span>
                                     </td>
-                                    <td>{{ $item->libelleFormat() }}</td>
-                                    <td class="chiffres text-right">{{ $item->quantiteLisible() }}</td>
-                                    <td class="chiffres whitespace-nowrap text-right">{{ $francs($item->prix_unitaire) }}</td>
-                                    <td class="chiffres whitespace-nowrap text-right font-semibold">{{ $francs($item->sous_total) }}</td>
+                                    <td data-label="Format">{{ $item->libelleFormat() }}</td>
+                                    <td class="chiffres text-right" data-label="Quantité">{{ $item->quantiteLisible() }}</td>
+                                    <td class="chiffres whitespace-nowrap text-right" data-label="Prix unitaire">{{ $francs($item->prix_unitaire) }}</td>
+                                    <td class="chiffres whitespace-nowrap text-right font-semibold" data-label="Sous-total">{{ $francs($item->sous_total) }}</td>
                                 </tr>
                             @endforeach
                         </tbody>

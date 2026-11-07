@@ -6,7 +6,7 @@
 
 <section class="bg-carte" aria-label="Liste des utilisateurs">
     <div class="overflow-x-auto">
-        <table class="tableau">
+        <table class="tableau tableau-empile">
             <thead>
                 <tr>
                     <th scope="col">Utilisateur</th>
@@ -28,8 +28,8 @@
                                 <span class="font-medium">{{ $user->name }}@if($user->id === Auth::id()) <span class="font-normal text-encre-2">(vous)</span>@endif</span>
                             </div>
                         </td>
-                        <td class="text-encre-2">{{ $user->email }}</td>
-                        <td><span class="pastille {{ $user->estPersonnel() ? 'pastille-brun' : '' }}">{{ $roleLibelle }}</span></td>
+                        <td class="text-encre-2" data-label="E-mail" data-large>{{ $user->email }}</td>
+                        <td data-label="Rôle" data-large><span class="pastille {{ $user->estPersonnel() ? 'pastille-brun' : '' }}">{{ $roleLibelle }}</span></td>
                         <td class="text-right">
                             {{-- Changer un rôle est réservé au propriétaire ; les secrétaires se gèrent depuis la page Équipe --}}
                             @if($user->estSecretaire())

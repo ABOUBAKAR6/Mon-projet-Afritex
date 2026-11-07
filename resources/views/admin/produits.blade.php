@@ -45,7 +45,7 @@
         <p id="compte-produits" class="text-[0.92rem] text-encre-2" aria-live="polite"></p>
     </div>
     <div class="overflow-x-auto">
-        <table class="tableau">
+        <table class="tableau tableau-empile">
             <thead>
                 <tr>
                     <th scope="col">Produit</th>
@@ -73,9 +73,9 @@
                                 </span>
                             </div>
                         </td>
-                        <td>{{ $produit->categorie->nom ?? 'Sans catégorie' }}</td>
-                        <td class="chiffres whitespace-nowrap text-right font-medium">{{ $produit->prix_metre ? number_format($produit->prix_metre, 0, ',', ' ') . ' F' : 'Non défini' }}</td>
-                        <td>
+                        <td data-label="Catégorie">{{ $produit->categorie->nom ?? 'Sans catégorie' }}</td>
+                        <td class="chiffres whitespace-nowrap text-right font-medium" data-label="Prix au mètre">{{ $produit->prix_metre ? number_format($produit->prix_metre, 0, ',', ' ') . ' F' : 'Non défini' }}</td>
+                        <td data-label="Stock" data-large>
                             <span class="pastille {{ $produit->stock > 10 ? 'pastille-succes' : ($produit->stock > 0 ? 'pastille-attente' : 'pastille-danger') }}">
                                 {{ $produit->stock > 0 ? $produit->stock . ' en stock' : 'Épuisé' }}
                             </span>

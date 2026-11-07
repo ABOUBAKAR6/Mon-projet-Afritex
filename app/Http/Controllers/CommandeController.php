@@ -29,8 +29,20 @@ class CommandeController extends Controller
         $discount = $this->cartService->getDiscount();
         $total = $this->cartService->getTotal($panier);
         $coupon = session('coupon', []);
+        $remarques = (string) session('panier_remarques', '');
 
-        return view('panier', compact('panier', 'subtotal', 'discount', 'total', 'coupon'));
+        return view('panier', compact('panier', 'subtotal', 'discount', 'total', 'coupon', 'remarques'));
+    }
+
+    // Remarques du client pour la boutique, écrites dans le panier : gardées jusqu'à la commande
+    public function remarques(Request $request)
+    {
+        $donnees = $request->validate(['remarques' => ['nullable', 'string', 'max:1000']]);
+        session(['panier_remarques' => trim((string) ($donnees['remarques'] ?? ''))]);
+
+        return $request->expectsJson()
+            ? response()->json(['ok' => true])
+            : redirect()->route('panier')->with('success', 'Remarques enregistrées.');
     }
 
     public function ajouter(Request $request)
@@ -40,12 +52,14 @@ class CommandeController extends Controller
             'produit_id' => ['required', 'integer', 'exists:produits,id'],
             'type_commande' => ['required', 'in:metre,rouleau'],
             'quantite' => ['nullable', 'integer', 'min:1', 'max:10000'],
+            'couleur' => ['nullable', 'string', 'max:100'],
         ], ['type_commande.in' => 'Choisissez « Au mètre » ou « Au rouleau ».']);
 
         $this->cartService->addItem(
             (int) $request->produit_id,
             $request->type_commande,
-            (int) ($request->quantite ?? 1)
+            (int) ($request->quantite ?? 1),
+            $request->couleur
         );
 
         return redirect()->route('panier')->with('success', 'Produit ajouté au panier !');
@@ -98,7 +112,8 @@ class CommandeController extends Controller
                 $coupon,
                 $request->adresse_livraison,
                 auth()->id(),
-                $request->mode_livraison === 'boutique' ? 'boutique' : 'domicile'
+                $request->mode_livraison === 'boutique' ? 'boutique' : 'domicile',
+                session('panier_remarques')
             );
 
             return redirect()->route('paiement', $commande->id);

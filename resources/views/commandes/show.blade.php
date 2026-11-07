@@ -40,7 +40,7 @@
                             @else
                                 <span class="block font-medium">Produit retiré du catalogue</span>
                             @endif
-                            <span class="block text-[0.92rem] text-encre-2">{{ $formats[$item->type_commande] ?? ucfirst($item->type_commande) }} × <span class="chiffres">{{ $item->quantite }}</span></span>
+                            <span class="block text-[0.92rem] text-encre-2">{{ $formats[$item->type_commande] ?? ucfirst($item->type_commande) }} × <span class="chiffres">{{ $item->quantite }}</span>@if($item->couleur) · couleur : {{ $item->couleur }}@endif</span>
                         </span>
                         <span class="chiffres whitespace-nowrap font-medium">{{ number_format($item->sous_total, 0, ',', ' ') }} F</span>
                     </li>

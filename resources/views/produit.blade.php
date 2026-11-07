@@ -112,6 +112,7 @@
                               unites: @js($formats->map(fn ($f) => $f[2])),
                               choix: @js($formats->keys()->first()),
                               qte: 1,
+                              couleur: '',
                               get prix() { return this.formats[this.choix] || 0 },
                               get total() { return this.prix * (parseInt(this.qte) || 0) },
                               f(n) { return new Intl.NumberFormat('fr-FR').format(n).replace(/\s/g, ' ') + ' F' },
@@ -120,7 +121,7 @@
                                   const n = parseInt(this.qte) || 1;
                                   const unite = this.choix === 'metre' ? ' m' : (this.choix === 'rouleau' ? (n > 1 ? ' rouleaux' : ' rouleau') : (n > 1 ? ' pièces' : ' pièce'));
                                   const texte = @js($debutMessage) + '\n\n*' + @js($produit->nom) + '*\n' + this.libelles[this.choix] + ' : ' + n + unite
-                                      + ' × ' + this.f(this.prix) + ' = ' + this.f(this.prix * n) + @js($finMessage);
+                                      + ' × ' + this.f(this.prix) + ' = ' + this.f(this.prix * n) + (this.couleur.trim() ? '\nCouleur souhaitée : ' + this.couleur.trim() : '') + @js($finMessage);
                                   return 'https://wa.me/' + @js((string) $numeroWhatsapp) + '?text=' + encodeURIComponent(texte);
                               }
                           }">
@@ -168,6 +169,19 @@
                                 <p class="text-[0.92rem] text-encre-2">Total</p>
                                 <p class="titre-display chiffres text-[1.7rem] leading-tight text-brun" x-text="f(total)">{{ number_format($formats->first()[1], 0, ',', ' ') }} F</p>
                             </div>
+                        </div>
+
+                        {{-- Couleur voulue par le client : enregistrée avec l'article, visible par la boutique dans la commande --}}
+                        <div class="mt-5">
+                            <label for="couleur" class="etiquette">Couleur souhaitée <span class="font-normal text-encre-2">(facultatif)</span></label>
+                            <input id="couleur" type="text" name="couleur" maxlength="100" x-model="couleur" autocomplete="off"
+                                   @if(!empty($produit->couleurs)) list="couleurs-produit" @endif
+                                   class="champ" placeholder="Ex. : bleu nuit, rouge bordeaux, comme sur la photo">
+                            @if(!empty($produit->couleurs))
+                                <datalist id="couleurs-produit">@foreach((array) $produit->couleurs as $c)<option value="{{ $c }}"></option>@endforeach</datalist>
+                            @endif
+                            <p class="aide">La boutique la reçoit avec votre commande et dans le message WhatsApp.</p>
+                            @error('couleur')<p class="erreur">{{ $message }}</p>@enderror
                         </div>
 
                         @auth

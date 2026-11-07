@@ -7,6 +7,24 @@
         'chemise_courte' => 'Chemise manches courtes', 'chemise_longue' => 'Chemise manches longues',
         'tunique_courte' => 'Tunique manches courtes', 'tunique_longue' => 'Tunique manches longues',
     ];
+
+    // Message WhatsApp du panier pour le propriétaire (les remarques s'ajoutent en direct)
+    $numeroWhatsapp = config('services.whatsapp.numero');
+    $f = fn ($n) => number_format((float) $n, 0, ',', ' ') . ' F';
+    $lignes = ['Bonjour ' . boutique('nom') . ',', '', 'Voici mon panier :', ''];
+    foreach ($panier as $item) {
+        $q = (float) $item['quantite'];
+        $unite = $item['type_commande'] === 'metre' ? ' m' : ($item['type_commande'] === 'rouleau' ? ($q > 1 ? ' rouleaux' : ' rouleau') : '');
+        $lignes[] = '*' . $item['nom'] . '*';
+        $lignes[] = ($formats[$item['type_commande']] ?? $item['type_commande']) . ' : ' . rtrim(rtrim(number_format($q, 2, ',', ''), '0'), ',') . $unite
+            . ' × ' . $f($item['prix_unitaire'] ?? ($item['sous_total'] / max(1, $q))) . ' = ' . $f($item['sous_total']);
+        if (!empty($item['couleur'])) {
+            $lignes[] = 'Couleur souhaitée : ' . $item['couleur'];
+        }
+        $lignes[] = '';
+    }
+    $lignes[] = '*Total : ' . $f($total ?? 0) . '*';
+    $debutMessage = implode("\n", $lignes);
 @endphp
 
 <div class="conteneur pb-20 pt-10 lg:pb-28 lg:pt-14">
@@ -41,6 +59,9 @@
                                 {{ $formats[$item['type_commande']] ?? ucfirst(str_replace('_', ' ', $item['type_commande'])) }}
                                 · <span class="chiffres">{{ $item['quantite'] }}</span> × <span class="chiffres">{{ number_format($item['prix_unitaire'] ?? ($item['sous_total'] / max(1, $item['quantite'])), 0, ',', ' ') }} F</span>
                             </p>
+                            @if(!empty($item['couleur']))
+                                <p class="mt-1 text-[0.92rem]"><span class="text-encre-2">Couleur :</span> {{ $item['couleur'] }}</p>
+                            @endif
                             <p class="chiffres mt-2 font-semibold sm:hidden">{{ number_format($item['sous_total'], 0, ',', ' ') }} F</p>
                         </div>
                         <div class="col-span-2 flex items-center justify-between gap-4 sm:col-span-1 sm:flex-col sm:items-end">
@@ -89,6 +110,34 @@
                     <x-icone nom="livraison" class="mt-0.5 size-4 shrink-0 text-brun" />
                     Livraison partout en Côte d'Ivoire sous 24 à 72 h, ou retrait gratuit en boutique.
                 </p>
+
+                {{-- Remarques pour la boutique : enregistrées en tapant, jointes à la commande, envoyables sur WhatsApp --}}
+                <div class="mt-6 border-t border-trait pt-5"
+                     x-data="{
+                         texte: @js($remarques ?? ''),
+                         dernier: @js($remarques ?? ''),
+                         etat: 'Elles partent avec votre commande.',
+                         enregistrer() {
+                             if (this.texte === this.dernier) return;
+                             this.dernier = this.texte;
+                             fetch(@js(route('panier.remarques')), { method: 'POST', headers: { 'Content-Type': 'application/json', 'Accept': 'application/json', 'X-CSRF-TOKEN': @js(csrf_token()) }, body: JSON.stringify({ remarques: this.texte }) })
+                                 .then((r) => this.etat = r.ok ? 'Remarques enregistrées : elles partent avec votre commande.' : 'Remarques non enregistrées, réessayez.')
+                                 .catch(() => this.etat = 'Remarques non enregistrées, réessayez.');
+                         },
+                         lien() {
+                             const fin = (this.texte.trim() ? '\n\nMes remarques : ' + this.texte.trim() : '') + '\n\nMerci !';
+                             return 'https://wa.me/' + @js((string) $numeroWhatsapp) + '?text=' + encodeURIComponent(@js($debutMessage) + fin);
+                         }
+                     }">
+                    <label for="remarques" class="etiquette">Vos remarques pour la boutique <span class="font-normal text-encre-2">(facultatif)</span></label>
+                    <textarea id="remarques" rows="3" maxlength="1000" x-model="texte" @input.debounce.800ms="enregistrer()" @blur="enregistrer()"
+                              class="champ min-h-0" placeholder="Ex. : même bain de teinture pour les deux tissus, livraison après 17 h"></textarea>
+                    <p class="aide" x-text="etat" aria-live="polite">Elles partent avec votre commande.</p>
+                    @if($numeroWhatsapp)
+                        <a href="https://wa.me/{{ $numeroWhatsapp }}?text={{ rawurlencode($debutMessage) }}" :href="lien()" @click="enregistrer()" target="_blank" rel="noopener noreferrer"
+                           class="btn btn-contour mt-3 w-full"><x-icone nom="message" /> Envoyer au propriétaire sur WhatsApp</a>
+                    @endif
+                </div>
 
                 <a href="{{ route('commande') }}" class="btn btn-brun btn-lg mt-6 w-full">Passer la commande <x-icone nom="fleche" /></a>
                 <a href="{{ route('catalogue') }}" class="btn btn-fantome mt-2 w-full">Continuer mes achats</a>

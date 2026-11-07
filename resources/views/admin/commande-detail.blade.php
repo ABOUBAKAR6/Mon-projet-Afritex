@@ -161,7 +161,7 @@
                                         <span class="block font-medium">{{ $item->produit->nom ?? 'Produit supprimé' }}</span>
                                         <span class="block text-[0.85rem] text-brun">{{ $item->produit?->categorie?->nom }}</span>
                                     </td>
-                                    <td data-label="Format">{{ $item->libelleFormat() }}</td>
+                                    <td data-label="Format">{{ $item->libelleFormat() }}@if($item->couleur)<span class="block text-[0.85rem] text-encre-2">Couleur : <span class="font-medium text-encre">{{ $item->couleur }}</span></span>@endif</td>
                                     <td class="chiffres text-right" data-label="Quantité">{{ $item->quantiteLisible() }}</td>
                                     <td class="chiffres whitespace-nowrap text-right" data-label="Prix unitaire">{{ $francs($item->prix_unitaire) }}</td>
                                     <td class="chiffres whitespace-nowrap text-right font-semibold" data-label="Sous-total">{{ $francs($item->sous_total) }}</td>
@@ -288,6 +288,12 @@
                         <span class="block truncate text-[0.9rem] text-encre-2">{{ $commande->user->email ?? '' }}</span>
                     </span>
                 </div>
+                @if($commande->note_client)
+                    <div class="mt-4 border-t border-trait pt-4">
+                        <p class="text-[0.9rem] text-encre-2">Ses remarques</p>
+                        <p class="mt-1 whitespace-pre-line">{{ $commande->note_client }}</p>
+                    </div>
+                @endif
                 @if($commande->user?->email)
                     <a href="mailto:{{ $commande->user->email }}" class="btn btn-contour mt-5 w-full"><x-icone nom="courrier" /> Écrire au client</a>
                 @endif

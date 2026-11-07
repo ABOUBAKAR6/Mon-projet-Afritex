@@ -10,6 +10,7 @@ class CommandeItem extends Model
         'commande_id',
         'produit_id',
         'type_commande',
+        'couleur',
         'quantite',
         'prix_unitaire',
         'sous_total',

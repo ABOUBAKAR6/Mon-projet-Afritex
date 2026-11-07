@@ -24,6 +24,7 @@ class CartService
                     'produit_id' => $item->produit_id,
                     'nom' => $item->produit->nom,
                     'type_commande' => $item->type_commande,
+                    'couleur' => $item->couleur,
                     'quantite' => $item->quantite,
                     'prix_unitaire' => $item->prix_unitaire,
                     'sous_total' => $item->sous_total,
@@ -46,9 +47,11 @@ class CartService
         return $items;
     }
 
-    public function addItem(int $produitId, string $typeCommande, int $quantite): void
+    public function addItem(int $produitId, string $typeCommande, int $quantite, ?string $couleur = null): void
     {
         $produit = Produit::findOrFail($produitId);
+        // Couleur souhaitée par le client (page produit) : vide = pas de préférence
+        $couleur = trim((string) $couleur) !== '' ? mb_substr(trim($couleur), 0, 100) : null;
 
         $prixUnitaire = match($typeCommande) {
             'metre' => $produit->prix_metre,
@@ -70,6 +73,7 @@ class CartService
             $item = CartItem::where('cart_id', $cart->id)
                 ->where('produit_id', $produitId)
                 ->where('type_commande', $typeCommande)
+                ->when($couleur === null, fn ($q) => $q->whereNull('couleur'), fn ($q) => $q->where('couleur', $couleur))
                 ->first();
 
             if ($item) {
@@ -80,6 +84,7 @@ class CartService
                     'cart_id' => $cart->id,
                     'produit_id' => $produitId,
                     'type_commande' => $typeCommande,
+                    'couleur' => $couleur,
                     'quantite' => $quantite,
                     'prix_unitaire' => $prixUnitaire,
                     'sous_total' => $sousTotal,
@@ -91,7 +96,7 @@ class CartService
             // Vérifier si le produit existe déjà dans le panier session
             $existingKey = null;
             foreach ($panier as $key => $item) {
-                if ($item['produit_id'] === $produitId && $item['type_commande'] === $typeCommande) {
+                if ($item['produit_id'] === $produitId && $item['type_commande'] === $typeCommande && ($item['couleur'] ?? null) === $couleur) {
                     $existingKey = $key;
                     break;
                 }
@@ -105,6 +110,7 @@ class CartService
                     'produit_id' => $produit->id,
                     'nom' => $produit->nom,
                     'type_commande' => $typeCommande,
+                    'couleur' => $couleur,
                     'quantite' => $quantite,
                     'prix_unitaire' => $prixUnitaire,
                     'sous_total' => $sousTotal

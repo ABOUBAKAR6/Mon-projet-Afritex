@@ -14,6 +14,7 @@ class CartItem extends Model
         'cart_id',
         'produit_id',
         'type_commande',
+        'couleur',
         'quantite',
         'prix_unitaire',
         'sous_total',

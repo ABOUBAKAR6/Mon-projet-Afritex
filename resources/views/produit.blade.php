@@ -252,20 +252,25 @@
     @endif
 
     {{-- AVIS --}}
-    <section id="avis" class="mt-12 grid gap-10 bg-papier-2 p-6 sm:mt-20 sm:p-10 lg:mt-28 lg:grid-cols-12 lg:gap-16 lg:p-14" aria-labelledby="titre-avis">
-        <div class="revele lg:col-span-4">
-            <x-titre-bloc intitule="Avis clients" titre="Ce qu'en disent nos clients" id="titre-avis" />
+    {{-- Avis : au téléphone, titre sur une ligne et formulaire replié derrière un bouton (bloc le plus court possible) --}}
+    <section id="avis" class="mt-8 grid gap-4 bg-papier-2 p-4 sm:mt-20 sm:gap-10 sm:p-10 lg:mt-28 lg:grid-cols-12 lg:gap-16 lg:p-14" aria-labelledby="titre-avis">
+        <div class="revele lg:col-span-4" x-data="{ formulaire: false }">
+            <h2 class="titre-display text-[1.25rem] sm:hidden">Avis clients @if($nbAvis > 0)<span class="chiffres font-sans text-[0.95rem] font-normal text-encre-2">· {{ number_format($moyenne, 1, ',', ' ') }} sur 5 ({{ $nbAvis }})</span>@endif</h2>
+            <div class="hidden sm:block"><x-titre-bloc intitule="Avis clients" titre="Ce qu'en disent nos clients" id="titre-avis" /></div>
             @if($nbAvis > 0)
-                <p class="mt-6 flex items-baseline gap-2">
+                <p class="mt-6 hidden items-baseline gap-2 sm:flex">
                     <span class="titre-display chiffres text-[3rem] leading-none text-brun">{{ number_format($moyenne, 1, ',', ' ') }}</span>
                     <span class="text-encre-2">sur 5, d'après {{ $nbAvis }} avis</span>
                 </p>
             @endif
 
             @auth
-                <form action="{{ route('produit.review.store', $produit->id) }}" method="POST" class="mt-8 space-y-5 bg-carte p-6">
+                <button type="button" @click="formulaire = !formulaire" :aria-expanded="formulaire" aria-controls="formulaire-avis"
+                        class="btn btn-contour mt-3 w-full sm:hidden"><x-icone nom="etoile" /> <span x-text="formulaire ? 'Fermer' : 'Donner votre avis'">Donner votre avis</span></button>
+                <form id="formulaire-avis" action="{{ route('produit.review.store', $produit->id) }}" method="POST" x-show="formulaire" x-cloak
+                      class="mt-3 space-y-4 bg-carte p-4 sm:mt-8 sm:!block sm:space-y-5 sm:p-6">
                     @csrf
-                    <p class="font-medium">Donner votre avis</p>
+                    <p class="hidden font-medium sm:block">Donner votre avis</p>
                     <div>
                         <label for="note" class="etiquette">Votre note</label>
                         <select id="note" name="rating" class="champ">
@@ -278,18 +283,18 @@
                     </div>
                     <div>
                         <label for="commentaire" class="etiquette">Votre commentaire</label>
-                        <textarea id="commentaire" name="comment" rows="4" class="champ" placeholder="La tenue du tissu, le rendu des couleurs, la confection…"></textarea>
+                        <textarea id="commentaire" name="comment" rows="3" class="champ min-h-0 sm:min-h-[7rem]" placeholder="La tenue du tissu, le rendu des couleurs, la confection…"></textarea>
                     </div>
                     <button type="submit" class="btn btn-brun w-full">Publier mon avis</button>
                 </form>
             @else
-                <p class="mt-8 text-encre-2"><a href="{{ route('login') }}" class="lien">Connectez-vous</a> pour donner votre avis sur ce tissu.</p>
+                <p class="mt-2 text-[0.95rem] text-encre-2 sm:mt-8 sm:text-base"><a href="{{ route('login') }}" class="lien">Connectez-vous</a> pour donner votre avis sur ce tissu.</p>
             @endauth
         </div>
 
         <div class="lg:col-span-8">
             @forelse($produit->reviews as $avis)
-                <figure class="revele border-b border-trait py-6 first:pt-0 last:border-0" style="--delai: {{ min($loop->index, 4) * 60 }}ms">
+                <figure class="revele border-b border-trait py-4 first:pt-0 last:border-0 sm:py-6" style="--delai: {{ min($loop->index, 4) * 60 }}ms">
                     <div class="flex items-center justify-between gap-4">
                         <figcaption class="flex items-center gap-3">
                             <span aria-hidden="true" class="titre-display flex size-10 items-center justify-center rounded-full bg-brun-doux text-brun">{{ mb_strtoupper(mb_substr($avis->user?->name ?? 'C', 0, 1)) }}</span>
@@ -309,9 +314,9 @@
                     @endif
                 </figure>
             @empty
-                <div class="flex h-full min-h-48 flex-col items-start justify-center bg-carte p-8">
-                    <p class="titre-display text-[1.3rem]">Aucun avis pour le moment</p>
-                    <p class="mt-2 text-encre-2">Vous avez cousu ce tissu ? Votre retour aidera les prochains clients à choisir.</p>
+                <div class="flex h-full flex-col items-start justify-center bg-carte p-4 sm:min-h-48 sm:p-8">
+                    <p class="titre-display text-[1.05rem] sm:text-[1.3rem]">Aucun avis pour le moment</p>
+                    <p class="mt-1 text-[0.92rem] text-encre-2 sm:mt-2 sm:text-base">Vous avez cousu ce tissu ? Votre retour aidera les prochains clients à choisir.</p>
                 </div>
             @endforelse
         </div>

@@ -18,6 +18,14 @@
         ->filter(fn ($c) => $c && file_exists(public_path($c)))->unique()->values();
 
     $nbAvis = $produit->reviews?->count() ?? 0;
+
+    // « Discuter sur WhatsApp » : message déjà écrit pour la boutique (masqué si WHATSAPP_NUMERO est vide)
+    $numeroWhatsapp = config('services.whatsapp.numero');
+    $debutMessage = 'Bonjour ' . boutique('nom') . ",\n\nJe suis intéressé(e) par ce tissu :";
+    $finMessage = "\n\n" . route('produit.show', $produit->slug) . "\n\nEst-il disponible ?";
+    $lienWhatsappProduit = $numeroWhatsapp
+        ? 'https://wa.me/' . $numeroWhatsapp . '?text=' . rawurlencode($debutMessage . "\n\n*" . $produit->nom . '*' . $finMessage)
+        : null;
     $moyenne = $nbAvis > 0 ? round($produit->averageRating(), 1) : 0;
 
     $caracteristiques = collect([
@@ -97,6 +105,9 @@
             <div class="lg:sticky lg:top-28 lg:pt-8">
                 @if($formats->isEmpty())
                     <p class="bg-alerte-doux p-4 text-alerte">Ce tissu n'a pas encore de prix en ligne. Contactez-nous pour une commande.</p>
+                    @if($lienWhatsappProduit)
+                        <a href="{{ $lienWhatsappProduit }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun btn-lg mt-4 w-full"><x-icone nom="message" /> Discuter sur WhatsApp</a>
+                    @endif
                 @else
                     {{-- Choix du format, quantité et total en direct --}}
                     <form action="{{ route('panier.ajouter') }}" method="POST"
@@ -107,7 +118,15 @@
                               qte: 1,
                               get prix() { return this.formats[this.choix] || 0 },
                               get total() { return this.prix * (parseInt(this.qte) || 0) },
-                              f(n) { return new Intl.NumberFormat('fr-FR').format(n).replace(/\s/g, ' ') + ' F' }
+                              f(n) { return new Intl.NumberFormat('fr-FR').format(n).replace(/\s/g, ' ') + ' F' },
+                              libelles: @js($formats->map(fn ($f) => $f[0])),
+                              get lienWhatsapp() {
+                                  const n = parseInt(this.qte) || 1;
+                                  const unite = this.choix === 'metre' ? ' m' : (this.choix === 'rouleau' ? (n > 1 ? ' rouleaux' : ' rouleau') : (n > 1 ? ' pièces' : ' pièce'));
+                                  const texte = @js($debutMessage) + '\n\n*' + @js($produit->nom) + '*\n' + this.libelles[this.choix] + ' : ' + n + unite
+                                      + ' × ' + this.f(this.prix) + ' = ' + this.f(this.prix * n) + @js($finMessage);
+                                  return 'https://wa.me/' + @js((string) $numeroWhatsapp) + '?text=' + encodeURIComponent(texte);
+                              }
                           }">
                         @csrf
                         <input type="hidden" name="produit_id" value="{{ $produit->id }}">
@@ -161,6 +180,11 @@
                             <a href="{{ route('login') }}" class="btn btn-brun btn-lg mt-6 w-full">Se connecter pour commander</a>
                             <p class="mt-2 text-center text-[0.92rem] text-encre-2">Pas encore de compte ? <a href="{{ route('register') }}" class="lien">Créez-le en une minute</a>.</p>
                         @endauth
+
+                        @if($lienWhatsappProduit)
+                            {{-- Le message reprend le format, la quantité et le total choisis ci-dessus --}}
+                            <a href="{{ $lienWhatsappProduit }}" :href="lienWhatsapp" target="_blank" rel="noopener noreferrer" class="btn btn-contour btn-lg mt-3 w-full"><x-icone nom="message" /> Discuter sur WhatsApp</a>
+                        @endif
                     </form>
                 @endif
 

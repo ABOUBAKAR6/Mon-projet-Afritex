@@ -429,6 +429,9 @@
     .tableau td {
         @apply border-t px-4 py-3.5 align-middle;
         border-color: var(--trait);
+        /* les libellés masqués (sr-only) des boutons restent dans la zone de défilement
+           du tableau au lieu d'élargir toute la page */
+        position: relative;
     }
 
     .tableau tbody tr {

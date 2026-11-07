@@ -57,7 +57,8 @@
             </thead>
             <tbody>
                 @forelse($produits as $produit)
-                    <tr class="prod-row" data-nom="{{ mb_strtolower($produit->nom . ' ' . ($produit->categorie->nom ?? '')) }}">
+                    {{-- Toute la ligne ouvre la fenêtre « Modifier » (script en bas de page) --}}
+                    <tr class="prod-row cursor-pointer" data-id="{{ $produit->id }}" data-nom="{{ mb_strtolower($produit->nom . ' ' . ($produit->categorie->nom ?? '')) }}">
                         <td>
                             <div class="flex items-center gap-3">
                                 <span class="flex size-12 shrink-0 items-center justify-center overflow-hidden bg-papier-2 text-brun-trait">
@@ -68,7 +69,7 @@
                                     @endif
                                 </span>
                                 <span class="min-w-0">
-                                    <a href="{{ route('produit.show', $produit->slug) }}" target="_blank" class="block truncate font-medium hover:text-brun hover:underline">{{ $produit->nom }}</a>
+                                    <button type="button" onclick="openEditProduit({{ $produit->id }})" class="block max-w-full truncate text-left font-medium hover:text-brun hover:underline">{{ $produit->nom }}</button>
                                     <span class="block text-[0.85rem] text-encre-2">{{ $produit->images->count() }} photo{{ $produit->images->count() > 1 ? 's' : '' }} supplémentaire{{ $produit->images->count() > 1 ? 's' : '' }}</span>
                                 </span>
                             </div>
@@ -81,12 +82,13 @@
                             </span>
                         </td>
                         <td>
-                            <div class="flex items-center justify-end gap-1">
-                                <button type="button" class="btn btn-fantome btn-sm" onclick="openEditProduit({{ $produit->id }})"><x-icone nom="crayon" /><span class="sr-only xl:not-sr-only">Modifier</span></button>
-                                <button type="button" class="btn btn-fantome btn-sm" onclick="openPhotosModal({{ $produit->id }})"><x-icone nom="image" /><span class="sr-only xl:not-sr-only">Photos</span></button>
+                            <div class="flex items-center justify-end gap-1.5 sm:gap-2">
+                                <button type="button" class="btn btn-brun btn-sm max-sm:min-h-10 max-sm:flex-1" onclick="openEditProduit({{ $produit->id }})"><x-icone nom="crayon" /> Modifier</button>
+                                <button type="button" class="btn btn-contour btn-sm max-sm:min-h-10" onclick="openPhotosModal({{ $produit->id }})" title="Photos du produit"><x-icone nom="image" /><span class="sm:sr-only 2xl:not-sr-only">Photos</span></button>
+                                <a href="{{ route('produit.show', $produit->slug) }}" target="_blank" rel="noopener" class="btn btn-fantome btn-sm max-sm:min-h-10" title="Voir la page du produit dans la boutique"><x-icone nom="oeil" /><span class="sr-only 2xl:not-sr-only">Voir</span></a>
                                 <form method="POST" action="{{ route('admin.produits.destroy', $produit->id) }}" onsubmit="return confirm('Supprimer définitivement « {{ addslashes($produit->nom) }} » ?')">
                                     @csrf @method('DELETE')
-                                    <button type="submit" class="btn btn-sm text-danger hover:bg-danger-doux"><x-icone nom="corbeille" /><span class="sr-only">Supprimer {{ $produit->nom }}</span></button>
+                                    <button type="submit" class="btn btn-sm text-danger hover:bg-danger-doux max-sm:min-h-10" title="Supprimer"><x-icone nom="corbeille" /><span class="sr-only">Supprimer {{ $produit->nom }}</span></button>
                                 </form>
                             </div>
                         </td>
@@ -327,6 +329,14 @@ addPricingRow('pricing-container-add', 'Au mètre', '');
 
 // Fermer une fenêtre en cliquant sur le voile
 document.querySelectorAll('dialog').forEach((d) => d.addEventListener('click', (e) => { if (e.target === d) d.close(); }));
+
+// Un clic n'importe où sur la ligne d'un produit ouvre sa fenêtre « Modifier »
+// (les boutons, liens et le formulaire de suppression gardent leur action)
+document.querySelectorAll('.prod-row').forEach((ligne) => ligne.addEventListener('click', (e) => {
+    if (e.target.closest('a, button, input, select, textarea, label, form')) return;
+    if (window.getSelection()?.toString()) return;
+    openEditProduit(Number(ligne.dataset.id));
+}));
 
 // Ouverture directe d'un produit depuis le tableau de bord : /admin/produits?modifier=12
 const produitAModifier = new URLSearchParams(window.location.search).get('modifier');

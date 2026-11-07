@@ -88,9 +88,11 @@
             <a href="{{ route('catalogue') }}" class="lien-fleche shrink-0">Tout le catalogue <x-icone nom="fleche" /></a>
         </div>
 
-        <ul class="mt-6 grid grid-cols-2 gap-2 sm:mt-10 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
+        {{-- Téléphone : rangée qui glisse à l'horizontale jusqu'au bord de l'écran (la tuile suivante dépasse) ; tablette et ordinateur : grille --}}
+        <ul tabindex="0" aria-label="Familles de tissus, défilement horizontal"
+            class="defilement-discret mt-6 mr-[calc(50%-50vw)] flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2 pr-4 motion-safe:scroll-smooth focus-visible:outline-offset-4 sm:mt-10 sm:mr-0 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:pb-0 sm:pr-0 lg:grid-cols-5">
             @foreach($categories as $cat)
-                <li class="revele" style="--delai: {{ min($loop->index, 9) * 50 }}ms">
+                <li class="w-[44%] shrink-0 snap-start sm:w-auto">
                     <a href="{{ route('catalogue', ['categorie_id' => $cat->id]) }}" class="group filet relative block bg-carte">
                         <div class="aspect-square overflow-hidden bg-papier-2">
                             @if(!empty($cat->image) && file_exists(public_path($cat->image)))
@@ -122,10 +124,12 @@
         @if($vedettes->isEmpty())
             <p class="mt-10 bg-carte p-10 text-center text-encre-2">Les premiers tissus arrivent bientôt dans la boutique.</p>
         @else
-            <div class="mt-6 grid gap-3 sm:mt-10 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+            {{-- Téléphone : rangée qui glisse à l'horizontale (la carte suivante dépasse) ; tablette et ordinateur : grille --}}
+            <div tabindex="0" role="region" aria-label="Les tissus les plus demandés, défilement horizontal"
+                 class="defilement-discret mt-6 mr-[calc(50%-50vw)] flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 pr-4 motion-safe:scroll-smooth focus-visible:outline-offset-4 sm:mt-10 sm:mr-0 sm:grid sm:grid-cols-2 sm:overflow-visible sm:pb-0 sm:pr-0 lg:grid-cols-4 lg:gap-4">
                 @foreach($vedettes as $produit)
                     <x-carte-produit :produit="$produit" :grand="$loop->first"
-                        class="revele {{ $loop->first ? 'sm:col-span-2 lg:row-span-2' : '' }}" style="--delai: {{ $loop->index * 70 }}ms" />
+                        class="w-[78%] shrink-0 snap-start sm:w-auto {{ $loop->first ? 'sm:col-span-2 lg:row-span-2' : '' }}" />
                 @endforeach
             </div>
         @endif

@@ -16,7 +16,7 @@ class MessageDevis
 {
     public static function texte(Commande $commande, string $pour = 'revendeur'): string
     {
-        $commande->loadMissing(['items.produit', 'user.comptePro']);
+        $commande->loadMissing(['items.produit.categorie', 'user.comptePro']);
         $numero = str_pad($commande->id, 4, '0', STR_PAD_LEFT);
         $devis = $commande->estDevis();
         $revendeur = $commande->user?->comptePro?->boutique ?? $commande->user?->name ?? '';
@@ -43,7 +43,9 @@ class MessageDevis
                 continue;
             }
             $sousTotal += (int) $item->sous_total;
-            $lignes[] = '*'.($item->produit->nom ?? 'Tissu retiré du catalogue').'*';
+            $nom = $item->produit->nom ?? 'Tissu retiré du catalogue';
+            $categorie = $item->produit?->categorie?->nom;
+            $lignes[] = '*'.$nom.'*'.($categorie ? ' (Catégorie : '.$categorie.')' : '');
             $lignes[] = $item->libelleFormat().' : '.self::quantite($item->type_commande, (float) $item->quantite)
                 .' × '.self::francs($item->prix_unitaire).' = '.self::francs($item->sous_total);
             $lignes[] = '';

@@ -299,6 +299,39 @@ class EspaceProTest extends TestCase
         $this->assertSame('devis_demande', $commande->fresh()->statut);
     }
 
+    public function test_envoi_whatsapp_contient_produit_categorie_et_prix_depuis_commander_et_commande(): void
+    {
+        $this->proprietaire->update(['phone' => '07 11 22 33 44']);
+        $produit = $this->produitPro('Morrocco rouge', ['prix_pro' => ['metre' => 800, 'rouleau' => 20000]]);
+        $revendeur = $this->revendeurValide();
+
+        $this->actingAs($revendeur)
+            ->get(route('pro.commander'))
+            ->assertOk()
+            ->assertSee('data-categorie="Wax"', false)
+            ->assertSee('Demander + WhatsApp')
+            ->assertSee('Envoyer directement sur WhatsApp')
+            ->assertSee('2250711223344', false);
+
+        $this->actingAs($revendeur)->post(route('pro.commander.envoyer'), $this->formulaireCommande(
+            [$produit->id => ['metre' => 10, 'rouleau' => 1]],
+            ['mode_livraison' => 'domicile', 'adresse_livraison' => 'Adjamé', 'partager' => 'whatsapp'],
+        ))->assertSessionHas('demande_whatsapp', true);
+
+        $commande = Commande::where('user_id', $revendeur->id)->firstOrFail();
+        $texte = \App\Support\MessageDevis::texte($commande, 'boutique');
+        $this->assertStringContainsString('*Morrocco rouge* (Catégorie : Wax)', $texte);
+        $this->assertStringContainsString('Au mètre : 10 m × 800 F = 8 000 F', $texte);
+        $this->assertStringContainsString('Au rouleau : 1 rouleau × 20 000 F = 20 000 F', $texte);
+        $this->assertStringContainsString('*Total indicatif : 28 000 F*', $texte);
+        $this->assertStringContainsString('Livraison : Adjamé', $texte);
+
+        $this->actingAs($revendeur)
+            ->get(route('pro.commande', $commande))
+            ->assertOk()
+            ->assertSee('Envoyer ma demande sur WhatsApp');
+    }
+
     // ===== Outils =====
 
     private function produitPro(string $nom = 'Wax Kente', array $attributs = []): Produit

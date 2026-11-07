@@ -64,8 +64,11 @@
                 <x-input-error :messages="$errors->get('email')" class="mt-2" />
             </div>
             <div>
-                <label for="phone" class="etiquette">Téléphone <span class="font-normal text-encre-2">(facultatif)</span></label>
+                <label for="phone" class="etiquette">{{ $admin->estProprietaire() ? 'Téléphone / WhatsApp de la boutique' : 'Téléphone' }} <span class="font-normal text-encre-2">(facultatif)</span></label>
                 <input type="tel" name="phone" id="phone" value="{{ old('phone', $admin->phone) }}" autocomplete="tel" class="champ" placeholder="07 00 00 00 00">
+                @if($admin->estProprietaire())
+                    <p class="aide mt-1">Reçoit aussi les commandes et demandes de devis envoyées sur WhatsApp.</p>
+                @endif
                 <x-input-error :messages="$errors->get('phone')" class="mt-2" />
             </div>
             <div class="sm:col-span-2">

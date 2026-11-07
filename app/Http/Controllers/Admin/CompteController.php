@@ -43,6 +43,11 @@ class CompteController extends Controller
         }
         $admin->save();
 
+        // Le numéro du propriétaire sert aussi de WhatsApp de la boutique s'il n'est pas fixé dans le .env
+        if ($admin->estProprietaire()) {
+            Parametre::definir('whatsapp', $admin->phone ?: null);
+        }
+
         return back()->with('success', 'Vos informations sont enregistrées.');
     }
 

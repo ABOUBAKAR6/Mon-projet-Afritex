@@ -194,3 +194,30 @@ if (! function_exists('boutique_slug')) {
         return str(str(boutique('nom'))->slug('_'))->lower()->toString();
     }
 }
+
+if (! function_exists('lien_whatsapp_boutique')) {
+    /**
+     * Lien WhatsApp vers le propriétaire de la boutique :
+     * WHATSAPP_NUMERO (.env), sinon BOUTIQUE_TELEPHONE (.env), sinon le paramètre
+     * « whatsapp », sinon le téléphone du propriétaire dans l'administration.
+     * Si aucun numéro n'est encore renseigné, renvoie « https://wa.me/ » pour que
+     * WhatsApp s'ouvre quand même avec tout le message prêt à envoyer.
+     */
+    function lien_whatsapp_boutique(): string
+    {
+        $brut = config('services.whatsapp.numero')
+            ?: config('boutique.telephone')
+            ?: \App\Models\Parametre::valeur('whatsapp')
+            ?: \App\Models\User::where('role', 'admin')->whereNotNull('phone')->where('phone', '!=', '')->value('phone');
+
+        $chiffres = preg_replace('/\D+/', '', (string) $brut);
+        if ($chiffres === '') {
+            return 'https://wa.me/';
+        }
+        if (! str_starts_with($chiffres, '225') && strlen($chiffres) <= 10) {
+            $chiffres = '225'.$chiffres;
+        }
+
+        return 'https://wa.me/'.$chiffres;
+    }
+}

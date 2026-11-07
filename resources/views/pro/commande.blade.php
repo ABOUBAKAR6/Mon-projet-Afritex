@@ -3,8 +3,7 @@
     $numero = str_pad($commande->id, 4, '0', STR_PAD_LEFT);
     $nature = $commande->estDevis() ? 'Devis' : 'Commande';
     $francs = fn ($montant) => number_format((float) $montant, 0, ',', ' ') . ' F';
-    $numeroWhatsapp = config('services.whatsapp.numero');
-    $lienWhatsapp = $numeroWhatsapp ? 'https://wa.me/' . $numeroWhatsapp : null;
+    $lienWhatsapp = \App\Support\MessageDevis::lien(lien_whatsapp_boutique(), $commande, 'boutique');
     $sousTotal = $commande->sousTotalArticles();
 @endphp
 @section('title', $nature . ' n° ' . $numero . ' · ' . boutique('nom'))
@@ -22,6 +21,13 @@
         </div>
         <x-statut-commande :statut="$commande->statut" client class="self-start !text-[0.92rem] sm:self-auto" />
     </div>
+
+    @if(session('demande_whatsapp'))
+        <div class="apparition mt-6 flex flex-col gap-4 bg-succes-doux p-5 sm:flex-row sm:items-center sm:justify-between" role="status">
+            <p class="flex items-start gap-3"><x-icone nom="message" class="mt-0.5 size-5 shrink-0 text-succes" /> <span>Demande enregistrée. Ouvrez WhatsApp pour l'envoyer au propriétaire de {{ boutique('nom') }}, tout le détail est déjà écrit.</span></p>
+            <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun shrink-0"><x-icone nom="message" /> Ouvrir WhatsApp</a>
+        </div>
+    @endif
 
     {{-- Où en est le devis ou la commande --}}
     @switch($commande->statut)
@@ -132,7 +138,12 @@
                                                 <img src="{{ asset($item->produit->image) }}" alt="" loading="lazy" class="h-full w-full object-cover">
                                             @endif
                                         </span>
-                                        <span class="font-medium">{{ $item->produit->nom ?? 'Tissu retiré du catalogue' }}</span>
+                                        <span class="min-w-0">
+                                            <span class="block font-medium">{{ $item->produit->nom ?? 'Tissu retiré du catalogue' }}</span>
+                                            @if($item->produit?->categorie)
+                                                <span class="block text-[0.82rem] text-encre-2">{{ $item->produit->categorie->nom }}</span>
+                                            @endif
+                                        </span>
                                     </div>
                                 </td>
                                 <td class="whitespace-nowrap" data-label="Format">{{ $item->libelleFormat() }}</td>
@@ -205,10 +216,8 @@
             @if($commande->tracking_number && !$commande->estDevis())
                 <a href="{{ route('track', $commande->tracking_number) }}" class="btn btn-fantome w-full">Page de suivi à partager</a>
             @endif
-            @if($lienWhatsapp)
-                {{-- Tout le détail est écrit dans le message : tissus, mètres ou rouleaux, prix, total, livraison --}}
-                <a href="{{ \App\Support\MessageDevis::lien($lienWhatsapp, $commande, 'boutique') }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour w-full"><x-icone nom="message" /> Envoyer {{ $commande->estDevis() ? 'ma demande' : 'ma commande' }} sur WhatsApp</a>
-            @endif
+            {{-- Tout le détail est écrit dans le message : tissus, catégorie, mètres ou rouleaux, prix, total, livraison --}}
+            <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour w-full"><x-icone nom="message" /> Envoyer {{ $commande->estDevis() ? 'ma demande' : 'ma commande' }} sur WhatsApp</a>
         </aside>
     </div>
 </div>

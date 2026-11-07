@@ -187,7 +187,8 @@ class ProController extends Controller
         $commande = $this->espacePro->demanderDevis($request->user(), $infos['quantites'], $infos);
 
         return redirect()->route('pro.commande', $commande)
-            ->with('success', 'Demande de devis envoyée. La boutique vérifie le stock et vous envoie le devis.');
+            ->with('success', 'Demande de devis envoyée. La boutique vérifie le stock et vous envoie le devis.')
+            ->with('demande_whatsapp', $request->input('partager') === 'whatsapp');
     }
 
     public function commandes(Request $request)
@@ -201,7 +202,7 @@ class ProController extends Controller
     public function commande(Request $request, Commande $commande)
     {
         $this->verifierProprietaire($request, $commande);
-        $commande->load(['items.produit', 'paiement']);
+        $commande->load(['items.produit.categorie', 'paiement']);
 
         return view('pro.commande', ['compte' => $request->user()->comptePro, 'commande' => $commande]);
     }

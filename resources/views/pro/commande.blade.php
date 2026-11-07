@@ -206,7 +206,8 @@
                 <a href="{{ route('track', $commande->tracking_number) }}" class="btn btn-fantome w-full">Page de suivi à partager</a>
             @endif
             @if($lienWhatsapp)
-                <a href="{{ $lienWhatsapp }}?text={{ rawurlencode('Bonjour, au sujet de ma ' . mb_strtolower($nature) . ' pro n° ' . $numero) }}" target="_blank" rel="noopener noreferrer" class="btn btn-fantome w-full"><x-icone nom="message" /> En parler sur WhatsApp</a>
+                {{-- Tout le détail est écrit dans le message : tissus, mètres ou rouleaux, prix, total, livraison --}}
+                <a href="{{ \App\Support\MessageDevis::lien($lienWhatsapp, $commande, 'boutique') }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour w-full"><x-icone nom="message" /> Envoyer {{ $commande->estDevis() ? 'ma demande' : 'ma commande' }} sur WhatsApp</a>
             @endif
         </aside>
     </div>

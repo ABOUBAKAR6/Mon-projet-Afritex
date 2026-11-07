@@ -9,6 +9,8 @@
     // Devis pro encore modifiable : demandé, ou envoyé sans réponse du revendeur
     $chiffrable = $commande->est_pro && in_array($commande->statut, ['devis_demande', 'devis_envoye'], true);
     $numero = str_pad($commande->id, 4, '0', STR_PAD_LEFT);
+    // WhatsApp du revendeur avec tout le devis écrit (tissus, quantités, prix, total, livraison)
+    $whatsappDevis = $comptePro ? \App\Support\MessageDevis::lien($comptePro->lienWhatsapp(), $commande, 'revendeur') : null;
 @endphp
 
 <a href="{{ route('admin.commandes') }}" class="lien-fleche mb-5 flex-row-reverse justify-end text-[0.95rem]"><span>Toutes les commandes</span><x-icone nom="fleche-gauche" /></a>
@@ -19,6 +21,14 @@
     @endif
     <x-statut-commande :statut="$commande->statut" class="!px-3.5 !py-2 !text-[0.95rem]" />
 </x-admin-entete>
+
+@if(session('devis_whatsapp') && $whatsappDevis)
+    {{-- Après « Envoyer + WhatsApp » : le devis est enregistré, il reste à l'ouvrir dans WhatsApp --}}
+    <div class="mb-6 flex flex-col gap-4 bg-succes-doux p-5 sm:flex-row sm:items-center sm:justify-between" role="status">
+        <p class="flex items-start gap-3"><x-icone nom="message" class="mt-0.5 size-5 shrink-0 text-succes" /> <span>Devis enregistré. Ouvrez WhatsApp pour l'envoyer à {{ $comptePro->boutique }}, le message est déjà écrit.</span></p>
+        <a href="{{ $whatsappDevis }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun shrink-0"><x-icone nom="message" /> Ouvrir WhatsApp</a>
+    </div>
+@endif
 
 <div class="grid items-start gap-6 xl:grid-cols-[1fr_22rem]">
     <div class="min-w-0 space-y-6">
@@ -122,7 +132,12 @@
                 </div>
                 <div class="flex flex-col gap-3 border-t border-trait p-6 sm:flex-row sm:items-center sm:justify-between">
                     <p class="text-[0.92rem] text-encre-2">Le revendeur est prévenu par e-mail et valide le devis depuis son Espace Pro avant de payer.</p>
-                    <button type="submit" class="btn btn-brun shrink-0">{{ $commande->devis_envoye_le ? 'Renvoyer le devis modifié' : 'Envoyer le devis' }}</button>
+                    <div class="flex shrink-0 flex-col gap-2 sm:flex-row">
+                        @if($comptePro)
+                            <button type="submit" name="partager" value="whatsapp" class="btn btn-contour"><x-icone nom="message" /> Envoyer + WhatsApp</button>
+                        @endif
+                        <button type="submit" class="btn btn-brun">{{ $commande->devis_envoye_le ? 'Renvoyer le devis modifié' : 'Envoyer le devis' }}</button>
+                    </div>
                 </div>
             </form>
         @else
@@ -256,7 +271,10 @@
                     </div>
                 @endif
                 <div class="mt-5 grid gap-2">
-                    <a href="{{ $comptePro->lienWhatsapp() }}?text={{ rawurlencode('Bonjour, au sujet de votre ' . ($commande->estDevis() ? 'devis' : 'commande') . ' n° ' . $numero) }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour w-full"><x-icone nom="message" /> WhatsApp</a>
+                    <a href="{{ $whatsappDevis }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour w-full"><x-icone nom="message" /> {{ $commande->estDevis() ? 'Envoyer le devis sur WhatsApp' : 'Envoyer le récapitulatif sur WhatsApp' }}</a>
+                    @if($chiffrable)
+                        <p class="text-[0.82rem] text-encre-2">Le message reprend le devis enregistré. Après une modification, utilisez « Envoyer + WhatsApp ».</p>
+                    @endif
                     <a href="mailto:{{ $commande->user->email }}" class="btn btn-fantome w-full"><x-icone nom="courrier" /> Écrire un e-mail</a>
                 </div>
             </section>

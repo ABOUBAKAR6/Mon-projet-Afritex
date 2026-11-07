@@ -110,6 +110,9 @@ class ProController extends Controller
             $donnees['note_boutique'] ?? null,
         );
 
-        return back()->with('success', 'Devis envoyé. Le revendeur est prévenu et peut le valider depuis son Espace Pro.');
+        // « Envoyer + WhatsApp » : la page propose ensuite d'ouvrir WhatsApp avec le devis enregistré
+        return back()
+            ->with('success', 'Devis envoyé. Le revendeur est prévenu et peut le valider depuis son Espace Pro.')
+            ->with('devis_whatsapp', $request->input('partager') === 'whatsapp');
     }
 }

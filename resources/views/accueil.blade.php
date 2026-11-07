@@ -88,11 +88,10 @@
             <a href="{{ route('catalogue') }}" class="lien-fleche shrink-0">Tout le catalogue <x-icone nom="fleche" /></a>
         </div>
 
-        {{-- Téléphone : rangée qui glisse à l'horizontale jusqu'au bord de l'écran (la tuile suivante dépasse) ; tablette et ordinateur : grille --}}
-        <ul tabindex="0" aria-label="Familles de tissus, défilement horizontal"
-            class="defilement-discret mt-6 mr-[calc(50%-50vw)] flex snap-x snap-mandatory gap-2 overflow-x-auto pb-2 pr-4 motion-safe:scroll-smooth focus-visible:outline-offset-4 sm:mt-10 sm:mr-0 sm:grid sm:grid-cols-3 sm:gap-3 sm:overflow-visible sm:pb-0 sm:pr-0 lg:grid-cols-5">
+        {{-- Grille de tuiles (2 colonnes au téléphone) ; au téléphone, une dernière tuile seule est centrée sous les autres --}}
+        <ul aria-label="Familles de tissus" class="mt-6 grid grid-cols-2 gap-2 sm:mt-10 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
             @foreach($categories as $cat)
-                <li class="w-[44%] shrink-0 snap-start sm:w-auto">
+                <li @class(['col-span-2 w-[calc(50%-0.25rem)] justify-self-center sm:col-span-1 sm:w-auto sm:justify-self-stretch' => $loop->last && $loop->count % 2 === 1])>
                     <a href="{{ route('catalogue', ['categorie_id' => $cat->id]) }}" class="group filet relative block bg-carte">
                         <div class="aspect-square overflow-hidden bg-papier-2">
                             @if(!empty($cat->image) && file_exists(public_path($cat->image)))

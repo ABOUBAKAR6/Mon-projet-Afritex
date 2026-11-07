@@ -154,8 +154,8 @@
         </div>
 
         <div class="revele" style="--delai: 120ms">
-            <x-titre-bloc intitule="Comment acheter" titre="Au mètre, au rouleau ou en confection" id="titre-achat" />
-            <p class="mt-5 text-[1.05rem] font-medium lg:text-[1.15rem]">Achetez exactement ce dont vous avez besoin, au mètre ou à la pièce, ou profitez de tarifs avantageux sur les grandes quantités.</p>
+            <x-titre-bloc intitule="Comment acheter" titre="Au mètre ou au rouleau" id="titre-achat" />
+            <p class="mt-5 text-[1.05rem] font-medium lg:text-[1.15rem]">Achetez exactement ce dont vous avez besoin, au mètre, ou profitez de tarifs avantageux sur les grandes quantités.</p>
 
             <dl class="mt-8 divide-y divide-trait border-y border-trait">
                 <div class="grid gap-1 py-4 sm:grid-cols-[9rem_1fr] sm:gap-6">
@@ -165,10 +165,6 @@
                 <div class="grid gap-1 py-4 sm:grid-cols-[9rem_1fr] sm:gap-6">
                     <dt class="titre-display text-[1.05rem]">En gros</dt>
                     <dd class="text-encre-2">Le rouleau entier, pour les ateliers, tailleurs et revendeurs.</dd>
-                </div>
-                <div class="grid gap-1 py-4 sm:grid-cols-[9rem_1fr] sm:gap-6">
-                    <dt class="titre-display text-[1.05rem]">En confection</dt>
-                    <dd class="text-encre-2">Pantalon, chemise ou tunique, manches courtes ou longues, selon le tissu.</dd>
                 </div>
             </dl>
 

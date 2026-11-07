@@ -5,11 +5,6 @@
 --}}
 @php
     $estFavori = $favori ?? (auth()->check() ? auth()->user()->wishlist()->where('produit_id', $produit->id)->exists() : false);
-    $formats = collect([
-        'prix_pantalon' => 'pantalon',
-        'prix_chemise' => 'chemise',
-        'prix_tunique' => 'tunique',
-    ])->filter(fn ($l, $champ) => !empty($produit->$champ))->values();
 @endphp
 <article {{ $attributes->merge(['class' => 'group filet relative flex flex-col bg-carte']) }}>
     <div class="relative overflow-hidden bg-papier-2 {{ $grand ? 'aspect-[4/5] lg:aspect-auto lg:min-h-[24rem] lg:flex-1' : 'aspect-[4/5]' }}">
@@ -54,9 +49,6 @@
                 <p><span class="chiffres font-semibold">{{ number_format($produit->prix_rouleau, 0, ',', ' ') }} F</span> <span class="text-encre-2">le rouleau</span></p>
             @endif
         </div>
-        @if($formats->isNotEmpty())
-            <p class="mt-2 text-[0.88rem] text-encre-2">Aussi en confection : {{ $formats->join(', ', ' et ') }}</p>
-        @endif
 
         <span class="lien-fleche mt-auto pt-4 text-[0.92rem]">Voir le tissu <x-icone nom="fleche" /></span>
     </div>

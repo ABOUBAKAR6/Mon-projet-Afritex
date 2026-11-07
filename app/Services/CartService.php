@@ -53,11 +53,13 @@ class CartService
         $prixUnitaire = match($typeCommande) {
             'metre' => $produit->prix_metre,
             'rouleau' => $produit->prix_rouleau,
-            'pantalon' => $produit->prix_pantalon,
-            'chemise_courte', 'chemise_longue' => $produit->prix_chemise,
-            'tunique_courte', 'tunique_longue' => $produit->prix_tunique,
-            default => 0
+            default => 0, // confections retirées de la vente
         };
+        if ((int) $prixUnitaire <= 0) {
+            throw \Illuminate\Validation\ValidationException::withMessages([
+                'type_commande' => 'Ce format n\'est pas proposé pour ce tissu.',
+            ]);
+        }
 
         $sousTotal = $prixUnitaire * $quantite;
 

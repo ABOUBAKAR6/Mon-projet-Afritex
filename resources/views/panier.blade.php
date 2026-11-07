@@ -16,7 +16,7 @@
         <div class="apparition mt-8 grid items-center gap-8 bg-carte p-8 sm:p-12 lg:grid-cols-[1fr_auto]" style="animation-delay: 80ms">
             <div>
                 <p class="titre-display text-[1.5rem]">Votre panier est vide</p>
-                <p class="mt-2 max-w-[52ch] text-encre-2">Parcourez nos familles de tissus, choisissez un format (au mètre, au rouleau ou en confection) et ajoutez-le ici.</p>
+                <p class="mt-2 max-w-[52ch] text-encre-2">Parcourez nos familles de tissus, choisissez un format (au mètre ou au rouleau) et ajoutez-le ici.</p>
             </div>
             <a href="{{ route('catalogue') }}" class="btn btn-brun btn-lg">Voir le catalogue <x-icone nom="fleche" /></a>
         </div>

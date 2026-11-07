@@ -13,11 +13,11 @@ return [
     'slogan_long' => env('BOUTIQUE_SLOGAN_LONG') ?: "tissus africains au mètre et au rouleau",
 
     'description' => env('BOUTIQUE_DESCRIPTION') ?:
-        "tissus africains de qualité au mètre, au rouleau ou en confection. Vente en gros et au détail, livraison partout en Côte d'Ivoire.",
+        "tissus africains de qualité au mètre ou au rouleau. Vente en gros et au détail, livraison partout en Côte d'Ivoire.",
 
     // Phrase sous le grand titre de la page d'accueil.
     'accroche' => env('BOUTIQUE_ACCROCHE') ?:
-        "Grain de diamant, duchesse, soie, dentelle : au mètre, au rouleau ou en confection, livrés partout en Côte d'Ivoire.",
+        "Grain de diamant, duchesse, soie, dentelle : au mètre ou au rouleau, livrés partout en Côte d'Ivoire.",
 
     'mot_fin' => env('BOUTIQUE_MOT_FIN') ?: "Tissus africains, livrés partout en Côte d'Ivoire.",
 

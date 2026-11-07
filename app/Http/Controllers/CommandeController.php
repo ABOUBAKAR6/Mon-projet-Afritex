@@ -35,6 +35,13 @@ class CommandeController extends Controller
 
     public function ajouter(Request $request)
     {
+        // Formats en vente : au mètre ou au rouleau
+        $request->validate([
+            'produit_id' => ['required', 'integer', 'exists:produits,id'],
+            'type_commande' => ['required', 'in:metre,rouleau'],
+            'quantite' => ['nullable', 'integer', 'min:1', 'max:10000'],
+        ], ['type_commande.in' => 'Choisissez « Au mètre » ou « Au rouleau ».']);
+
         $this->cartService->addItem(
             (int) $request->produit_id,
             $request->type_commande,

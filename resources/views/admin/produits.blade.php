@@ -135,7 +135,7 @@
         </div>
         <fieldset class="mt-6">
             <legend class="etiquette">Tarifs</legend>
-            <p class="aide -mt-1 mb-3">Un tarif par format : « Au mètre », « Au rouleau », « Pantalon »… Le premier sert de prix affiché.</p>
+            <p class="aide -mt-1 mb-3">Un tarif par format : « Au mètre » et « Au rouleau ». Le premier sert de prix affiché.</p>
             <div id="pricing-container-add" class="space-y-2"></div>
             <button type="button" class="btn btn-contour btn-sm mt-3" onclick="addPricingRow('pricing-container-add')"><x-icone nom="plus" /> Ajouter un tarif</button>
         </fieldset>

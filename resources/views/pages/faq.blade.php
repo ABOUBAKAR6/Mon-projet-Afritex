@@ -7,7 +7,7 @@
         ['Quels sont vos délais de livraison ?', 'Nous livrons partout en Côte d\'Ivoire. Les délais varient généralement entre 24 et 72 heures selon votre localisation.'],
         ['Combien coûte la livraison ?', 'La livraison à domicile est facturée 1 500 F, et offerte dès 50 000 F d\'achat. Le retrait en boutique est gratuit, dès le lendemain de la commande.'],
         ['Quels moyens de paiement acceptez-vous ?', 'Mobile Money (Orange Money, MTN MoMo, Wave, Moov), carte bancaire (Visa, Mastercard, Maestro), ou espèces à la livraison. Les paiements en ligne sont sécurisés par FedaPay.'],
-        ['Comment sont calculés les prix au mètre ?', 'Le prix dépend de la qualité et de la rareté du tissu. Le prix affiché correspond à un mètre linéaire. Vous pouvez aussi acheter le rouleau entier, ou une pièce en confection quand le tissu le propose.'],
+        ['Comment sont calculés les prix au mètre ?', 'Le prix dépend de la qualité et de la rareté du tissu. Le prix affiché correspond à un mètre linéaire. Vous pouvez aussi acheter le rouleau entier.'],
         ['Combien de mètres dois-je commander ?', 'Cela dépend du vêtement et de la taille. Une fois connecté, le calculateur de métrage vous donne une estimation pour une robe, une chemise, un pantalon ou une tunique.'],
         ['Proposez-vous des tarifs pour les grossistes ?', 'Oui. Le rouleau entier est vendu à un tarif avantageux par rapport au mètre, pensé pour les ateliers, tailleurs et revendeurs. Pour de grandes quantités, écrivez-nous.'],
         ['Puis-je retourner un produit ?', 'Oui, nous acceptons les retours sous 7 jours après réception, à condition que le tissu n\'ait pas été coupé ni endommagé.'],

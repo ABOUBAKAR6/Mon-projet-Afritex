@@ -12,7 +12,7 @@
         ['Commandez sur devis', 'Saisissez vos quantités aux prix pro. Nous confirmons le stock, la livraison et la date, vous validez puis payez.'],
     ];
     $avantages = [
-        ['etiquette' => 'Prix revendeurs', 'icone' => 'billets', 'texte' => 'Un prix pro pour chaque format : au mètre, au rouleau ou en pièces confectionnées.'],
+        ['etiquette' => 'Prix revendeurs', 'icone' => 'billets', 'texte' => 'Un prix pro pour chaque format : au mètre ou au rouleau.'],
         ['etiquette' => 'Toute la commande sur une page', 'icone' => 'regle', 'texte' => 'Tous les tissus et leurs formats dans un seul tableau. Une commande passée se reprend en un clic.'],
         ['etiquette' => 'Devis avant paiement', 'icone' => 'courrier', 'texte' => 'Rien n\'est payé avant que vous ayez accepté le devis, frais de livraison et date compris.'],
         ['etiquette' => 'Tarifs en PDF', 'icone' => 'telechargement', 'texte' => 'La liste de nos prix pro, à jour, à télécharger quand vous préparez vos achats.'],

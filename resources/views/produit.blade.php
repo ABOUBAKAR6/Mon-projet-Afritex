@@ -1,17 +1,12 @@
 @extends('layouts.app')
 @section('title', ($produit->meta_title ?: $produit->nom) . ' · ' . boutique('nom'))
-@section('meta_description', $produit->meta_description ?: 'Achetez ' . $produit->nom . ' chez '.boutique('nom').' : au mètre, au rouleau ou en confection, livré partout en Côte d\'Ivoire.')
+@section('meta_description', $produit->meta_description ?: 'Achetez ' . $produit->nom . ' chez '.boutique('nom').' : au mètre ou au rouleau, livré partout en Côte d\'Ivoire.')
 @section('content')
 @php
     // Formats de vente acceptés par le panier (CartService::addItem) et leur prix
     $formats = collect([
         'metre' => ['Au mètre', $produit->prix_metre, 'le mètre'],
         'rouleau' => ['Au rouleau', $produit->prix_rouleau, 'le rouleau'],
-        'pantalon' => ['Pantalon', $produit->prix_pantalon, 'la pièce'],
-        'chemise_courte' => ['Chemise manches courtes', $produit->prix_chemise, 'la pièce'],
-        'chemise_longue' => ['Chemise manches longues', $produit->prix_chemise, 'la pièce'],
-        'tunique_courte' => ['Tunique manches courtes', $produit->prix_tunique, 'la pièce'],
-        'tunique_longue' => ['Tunique manches longues', $produit->prix_tunique, 'la pièce'],
     ])->filter(fn ($f) => !empty($f[1]) && $f[1] > 0);
 
     $images = collect([$produit->image])->merge($produit->images->pluck('chemin'))

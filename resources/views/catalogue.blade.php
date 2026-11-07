@@ -18,8 +18,8 @@
     :ariane="$categorieActive ? [['Catalogue', route('catalogue')]] : []"
     :vignette="$categorieActive?->image"
     :chapeau="$categorieActive
-        ? 'Notre sélection ' . $categorieActive->nom . ' : au mètre, au rouleau ou en confection. Affinez par prix ou par couleur.'
-        : 'Tissus au mètre, au rouleau ou en confection. Choisissez une famille, puis affinez par prix ou par couleur.'" />
+        ? 'Notre sélection ' . $categorieActive->nom . ' : au mètre ou au rouleau. Affinez par prix ou par couleur.'
+        : 'Tissus au mètre ou au rouleau. Choisissez une famille, puis affinez par prix ou par couleur.'" />
 </div>
 
 <div class="conteneur pb-10 pt-4 sm:py-10 lg:py-14">

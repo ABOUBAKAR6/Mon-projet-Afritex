@@ -37,9 +37,8 @@ class Produit extends Model
     public const FORMATS = [
         'metre' => ['libelle' => 'Au mètre', 'colonne' => 'prix_metre', 'unite' => 'le mètre'],
         'rouleau' => ['libelle' => 'Au rouleau', 'colonne' => 'prix_rouleau', 'unite' => 'le rouleau'],
-        'pantalon' => ['libelle' => 'Pantalon', 'colonne' => 'prix_pantalon', 'unite' => 'la pièce'],
-        'chemise' => ['libelle' => 'Chemise', 'colonne' => 'prix_chemise', 'unite' => 'la pièce'],
-        'tunique' => ['libelle' => 'Tunique', 'colonne' => 'prix_tunique', 'unite' => 'la pièce'],
+        // Confections (pantalon, chemise, tunique) retirées de la vente le 2026-11-07 à la demande de la boutique :
+        // leurs colonnes de prix restent en base, et les anciennes commandes gardent leur libellé (CommandeItem).
     ];
 
     protected $casts = [

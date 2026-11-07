@@ -18,7 +18,7 @@
             <div class="max-w-lg">
                 <p class="titre-display text-[2.6rem] leading-[1.1] xl:text-[3.2rem]">Le meilleur tissu, livré chez vous</p>
                 <ul class="mt-8 space-y-3 text-white/85">
-                    <li class="flex items-center gap-3"><x-icone nom="regle" class="size-5 text-or" /> Au mètre, au rouleau ou en confection</li>
+                    <li class="flex items-center gap-3"><x-icone nom="regle" class="size-5 text-or" /> Au mètre ou au rouleau</li>
                     <li class="flex items-center gap-3"><x-icone nom="livraison" class="size-5 text-or" /> Livré partout en Côte d'Ivoire sous 24 à 72 h</li>
                     <li class="flex items-center gap-3"><x-icone nom="mobile" class="size-5 text-or" /> Paiement par Mobile Money ou à la livraison</li>
                 </ul>

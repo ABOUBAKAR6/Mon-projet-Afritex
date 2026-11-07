@@ -2,7 +2,7 @@
 @section('title', 'Ajouter un produit · ' . boutique('nom'))
 @section('content')
 @php
-    $prix = [['prix_metre', 'Au mètre'], ['prix_rouleau', 'Au rouleau'], ['prix_pantalon', 'Pantalon'], ['prix_chemise', 'Chemise'], ['prix_tunique', 'Tunique']];
+    $prix = [['prix_metre', 'Au mètre'], ['prix_rouleau', 'Au rouleau']];
 @endphp
 
 <a href="{{ route('admin.produits') }}" class="lien-fleche mb-5 flex-row-reverse justify-end text-[0.95rem]"><span>Tous les produits</span><x-icone nom="fleche-gauche" /></a>

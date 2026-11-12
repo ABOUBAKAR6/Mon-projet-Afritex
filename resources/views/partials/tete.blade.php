@@ -1,6 +1,6 @@
 {{-- En-tête HTML commun : boutique, admin et pages de connexion --}}
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 <meta name="csrf-token" content="{{ csrf_token() }}">
 <title>@yield('title', $titre ?? boutique('nom').', '.boutique('slogan_long'))</title>
 <meta name="description" content="@yield('meta_description', boutique('nom').' : '.boutique('description'))">
@@ -34,6 +34,11 @@
 
 {{-- Les animations au défilement ne masquent le contenu que si le script tourne --}}
 <script>document.documentElement.classList.add('js')</script>
+
+{{-- Pas de zoom de l'écran, comme dans une appli (demande de la boutique). La balise viewport suffit sur Android ;
+     l'iPhone l'ignore : on y bloque le pincement (gesturestart) et le double toucher (touch-action). --}}
+<style>html { touch-action: pan-x pan-y; }</style>
+<script>['gesturestart', 'gesturechange', 'gestureend'].forEach((n) => document.addEventListener(n, (e) => e.preventDefault(), { passive: false }));</script>
 
 @vite(['resources/css/app.css', 'resources/js/app.js'])
 

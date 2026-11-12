@@ -210,12 +210,6 @@
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
                     <h1 class="titre-display text-[1.6rem] leading-tight sm:mt-1 sm:text-[2.3rem] lg:text-[2.6rem]"><span x-text="titre">{{ $titres->first() ?? $produit->nom }}</span></h1>
-                    {{-- Quand le titre suit la couleur de la photo, le nom du tissu reste rappelé dessous --}}
-                    @if($titres->contains(fn ($t) => $t !== $produit->nom))
-                        <p class="mt-0.5 text-[0.9rem] text-encre-2 sm:mt-1 sm:text-[0.95rem]" x-show="titre !== @js($produit->nom)" @if(($titres->first() ?? $produit->nom) === $produit->nom) x-cloak @endif>
-                            {{ $produit->nom }}@if($listeCouleurs->count() > 1) · {{ $listeCouleurs->count() }} couleurs @endif
-                        </p>
-                    @endif
                 </div>
 
                 {{-- Couleurs en ronds à côté du titre : toucher = choisir la couleur et voir sa photo (re-toucher = annuler) --}}

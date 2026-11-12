@@ -38,11 +38,15 @@ class IconeAppController extends Controller
 
     public function show(string $variante): Response
     {
-        abort_unless(isset(self::VARIANTES[$variante]), 404);
-        [$cote, $cadre, $partLettre] = self::VARIANTES[$variante];
+        // « admin-… » : l'appli de gestion, couleurs inversées (fond doré, lettre foncée)
+        // pour la distinguer de l'appli de la boutique sur l'écran d'accueil
+        $gestion = str_starts_with($variante, 'admin-');
+        $base = $gestion ? substr($variante, 6) : $variante;
+        abort_unless(isset(self::VARIANTES[$base]), 404);
+        [$cote, $cadre, $partLettre] = self::VARIANTES[$base];
 
-        $fond = couleur('foncee');
-        $or = couleur('seconde');
+        $fond = $gestion ? couleur('seconde') : couleur('foncee');
+        $or = $gestion ? couleur('foncee') : couleur('seconde');
         $lettre = boutique_initiale();
 
         $empreinte = self::empreinte();

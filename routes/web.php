@@ -33,6 +33,7 @@ Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'ind
 Route::get('/robots.txt', fn () => response()->view('robots')->header('Content-Type', 'text/plain'))->name('robots');
 Route::get('/manifest.webmanifest', fn () => response()->view('manifest')->header('Content-Type', 'application/manifest+json'))->name('manifest');
 // Application installable (PWA) : icônes aux couleurs de la boutique, page affichée sans connexion
+Route::get('/manifest-gestion.webmanifest', fn () => response()->view('manifest-gestion')->header('Content-Type', 'application/manifest+json'))->name('manifest.gestion');
 Route::get('/icones/app-{variante}.png', [\App\Http\Controllers\IconeAppController::class, 'show'])->where('variante', '[a-z0-9-]+')->name('icone-app');
 Route::view('/hors-ligne', 'hors-ligne')->name('hors-ligne');
 Route::get('/privacy', [LegalController::class, 'rgpd'])->name('privacy');

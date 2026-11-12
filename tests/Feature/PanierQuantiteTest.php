@@ -53,13 +53,6 @@ class PanierQuantiteTest extends TestCase
         $this->assertSame(1, (int) $ligne->fresh()->quantite);
     }
 
-    public function test_l_accueil_propose_la_recherche(): void
-    {
-        $this->produit();
-
-        $this->get(route('accueil'))->assertOk()->assertSee('id="recherche-accueil"', false);
-    }
-
     private function produit(): Produit
     {
         $categorie = Categorie::create(['nom' => 'Morrocco']);

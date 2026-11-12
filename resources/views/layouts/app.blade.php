@@ -366,7 +366,8 @@
         </div>
     </footer>
 
-    {{-- BARRE D'ACCÈS RAPIDE (téléphone) --}}
+    {{-- BARRE D'ACCÈS RAPIDE (téléphone) : remplacée par la barre d'achat sur la page produit (section « sans_acces_rapides ») --}}
+    @sectionMissing('sans_acces_rapides')
     <nav aria-label="Accès rapides" class="sans-impression fixed inset-x-0 bottom-0 z-sticky border-t border-trait bg-papier pb-[env(safe-area-inset-bottom)] lg:hidden">
         <ul class="mx-auto grid max-w-md grid-cols-3">
             @php
@@ -388,6 +389,7 @@
             @endforeach
         </ul>
     </nav>
+    @endif
 </div>
 
     @include('components.cookie-consent')

@@ -1,14 +1,19 @@
 @extends('layouts.app')
 @section('title', ($produit->meta_title ?: $produit->nom) . ' · ' . boutique('nom'))
 @section('meta_description', $produit->meta_description ?: 'Achetez ' . $produit->nom . ' chez '.boutique('nom').' : au mètre ou au rouleau, livré partout en Côte d\'Ivoire.')
-@section('content')
 @php
     // Formats de vente acceptés par le panier (CartService::addItem) et leur prix
     $formats = collect([
         'metre' => ['Au mètre', $produit->prix_metre, 'le mètre'],
         'rouleau' => ['Au rouleau', $produit->prix_rouleau, 'le rouleau'],
     ])->filter(fn ($f) => !empty($f[1]) && $f[1] > 0);
-
+@endphp
+{{-- Téléphone et tablette : la barre d'achat fixe remplace la barre Catalogue / Panier / Connexion --}}
+@if($formats->isNotEmpty())
+    @section('sans_acces_rapides', '1')
+@endif
+@section('content')
+@php
     $images = collect([$produit->image])->merge($produit->images->pluck('chemin'))
         ->filter(fn ($c) => $c && file_exists(public_path($c)))->unique()->values();
 
@@ -30,74 +35,140 @@
         'Grammage' => $produit->poids ?? null,
         'Couleurs' => is_array($produit->couleurs) ? implode(', ', $produit->couleurs) : null,
     ])->filter();
+
+    $estFavori = auth()->check() && auth()->user()->wishlist()->where('produit_id', $produit->id)->exists();
+    $lienFamille = $produit->categorie ? route('catalogue', ['categorie_id' => $produit->categorie->id]) : route('catalogue');
+
+    // Rangée d'assurances (téléphone et tablette) : uniquement des engagements déjà affichés sur le site
+    $assurances = [
+        ['bouclier', 'Qualité garantie'],
+        ['regle', $formats->count() > 1 ? 'Au mètre ou au rouleau' : ($formats->keys()->first() === 'rouleau' ? 'Au rouleau' : 'Au mètre')],
+        ['livraison', 'Livré en 24 à 72 h'],
+        ['mobile', 'Mobile Money'],
+    ];
 @endphp
 
-<div class="conteneur pb-8 pt-4 sm:pb-20 sm:pt-6 lg:pb-28 lg:pt-8">
-    {{-- Fil d'Ariane : pas au téléphone (la famille, au-dessus du titre, ramène à la liste) --}}
+<div class="conteneur pb-8 sm:pb-20 sm:pt-6 lg:pb-28 lg:pt-8">
+    {{-- Fil d'Ariane : pas au téléphone (la flèche sur la photo et la famille ramènent à la liste) --}}
     <nav aria-label="Fil d'Ariane" class="hidden flex-wrap items-center gap-1.5 text-[0.9rem] text-encre-2 sm:flex">
         <a href="{{ route('accueil') }}" class="hover:text-brun hover:underline">Accueil</a>
         <x-icone nom="chevron-droite" class="size-3.5" />
         <a href="{{ route('catalogue') }}" class="hover:text-brun hover:underline">Catalogue</a>
         @if($produit->categorie)
             <x-icone nom="chevron-droite" class="size-3.5" />
-            <a href="{{ route('catalogue', ['categorie_id' => $produit->categorie->id]) }}" class="hover:text-brun hover:underline">{{ $produit->categorie->nom }}</a>
+            <a href="{{ $lienFamille }}" class="hover:text-brun hover:underline">{{ $produit->categorie->nom }}</a>
         @endif
         <x-icone nom="chevron-droite" class="size-3.5" />
         <span aria-current="page" class="text-encre">{{ $produit->nom }}</span>
     </nav>
 
-    {{-- Sur téléphone : titre, puis photo, puis achat. Sur ordinateur : photo à gauche, titre et achat à droite. --}}
-    <div class="grid gap-8 sm:mt-6 lg:grid-cols-12 lg:gap-x-16 lg:gap-y-0">
-        <div class="lg:col-span-5 lg:col-start-8 lg:row-start-1">
-            @if($produit->categorie)
-                <a href="{{ route('catalogue', ['categorie_id' => $produit->categorie->id]) }}" class="intitule inline-block hover:underline">{{ $produit->categorie->nom }}</a>
-            @endif
-            <h1 class="titre-display mt-2 text-[2.1rem] sm:text-[2.6rem]">{{ $produit->nom }}</h1>
-
-            <a href="#avis" class="mt-3 inline-flex items-center gap-2 text-[0.95rem] text-encre-2 hover:text-brun">
-                <span class="flex text-or" aria-hidden="true">
-                    @for($i = 1; $i <= 5; $i++)
-                        <x-icone nom="etoile" class="size-4 {{ $i <= floor($moyenne) ? 'fill-current' : 'text-trait-fort' }}" />
-                    @endfor
-                </span>
-                @if($nbAvis > 0)
-                    <span><span class="chiffres">{{ number_format($moyenne, 1, ',', ' ') }}</span> sur 5, {{ $nbAvis }} avis</span>
-                @else
-                    <span>Pas encore d'avis</span>
-                @endif
-            </a>
-        </div>
+    {{--
+      Téléphone : photo bord à bord, puis la fiche qui remonte sur le bas de la photo, puis l'achat.
+      Tablette : photo à gauche, fiche et achat à droite.
+      Ordinateur (lg) : inchangé, photo sur 7 colonnes, fiche et achat sur 5.
+    --}}
+    <div class="grid sm:mt-6 sm:grid-cols-2 sm:grid-rows-[auto_1fr] sm:gap-x-8 sm:gap-y-6 lg:grid-cols-12 lg:grid-rows-none lg:gap-x-16 lg:gap-y-0">
 
         {{-- GALERIE --}}
-        <div class="lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1" x-data="{ active: 0, images: @js($images->map(fn ($c) => asset($c))->values()) }">
-            <div class="group relative aspect-square cursor-zoom-in overflow-hidden bg-papier-2"
-                 @mousemove="if (window.matchMedia('(hover: hover)').matches) { const r = $el.getBoundingClientRect(); $refs.photo.style.transformOrigin = `${(($event.clientX - r.left) / r.width) * 100}% ${(($event.clientY - r.top) / r.height) * 100}%`; $refs.photo.style.transform = 'scale(1.8)'; }"
-                 @mouseleave="$refs.photo.style.transform = 'scale(1)'">
+        <div class="sm:sticky sm:top-24 sm:col-start-1 sm:row-span-2 sm:row-start-1 sm:self-start lg:static lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:self-auto"
+             x-data="{ active: 0, images: @js($images->map(fn ($c) => asset($c))->values()) }">
+
+            {{-- Téléphone : photos qui glissent au doigt, bord à bord, retour et favori posés dessus --}}
+            <div class="relative -mx-4 sm:hidden">
                 @if($images->isNotEmpty())
-                    <img x-ref="photo" :src="images[active]" src="{{ asset($images->first()) }}" alt="{{ $produit->nom }}" class="h-full w-full object-cover transition-transform duration-500 ease-out-fort">
+                    <div class="defilement-discret flex aspect-square snap-x snap-mandatory overflow-x-auto bg-papier-2"
+                         @scroll.passive="active = Math.round($el.scrollLeft / $el.clientWidth)"
+                         aria-label="Photos de {{ $produit->nom }}" role="region" tabindex="0">
+                        @foreach($images as $i => $chemin)
+                            <img src="{{ asset($chemin) }}" alt="{{ $i === 0 ? $produit->nom : $produit->nom.', photo '.($i + 1) }}"
+                                 @if($i > 0) loading="lazy" @endif decoding="async" class="h-full w-full shrink-0 snap-center object-cover">
+                        @endforeach
+                    </div>
                 @else
-                    <div class="flex h-full w-full items-center justify-center text-brun-trait"><x-icone nom="image" class="size-16" /></div>
+                    <div class="flex aspect-square items-center justify-center bg-papier-2 text-brun-trait"><x-icone nom="image" class="size-16" /></div>
+                @endif
+
+                <a href="{{ $lienFamille }}" onclick="if (document.referrer.indexOf(location.origin) === 0 && history.length > 1) { history.back(); return false; }"
+                   class="absolute left-4 top-4 flex size-11 items-center justify-center bg-carte text-encre transition-transform duration-150 active:scale-95">
+                    <x-icone nom="fleche-gauche" class="size-5" />
+                    <span class="sr-only">Retour</span>
+                </a>
+                <div class="absolute right-4 top-4">
+                    @auth
+                        <form action="{{ route('wishlist.toggle', $produit->id) }}" method="POST">
+                            @csrf
+                            <button type="submit" aria-pressed="{{ $estFavori ? 'true' : 'false' }}"
+                                    class="flex size-11 items-center justify-center bg-carte transition-transform duration-150 active:scale-95 {{ $estFavori ? 'text-brun' : 'text-encre' }}">
+                                <x-icone nom="coeur" class="size-5 {{ $estFavori ? 'fill-current' : '' }}" />
+                                <span class="sr-only">{{ $estFavori ? 'Retirer des favoris' : 'Ajouter aux favoris' }}</span>
+                            </button>
+                        </form>
+                    @else
+                        <a href="{{ route('login') }}" class="flex size-11 items-center justify-center bg-carte text-encre transition-transform duration-150 active:scale-95">
+                            <x-icone nom="coeur" class="size-5" />
+                            <span class="sr-only">Se connecter pour ajouter aux favoris</span>
+                        </a>
+                    @endauth
+                </div>
+
+                @if($images->count() > 1)
+                    <p class="chiffres absolute bottom-12 right-4 bg-encre px-2 py-0.5 text-[0.8rem] font-medium text-papier" aria-hidden="true">
+                        <span x-text="active + 1">1</span> / {{ $images->count() }}
+                    </p>
                 @endif
             </div>
 
-            @if($images->count() > 1)
-                <ul class="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-6">
-                    @foreach($images as $i => $chemin)
-                        <li>
-                            <button type="button" @click="active = {{ $i }}" :aria-pressed="active === {{ $i }}"
-                                    class="relative block aspect-square w-full overflow-hidden bg-papier-2 transition-opacity duration-200"
-                                    :class="active === {{ $i }} ? 'outline outline-2 -outline-offset-2 outline-brun' : 'opacity-70 hover:opacity-100'">
-                                <img src="{{ asset($chemin) }}" alt="" loading="lazy" class="h-full w-full object-cover">
-                                <span class="sr-only">Afficher la photo {{ $i + 1 }}</span>
-                            </button>
-                        </li>
-                    @endforeach
-                </ul>
+            {{-- Tablette et ordinateur : grande photo (loupe au survol) et vignettes --}}
+            <div class="hidden sm:block">
+                <div class="group relative aspect-square cursor-zoom-in overflow-hidden bg-papier-2"
+                     @mousemove="if (window.matchMedia('(hover: hover)').matches) { const r = $el.getBoundingClientRect(); $refs.photo.style.transformOrigin = `${(($event.clientX - r.left) / r.width) * 100}% ${(($event.clientY - r.top) / r.height) * 100}%`; $refs.photo.style.transform = 'scale(1.8)'; }"
+                     @mouseleave="$refs.photo.style.transform = 'scale(1)'">
+                    @if($images->isNotEmpty())
+                        <img x-ref="photo" :src="images[active]" src="{{ asset($images->first()) }}" alt="{{ $produit->nom }}" class="h-full w-full object-cover transition-transform duration-500 ease-out-fort">
+                    @else
+                        <div class="flex h-full w-full items-center justify-center text-brun-trait"><x-icone nom="image" class="size-16" /></div>
+                    @endif
+                </div>
+
+                @if($images->count() > 1)
+                    <ul class="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-6">
+                        @foreach($images as $i => $chemin)
+                            <li>
+                                <button type="button" @click="active = {{ $i }}" :aria-pressed="active === {{ $i }}"
+                                        class="relative block aspect-square w-full overflow-hidden bg-papier-2 transition-opacity duration-200"
+                                        :class="active === {{ $i }} ? 'outline outline-2 -outline-offset-2 outline-brun' : 'opacity-70 hover:opacity-100'">
+                                    <img src="{{ asset($chemin) }}" alt="" loading="lazy" class="h-full w-full object-cover">
+                                    <span class="sr-only">Afficher la photo {{ $i + 1 }}</span>
+                                </button>
+                            </li>
+                        @endforeach
+                    </ul>
+                @endif
+            </div>
+        </div>
+
+        {{-- FICHE : au téléphone, elle remonte de 2 rem sur la photo (même fond que la page) --}}
+        <div class="relative -mx-2 -mt-8 bg-papier px-2 pt-5 sm:col-start-2 sm:row-start-1 sm:mx-0 sm:mt-0 sm:bg-transparent sm:px-0 sm:pt-0 lg:col-span-5 lg:col-start-8 lg:row-start-1">
+            @if($produit->categorie)
+                <a href="{{ $lienFamille }}" class="intitule inline-block hover:underline">{{ $produit->categorie->nom }}</a>
+            @endif
+            <h1 class="titre-display mt-1.5 text-[1.85rem] sm:mt-2 sm:text-[2.3rem] lg:text-[2.6rem]">{{ $produit->nom }}</h1>
+
+            {{-- Note : seulement quand il y a de vrais avis --}}
+            @if($nbAvis > 0)
+                <a href="#avis" class="mt-2 inline-flex items-center gap-2 text-[0.95rem] text-encre-2 hover:text-brun sm:mt-3">
+                    <span class="flex text-or" aria-hidden="true">
+                        @for($i = 1; $i <= 5; $i++)
+                            <x-icone nom="etoile" class="size-4 {{ $i <= floor($moyenne) ? 'fill-current' : 'text-trait-fort' }}" />
+                        @endfor
+                    </span>
+                    <span><span class="chiffres">{{ number_format($moyenne, 1, ',', ' ') }}</span> sur 5, {{ $nbAvis }} avis</span>
+                </a>
             @endif
         </div>
 
         {{-- ACHAT --}}
-        <div class="lg:col-span-5 lg:col-start-8 lg:row-start-2">
+        <div class="mt-5 sm:col-start-2 sm:row-start-2 sm:mt-0 lg:col-span-5 lg:col-start-8 lg:row-start-2">
             <div class="lg:sticky lg:top-28 lg:pt-8">
                 @if($formats->isEmpty())
                     <p class="bg-alerte-doux p-4 text-alerte">Ce tissu n'a pas encore de prix en ligne. Contactez-nous pour une commande.</p>
@@ -116,6 +187,8 @@
                               get prix() { return this.formats[this.choix] || 0 },
                               get total() { return this.prix * (parseInt(this.qte) || 0) },
                               f(n) { return new Intl.NumberFormat('fr-FR').format(n).replace(/\s/g, ' ') + ' F' },
+                              moins() { this.qte = Math.max(1, (parseInt(this.qte) || 1) - 1) },
+                              plus() { this.qte = (parseInt(this.qte) || 0) + 1 },
                               libelles: @js($formats->map(fn ($f) => $f[0])),
                               get lienWhatsapp() {
                                   const n = parseInt(this.qte) || 1;
@@ -127,23 +200,25 @@
                           }">
                         @csrf
                         <input type="hidden" name="produit_id" value="{{ $produit->id }}">
+                        {{-- Une seule quantité envoyée, quel que soit le sélecteur utilisé (barre du bas ou bloc ordinateur) --}}
+                        <input type="hidden" name="quantite" :value="parseInt(qte) || 1" value="1">
 
-                        <p class="titre-display chiffres text-[2.4rem] leading-none">
+                        <p class="titre-display chiffres text-[2.1rem] leading-none sm:text-[2.4rem]">
                             <span x-text="f(prix)">{{ number_format($formats->first()[1], 0, ',', ' ') }} F</span>
                             <span class="font-sans text-[1rem] font-normal text-encre-2" x-text="unites[choix]">{{ $formats->first()[2] }}</span>
                         </p>
 
-                        <fieldset class="mt-7">
+                        <fieldset class="mt-6 sm:mt-7">
                             <legend class="etiquette">Format</legend>
-                            <div class="grid gap-2 sm:grid-cols-2">
+                            <div @class(['grid gap-2', 'grid-cols-2' => $formats->count() > 1])>
                                 @foreach($formats as $cle => [$libelle, $prix, $unite])
-                                    <label class="choix min-h-[4.25rem] !p-3.5">
+                                    <label class="choix min-h-[4rem] gap-3 !p-3 sm:min-h-[4.25rem] sm:gap-4 sm:!p-3.5">
                                         <input type="radio" name="type_commande" value="{{ $cle }}" x-model="choix" class="sr-only" @checked($loop->first)>
-                                        <span class="flex-1">
+                                        <span class="min-w-0 flex-1">
                                             <span class="block font-medium leading-snug">{{ $libelle }}</span>
-                                            <span class="chiffres block text-[0.92rem] text-encre-2">{{ number_format($prix, 0, ',', ' ') }} F {{ $unite }}</span>
+                                            <span class="chiffres block text-[0.88rem] text-encre-2 sm:text-[0.92rem]">{{ number_format($prix, 0, ',', ' ') }} F {{ $unite }}</span>
                                         </span>
-                                        <span aria-hidden="true" class="flex size-5 shrink-0 items-center justify-center border border-trait-fort bg-carte" :class="choix === '{{ $cle }}' && '!border-brun !bg-brun text-white'">
+                                        <span aria-hidden="true" class="hidden size-5 shrink-0 items-center justify-center border border-trait-fort bg-carte sm:flex" :class="choix === '{{ $cle }}' && '!border-brun !bg-brun text-white'">
                                             <x-icone nom="coche" class="size-3.5" x-show="choix === '{{ $cle }}'" />
                                         </span>
                                     </label>
@@ -151,16 +226,17 @@
                             </div>
                         </fieldset>
 
-                        <div class="mt-6 grid grid-cols-[auto_1fr] items-end gap-4">
+                        {{-- Quantité et total : ordinateur seulement (téléphone et tablette : barre fixe en bas) --}}
+                        <div class="mt-6 hidden grid-cols-[auto_1fr] items-end gap-4 lg:grid">
                             <div>
                                 <label for="quantite" class="etiquette" x-text="choix === 'metre' ? 'Nombre de mètres' : 'Quantité'">Quantité</label>
                                 <div class="flex h-13 items-stretch border border-trait-fort bg-carte">
-                                    <button type="button" @click="qte = Math.max(1, (parseInt(qte) || 1) - 1)" class="flex w-12 items-center justify-center text-encre-2 transition-colors hover:bg-brun-doux hover:text-brun-fonce">
+                                    <button type="button" @click="moins()" class="flex w-12 items-center justify-center text-encre-2 transition-colors hover:bg-brun-doux hover:text-brun-fonce">
                                         <x-icone nom="moins" class="size-4" /><span class="sr-only">Diminuer</span>
                                     </button>
-                                    <input id="quantite" type="number" name="quantite" min="1" x-model="qte" value="1"
+                                    <input id="quantite" type="number" min="1" x-model="qte" value="1"
                                            class="chiffres w-16 border-0 bg-transparent text-center text-[1.05rem] font-semibold focus:ring-0">
-                                    <button type="button" @click="qte = (parseInt(qte) || 0) + 1" class="flex w-12 items-center justify-center text-encre-2 transition-colors hover:bg-brun-doux hover:text-brun-fonce">
+                                    <button type="button" @click="plus()" class="flex w-12 items-center justify-center text-encre-2 transition-colors hover:bg-brun-doux hover:text-brun-fonce">
                                         <x-icone nom="plus" class="size-4" /><span class="sr-only">Augmenter</span>
                                     </button>
                                 </div>
@@ -176,25 +252,75 @@
                             <label for="couleur" class="etiquette">Couleur souhaitée <span class="font-normal text-encre-2">(facultatif)</span></label>
                             <input id="couleur" type="text" name="couleur" maxlength="100" x-model="couleur" autocomplete="off"
                                    @if(!empty($produit->couleurs)) list="couleurs-produit" @endif
-                                   class="champ" placeholder="Ex. : bleu nuit, rouge bordeaux, comme sur la photo">
+                                   class="champ" placeholder="Ex. : bleu nuit, comme sur la photo">
                             @if(!empty($produit->couleurs))
                                 <datalist id="couleurs-produit">@foreach((array) $produit->couleurs as $c)<option value="{{ $c }}"></option>@endforeach</datalist>
                             @endif
-                            <p class="aide">La boutique la reçoit avec votre commande et dans le message WhatsApp.</p>
+                            <p class="aide hidden lg:block">La boutique la reçoit avec votre commande et dans le message WhatsApp.</p>
                             @error('couleur')<p class="erreur">{{ $message }}</p>@enderror
                         </div>
 
-                        @auth
-                            <button type="submit" class="btn btn-brun btn-lg mt-6 w-full"><x-icone nom="panier" /> Ajouter au panier</button>
-                        @else
-                            <a href="{{ route('login') }}" class="btn btn-brun btn-lg mt-6 w-full">Se connecter pour commander</a>
-                            <p class="mt-2 text-center text-[0.92rem] text-encre-2">Pas encore de compte ? <a href="{{ route('register') }}" class="lien">Créez-le en une minute</a>.</p>
-                        @endauth
+                        {{-- Boutons : ordinateur --}}
+                        <div class="hidden lg:block">
+                            @auth
+                                <button type="submit" class="btn btn-brun btn-lg mt-6 w-full"><x-icone nom="panier" /> Ajouter au panier</button>
+                            @else
+                                <a href="{{ route('login') }}" class="btn btn-brun btn-lg mt-6 w-full">Se connecter pour commander</a>
+                                <p class="mt-2 text-center text-[0.92rem] text-encre-2">Pas encore de compte ? <a href="{{ route('register') }}" class="lien">Créez-le en une minute</a>.</p>
+                            @endauth
 
+                            @if($lienWhatsappProduit)
+                                {{-- Le message reprend le format, la quantité et le total choisis ci-dessus --}}
+                                <a href="{{ $lienWhatsappProduit }}" :href="lienWhatsapp" target="_blank" rel="noopener noreferrer" class="btn btn-contour btn-lg mt-3 w-full"><x-icone nom="message" /> Discuter sur WhatsApp</a>
+                            @endif
+                        </div>
+
+                        {{-- Téléphone et tablette : WhatsApp en lien discret --}}
                         @if($lienWhatsappProduit)
-                            {{-- Le message reprend le format, la quantité et le total choisis ci-dessus --}}
-                            <a href="{{ $lienWhatsappProduit }}" :href="lienWhatsapp" target="_blank" rel="noopener noreferrer" class="btn btn-contour btn-lg mt-3 w-full"><x-icone nom="message" /> Discuter sur WhatsApp</a>
+                            <a href="{{ $lienWhatsappProduit }}" :href="lienWhatsapp" target="_blank" rel="noopener noreferrer"
+                               class="mt-4 inline-flex min-h-11 items-center gap-2 font-medium text-brun underline-offset-4 hover:underline lg:hidden">
+                                <x-icone nom="message" class="size-5" /> Une question ? Discuter sur WhatsApp
+                            </a>
                         @endif
+
+                        {{-- BARRE D'ACHAT FIXE (téléphone et tablette), à la place de la barre d'accès rapide --}}
+                        <div class="sans-impression fixed inset-x-0 bottom-0 z-sticky border-t border-trait bg-papier pb-[env(safe-area-inset-bottom)] lg:hidden">
+                            <div class="conteneur flex items-center gap-3 py-2">
+                                {{-- Tablette : rappel du tissu et du prix --}}
+                                <div class="hidden min-w-0 flex-1 sm:block">
+                                    <p class="truncate font-medium leading-snug">{{ $produit->nom }}</p>
+                                    <p class="chiffres text-[0.92rem] text-encre-2"><span x-text="f(prix)"></span> <span x-text="unites[choix]"></span></p>
+                                </div>
+
+                                @auth
+                                    <div class="flex h-12 shrink-0 items-stretch border border-trait-fort bg-carte">
+                                        <button type="button" @click="moins()" class="flex w-10 items-center justify-center text-encre-2 active:bg-brun-doux">
+                                            <x-icone nom="moins" class="size-4" /><span class="sr-only">Diminuer</span>
+                                        </button>
+                                        <label for="quantite-barre" class="sr-only" x-text="choix === 'metre' ? 'Nombre de mètres' : 'Quantité'">Quantité</label>
+                                        <span class="flex items-center">
+                                            <input id="quantite-barre" type="number" min="1" inputmode="numeric" x-model="qte"
+                                                   class="chiffres w-9 border-0 bg-transparent p-0 text-right text-[1.05rem] font-semibold focus:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none">
+                                            <span class="pl-0.5 pr-1 text-[0.85rem] text-encre-2" x-text="choix === 'metre' ? 'm' : ''">m</span>
+                                        </span>
+                                        <button type="button" @click="plus()" class="flex w-10 items-center justify-center text-encre-2 active:bg-brun-doux">
+                                            <x-icone nom="plus" class="size-4" /><span class="sr-only">Augmenter</span>
+                                        </button>
+                                    </div>
+                                    <button type="submit" class="btn btn-brun h-12 min-w-0 flex-1 px-4 sm:flex-none sm:px-8" aria-live="polite">
+                                        <span class="truncate">Ajouter<span class="hidden sm:inline"> au panier</span>&nbsp;·&nbsp;<span class="chiffres" x-text="f(total)">{{ number_format($formats->first()[1], 0, ',', ' ') }} F</span></span>
+                                    </button>
+                                @else
+                                    @if($lienWhatsappProduit)
+                                        <a href="{{ $lienWhatsappProduit }}" :href="lienWhatsapp" target="_blank" rel="noopener noreferrer"
+                                           class="btn btn-contour h-12 w-12 shrink-0 !px-0">
+                                            <x-icone nom="message" class="size-5" /><span class="sr-only">Discuter sur WhatsApp</span>
+                                        </a>
+                                    @endif
+                                    <a href="{{ route('login') }}" class="btn btn-brun h-12 flex-1 px-4 sm:flex-none sm:px-8">Se connecter pour commander</a>
+                                @endauth
+                            </div>
+                        </div>
                     </form>
                 @endif
 
@@ -210,8 +336,18 @@
                     @endif
                 </p>
 
-                {{-- Livraison, paiement, qualité : pas au téléphone (retiré à la demande de la boutique) --}}
-                <dl class="mt-8 hidden divide-y divide-trait border-y border-trait text-[0.95rem] sm:block">
+                {{-- Téléphone et tablette : les engagements de la boutique en une rangée d'icônes --}}
+                <ul class="mt-5 grid grid-cols-4 gap-1 border-y border-trait py-4 text-center text-[0.8rem] leading-tight text-encre-2 lg:hidden">
+                    @foreach($assurances as [$icone, $libelle])
+                        <li class="flex flex-col items-center gap-1.5 px-0.5">
+                            <x-icone :nom="$icone" class="size-5 text-brun" />
+                            <span>{{ $libelle }}</span>
+                        </li>
+                    @endforeach
+                </ul>
+
+                {{-- Ordinateur : livraison, paiement, qualité en détail --}}
+                <dl class="mt-8 hidden divide-y divide-trait border-y border-trait text-[0.95rem] lg:block">
                     <div class="flex gap-4 py-3.5">
                         <x-icone nom="livraison" class="mt-0.5 shrink-0 text-brun" />
                         <div><dt class="font-medium">Livraison partout en Côte d'Ivoire</dt><dd class="text-encre-2">Sous 24 à 72 h, offerte dès 50 000 F d'achat.</dd></div>
@@ -252,75 +388,71 @@
     @endif
 
     {{-- AVIS --}}
-    {{-- Avis : au téléphone, titre sur une ligne et formulaire replié derrière un bouton (bloc le plus court possible) --}}
-    <section id="avis" class="mt-8 grid gap-4 bg-papier-2 p-4 sm:mt-20 sm:gap-10 sm:p-10 lg:mt-28 lg:grid-cols-12 lg:gap-16 lg:p-14" aria-labelledby="titre-avis">
-        <div class="revele lg:col-span-4" x-data="{ formulaire: false }">
-            <h2 class="titre-display text-[1.25rem] sm:hidden">Avis clients @if($nbAvis > 0)<span class="chiffres font-sans text-[0.95rem] font-normal text-encre-2">· {{ number_format($moyenne, 1, ',', ' ') }} sur 5 ({{ $nbAvis }})</span>@endif</h2>
-            <div class="hidden sm:block"><x-titre-bloc intitule="Avis clients" titre="Ce qu'en disent nos clients" id="titre-avis" /></div>
-            @if($nbAvis > 0)
+    @if($nbAvis > 0)
+        {{-- Au téléphone : titre sur une ligne et formulaire replié derrière un bouton --}}
+        <section id="avis" class="mt-8 grid gap-4 bg-papier-2 p-4 sm:mt-20 sm:gap-10 sm:p-10 lg:mt-28 lg:grid-cols-12 lg:gap-16 lg:p-14" aria-labelledby="titre-avis">
+            <div class="revele lg:col-span-4" x-data="{ formulaire: false }">
+                <h2 class="titre-display text-[1.25rem] sm:hidden">Avis clients <span class="chiffres font-sans text-[0.95rem] font-normal text-encre-2">· {{ number_format($moyenne, 1, ',', ' ') }} sur 5 ({{ $nbAvis }})</span></h2>
+                <div class="hidden sm:block"><x-titre-bloc intitule="Avis clients" titre="Ce qu'en disent nos clients" id="titre-avis" /></div>
                 <p class="mt-6 hidden items-baseline gap-2 sm:flex">
                     <span class="titre-display chiffres text-[3rem] leading-none text-brun">{{ number_format($moyenne, 1, ',', ' ') }}</span>
                     <span class="text-encre-2">sur 5, d'après {{ $nbAvis }} avis</span>
                 </p>
-            @endif
 
-            @auth
-                <button type="button" @click="formulaire = !formulaire" :aria-expanded="formulaire" aria-controls="formulaire-avis"
-                        class="btn btn-contour mt-3 w-full sm:hidden"><x-icone nom="etoile" /> <span x-text="formulaire ? 'Fermer' : 'Donner votre avis'">Donner votre avis</span></button>
-                <form id="formulaire-avis" action="{{ route('produit.review.store', $produit->id) }}" method="POST" x-show="formulaire" x-cloak
-                      class="mt-3 space-y-4 bg-carte p-4 sm:mt-8 sm:!block sm:space-y-5 sm:p-6">
-                    @csrf
-                    <p class="hidden font-medium sm:block">Donner votre avis</p>
-                    <div>
-                        <label for="note" class="etiquette">Votre note</label>
-                        <select id="note" name="rating" class="champ">
-                            <option value="5">5 sur 5, excellent</option>
-                            <option value="4">4 sur 5, très bien</option>
-                            <option value="3">3 sur 5, correct</option>
-                            <option value="2">2 sur 5, décevant</option>
-                            <option value="1">1 sur 5, mauvais</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label for="commentaire" class="etiquette">Votre commentaire</label>
-                        <textarea id="commentaire" name="comment" rows="3" class="champ min-h-0 sm:min-h-[7rem]" placeholder="La tenue du tissu, le rendu des couleurs, la confection…"></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-brun w-full">Publier mon avis</button>
-                </form>
-            @else
-                <p class="mt-2 text-[0.95rem] text-encre-2 sm:mt-8 sm:text-base"><a href="{{ route('login') }}" class="lien">Connectez-vous</a> pour donner votre avis sur ce tissu.</p>
-            @endauth
-        </div>
+                @auth
+                    <button type="button" @click="formulaire = !formulaire" :aria-expanded="formulaire" aria-controls="formulaire-avis"
+                            class="btn btn-contour mt-3 w-full sm:hidden"><x-icone nom="etoile" /> <span x-text="formulaire ? 'Fermer' : 'Donner votre avis'">Donner votre avis</span></button>
+                    @include('partials.formulaire-avis')
+                @else
+                    <p class="mt-2 text-[0.95rem] text-encre-2 sm:mt-8 sm:text-base"><a href="{{ route('login') }}" class="lien">Connectez-vous</a> pour donner votre avis sur ce tissu.</p>
+                @endauth
+            </div>
 
-        <div class="lg:col-span-8">
-            @forelse($produit->reviews as $avis)
-                <figure class="revele border-b border-trait py-4 first:pt-0 last:border-0 sm:py-6" style="--delai: {{ min($loop->index, 4) * 60 }}ms">
-                    <div class="flex items-center justify-between gap-4">
-                        <figcaption class="flex items-center gap-3">
-                            <span aria-hidden="true" class="titre-display flex size-10 items-center justify-center rounded-full bg-brun-doux text-brun">{{ mb_strtoupper(mb_substr($avis->user?->name ?? 'C', 0, 1)) }}</span>
-                            <span>
-                                <span class="block font-medium">{{ $avis->user?->name ?? 'Client' }}</span>
-                                <span class="block text-[0.88rem] text-encre-2">{{ $avis->created_at->diffForHumans() }}</span>
+            <div class="lg:col-span-8">
+                @foreach($produit->reviews as $avis)
+                    <figure class="revele border-b border-trait py-4 first:pt-0 last:border-0 sm:py-6" style="--delai: {{ min($loop->index, 4) * 60 }}ms">
+                        <div class="flex items-center justify-between gap-4">
+                            <figcaption class="flex items-center gap-3">
+                                <span aria-hidden="true" class="titre-display flex size-10 items-center justify-center rounded-full bg-brun-doux text-brun">{{ mb_strtoupper(mb_substr($avis->user?->name ?? 'C', 0, 1)) }}</span>
+                                <span>
+                                    <span class="block font-medium">{{ $avis->user?->name ?? 'Client' }}</span>
+                                    <span class="block text-[0.88rem] text-encre-2">{{ $avis->created_at->diffForHumans() }}</span>
+                                </span>
+                            </figcaption>
+                            <span class="flex text-or" aria-label="{{ $avis->rating }} sur 5">
+                                @for($i = 1; $i <= 5; $i++)
+                                    <x-icone nom="etoile" class="size-4 {{ $i <= $avis->rating ? 'fill-current' : 'text-trait-fort' }}" />
+                                @endfor
                             </span>
-                        </figcaption>
-                        <span class="flex text-or" aria-label="{{ $avis->rating }} sur 5">
-                            @for($i = 1; $i <= 5; $i++)
-                                <x-icone nom="etoile" class="size-4 {{ $i <= $avis->rating ? 'fill-current' : 'text-trait-fort' }}" />
-                            @endfor
-                        </span>
-                    </div>
-                    @if($avis->comment)
-                        <blockquote class="mt-4 max-w-[62ch] text-[1.02rem]">{{ $avis->comment }}</blockquote>
-                    @endif
-                </figure>
-            @empty
-                <div class="flex h-full flex-col items-start justify-center bg-carte p-4 sm:min-h-48 sm:p-8">
-                    <p class="titre-display text-[1.05rem] sm:text-[1.3rem]">Aucun avis pour le moment</p>
-                    <p class="mt-1 text-[0.92rem] text-encre-2 sm:mt-2 sm:text-base">Vous avez cousu ce tissu ? Votre retour aidera les prochains clients à choisir.</p>
+                        </div>
+                        @if($avis->comment)
+                            <blockquote class="mt-4 max-w-[62ch] text-[1.02rem]">{{ $avis->comment }}</blockquote>
+                        @endif
+                    </figure>
+                @endforeach
+            </div>
+        </section>
+    @else
+        {{-- Pas encore d'avis : pas de bloc vide, une invitation courte et le formulaire --}}
+        <section id="avis" class="mt-6 sm:mt-20 sm:border-t sm:border-trait sm:pt-10 lg:mt-28 lg:grid lg:grid-cols-12 lg:gap-16" aria-labelledby="titre-avis" x-data="{ formulaire: false }">
+            <div class="lg:col-span-5">
+                <p class="intitule hidden sm:block">Avis clients</p>
+                <h2 id="titre-avis" class="titre-display text-[1.25rem] sm:mt-2 sm:text-[2.3rem] lg:text-[2.6rem]">Soyez le premier à donner votre avis</h2>
+                <p class="mt-1.5 text-[0.95rem] text-encre-2 sm:mt-3 sm:text-base">Vous avez cousu ce tissu ? Votre retour aidera les prochains clients à choisir.</p>
+                @auth
+                    <button type="button" @click="formulaire = !formulaire" :aria-expanded="formulaire" aria-controls="formulaire-avis"
+                            class="btn btn-contour mt-4 w-full sm:hidden"><x-icone nom="etoile" /> <span x-text="formulaire ? 'Fermer' : 'Donner votre avis'">Donner votre avis</span></button>
+                @else
+                    <p class="mt-3 text-[0.95rem] sm:mt-6 sm:text-base"><a href="{{ route('login') }}" class="lien">Connectez-vous</a> pour donner votre avis.</p>
+                @endauth
+            </div>
+            @auth
+                <div class="sm:max-w-xl lg:col-span-7 lg:max-w-none">
+                    @include('partials.formulaire-avis', ['classe' => 'lg:mt-0'])
                 </div>
-            @endforelse
-        </div>
-    </section>
+            @endauth
+        </section>
+    @endif
 
     {{-- DANS LA MÊME FAMILLE --}}
     @php $similaires = ($produitsSimilaires ?? collect())->where('id', '!=', $produit->id)->take(4); @endphp
@@ -329,7 +461,7 @@
             <div class="revele flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
                 <x-titre-bloc intitule="Dans la même famille" titre="Vous aimerez aussi" id="titre-similaires" />
                 @if($produit->categorie)
-                    <a href="{{ route('catalogue', ['categorie_id' => $produit->categorie->id]) }}" class="lien-fleche shrink-0">Tout {{ $produit->categorie->nom }} <x-icone nom="fleche" /></a>
+                    <a href="{{ $lienFamille }}" class="lien-fleche shrink-0">Tout {{ $produit->categorie->nom }} <x-icone nom="fleche" /></a>
                 @endif
             </div>
             {{-- Téléphone : rangée qui glisse à l'horizontale jusqu'au bord de l'écran (la carte suivante dépasse) ;

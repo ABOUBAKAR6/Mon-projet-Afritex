@@ -366,6 +366,35 @@ class AdminController extends Controller
         return redirect()->back()->with('success', 'Photos ajoutées avec succès ! ✅');
     }
 
+    /**
+     * Couleur montrée sur chaque photo d'un produit (fenêtre « Photos » de l'admin).
+     * La page produit en tire son titre (« Morrocco orange ») et la couleur commandée.
+     */
+    public function couleursPhotos(Request $request, Produit $produit)
+    {
+        $donnees = $request->validate([
+            'couleur_image' => 'nullable|string|max:40',
+            'couleurs_photos' => 'nullable|array',
+            'couleurs_photos.*' => 'nullable|string|max:40',
+        ]);
+
+        $propre = function ($valeur): ?string {
+            $valeur = trim(preg_replace('/\s+/', ' ', (string) $valeur));
+
+            return $valeur === '' ? null : mb_strtoupper(mb_substr($valeur, 0, 1)).mb_substr($valeur, 1);
+        };
+
+        $produit->update(['couleur_image' => $propre($donnees['couleur_image'] ?? null)]);
+
+        // Seulement les photos de CE produit
+        $photos = $produit->images()->whereIn('id', array_keys($donnees['couleurs_photos'] ?? []))->get();
+        foreach ($photos as $photo) {
+            $photo->update(['couleur' => $propre($donnees['couleurs_photos'][$photo->id] ?? null)]);
+        }
+
+        return redirect()->route('admin.produits')->with('success', 'Couleurs des photos enregistrées ✅');
+    }
+
     public function supprimerImage(\App\Models\ProduitImage $image)
     {
         if (file_exists(public_path($image->chemin))) {

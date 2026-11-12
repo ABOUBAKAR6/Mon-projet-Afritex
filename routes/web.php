@@ -144,6 +144,7 @@ Route::middleware(['auth', 'admin'])->prefix('admin')->group(function () {
         Route::post('/produits/{id}/modifier', [AdminController::class, 'editProduit'])->name('admin.produits.edit');
         Route::delete('/produits/{id}', [AdminController::class, 'destroyProduit'])->name('admin.produits.destroy');
         Route::post('/produits/{produit}/images', [AdminController::class, 'ajouterImage'])->name('admin.produit.image.ajouter');
+        Route::post('/produits/{produit}/couleurs-photos', [AdminController::class, 'couleursPhotos'])->name('admin.produit.couleurs-photos');
         Route::delete('/images/{image}', [AdminController::class, 'supprimerImage'])->name('admin.produit.image.supprimer');
 
         // Stock : rouleaux et mètres restants, arrivages, retraits, inventaires, historique

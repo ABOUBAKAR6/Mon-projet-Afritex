@@ -27,7 +27,8 @@
             'image' => $p->image ? asset($p->image) : null,
             'tarifs' => $tarifs,
             'prix_pro' => (object) ($p->prix_pro ?? []),
-            'photos' => $p->images->map(fn ($i) => ['id' => $i->id, 'url' => asset($i->chemin)])->values(),
+            'couleur_image' => $p->couleur_image,
+            'photos' => $p->images->map(fn ($i) => ['id' => $i->id, 'url' => asset($i->chemin), 'couleur' => $i->couleur])->values(),
         ]];
     });
 @endphp
@@ -222,7 +223,13 @@
             <h2 id="photos-title" class="titre-display text-[1.5rem]">Photos du produit</h2>
             <button type="button" onclick="this.closest('dialog').close()" class="-m-2 flex size-11 items-center justify-center text-encre-2 hover:bg-papier-2"><x-icone nom="fermer" /><span class="sr-only">Fermer</span></button>
         </div>
-        <div id="photos-container" class="mt-6 grid grid-cols-3 gap-2 sm:grid-cols-4"></div>
+        <p class="mt-2 text-[0.95rem] text-encre-2">Écrivez la couleur montrée sur chaque photo (ex. : Orange, Vert). Sur la page du tissu, le titre devient « Famille + couleur » selon la photo regardée, et cette couleur est choisie pour la commande.</p>
+        <div id="photos-container" class="mt-5 grid grid-cols-2 gap-3 sm:grid-cols-3"></div>
+        {{-- Les champs « couleur » des tuiles sont rattachés à ce formulaire (attribut form) : les tuiles contiennent aussi les formulaires de suppression --}}
+        <form method="POST" id="form-couleurs-photos" class="mt-4 flex justify-end">
+            @csrf
+            <button type="submit" class="btn btn-brun"><x-icone nom="coche" /> Enregistrer les couleurs</button>
+        </form>
         <form method="POST" id="photos-form" enctype="multipart/form-data" class="mt-6 border-t border-trait pt-6">
             @csrf
             <label for="p-images" class="etiquette">Ajouter des photos</label>
@@ -294,27 +301,43 @@ function openEditProduit(id) {
     document.getElementById('modal-modifier').showModal();
 }
 
-function openPhotosModal(id) {
-    const conteneur = document.getElementById('photos-container');
-    const photos = produits[id]?.photos ?? [];
-    conteneur.innerHTML = '';
-    if (!photos.length) {
-        conteneur.innerHTML = '<p class="col-span-full bg-papier-2 p-5 text-encre-2">Aucune photo supplémentaire pour ce produit.</p>';
-    }
-    photos.forEach((photo) => {
-        const tuile = document.createElement('div');
-        tuile.className = 'relative aspect-square bg-papier-2';
-        tuile.innerHTML = `
-            <img src="${photo.url}" alt="" class="h-full w-full object-cover">
-            <form method="POST" action="/admin/images/${photo.id}" class="absolute right-1.5 top-1.5" onsubmit="return confirm('Supprimer cette photo ?')">
+// Texte venant de la base, placé dans du HTML : on échappe
+const echapper = (texte) => String(texte ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+// Tuile d'une photo : image, champ « couleur » (rattaché à form-couleurs-photos), et suppression pour les photos supplémentaires
+function tuilePhoto({ url, nomChamp, couleur, etiquette, idSuppression }) {
+    const tuile = document.createElement('div');
+    tuile.className = 'flex flex-col bg-papier-2';
+    const champId = 'couleur-' + nomChamp.replace(/\W+/g, '-');
+    tuile.innerHTML = `
+        <div class="relative aspect-square">
+            ${url ? `<img src="${echapper(url)}" alt="" class="h-full w-full object-cover">` : '<span class="flex h-full items-center justify-center text-encre-2">Pas de photo</span>'}
+            ${etiquette ? `<span class="absolute left-1.5 top-1.5 bg-encre px-2 py-0.5 text-[0.8rem] text-papier">${etiquette}</span>` : ''}
+            ${idSuppression ? `
+            <form method="POST" action="/admin/images/${idSuppression}" class="absolute right-1.5 top-1.5" onsubmit="return confirm('Supprimer cette photo ?')">
                 <input type="hidden" name="_token" value="${jeton}">
                 <input type="hidden" name="_method" value="DELETE">
                 <button type="submit" class="flex size-9 items-center justify-center bg-carte text-danger hover:bg-danger hover:text-white" aria-label="Supprimer cette photo">
                     <svg class="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75" stroke-linecap="round" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
                 </button>
-            </form>`;
-        conteneur.appendChild(tuile);
+            </form>` : ''}
+        </div>
+        <label for="${champId}" class="sr-only">Couleur de cette photo</label>
+        <input id="${champId}" type="text" name="${nomChamp}" form="form-couleurs-photos" maxlength="40" value="${echapper(couleur)}"
+               placeholder="Couleur" class="champ min-h-11 border-x-0 border-b-0 text-[0.95rem]">`;
+    return tuile;
+}
+
+function openPhotosModal(id) {
+    const conteneur = document.getElementById('photos-container');
+    const produit = produits[id] ?? {};
+    const photos = produit.photos ?? [];
+    conteneur.innerHTML = '';
+    conteneur.appendChild(tuilePhoto({ url: produit.image, nomChamp: 'couleur_image', couleur: produit.couleur_image, etiquette: 'Principale' }));
+    photos.forEach((photo) => {
+        conteneur.appendChild(tuilePhoto({ url: photo.url, nomChamp: `couleurs_photos[${photo.id}]`, couleur: photo.couleur, idSuppression: photo.id }));
     });
+    document.getElementById('form-couleurs-photos').action = `/admin/produits/${id}/couleurs-photos`;
     document.getElementById('photos-form').action = `/admin/produits/${id}/images`;
     document.getElementById('modal-photos').showModal();
 }

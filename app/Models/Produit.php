@@ -22,6 +22,7 @@ class Produit extends Model
         'prix_tunique',
         'tarifications',
         'image',
+        'couleur_image',
         'stock',
         'metres_par_rouleau',
         'metres_entames',
@@ -168,7 +169,8 @@ class Produit extends Model
     // Relation avec ProduitImage
     public function images()
     {
-        return $this->hasMany(ProduitImage::class);
+        // Photos supplémentaires dans l'ordre choisi (puis d'envoi) : la page produit les fait glisser dans cet ordre
+        return $this->hasMany(ProduitImage::class)->orderBy('ordre')->orderBy('id');
     }
 
     // Relation with Review

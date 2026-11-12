@@ -14,8 +14,23 @@
 @endif
 @section('content')
 @php
-    $images = collect([$produit->image])->merge($produit->images->pluck('chemin'))
-        ->filter(fn ($c) => $c && file_exists(public_path($c)))->unique()->values();
+    // Photos et la couleur que chacune montre (photo principale : produits.couleur_image ; les autres : produit_images.couleur)
+    $photos = collect([['chemin' => $produit->image, 'couleur' => $produit->couleur_image]])
+        ->merge($produit->images->map(fn ($i) => ['chemin' => $i->chemin, 'couleur' => $i->couleur]))
+        ->filter(fn ($p) => $p['chemin'] && file_exists(public_path($p['chemin'])))
+        ->unique('chemin')->values();
+    $images = $photos->pluck('chemin');
+
+    // Titre selon la photo regardée : « Famille couleur » (ex. « Morrocco orange »), sinon le nom du tissu
+    $baseTitre = $produit->categorie?->nom ?: $produit->nom;
+    $titres = $photos->map(fn ($p) => filled($p['couleur'])
+        ? $baseTitre.' '.mb_strtolower(mb_substr($p['couleur'], 0, 1)).mb_substr($p['couleur'], 1)
+        : $produit->nom)->values();
+    $couleursPhotos = $photos->pluck('couleur')->values();
+
+    // Pastilles : couleurs saisies pour le tissu + couleurs des photos, sans doublon
+    $listeCouleurs = collect((array) ($produit->couleurs ?? []))->merge($photos->pluck('couleur')->filter())
+        ->unique(fn ($c) => mb_strtolower($c))->values();
 
     $nbAvis = $produit->reviews?->count() ?? 0;
 
@@ -67,17 +82,38 @@
       Tablette : photo à gauche, fiche et achat à droite.
       Ordinateur (lg) : inchangé, photo sur 7 colonnes, fiche et achat sur 5.
     --}}
-    <div class="grid sm:mt-6 sm:grid-cols-2 sm:grid-rows-[auto_1fr] sm:gap-x-8 sm:gap-y-6 lg:grid-cols-12 lg:grid-rows-none lg:gap-x-16 lg:gap-y-0">
+    {{--
+      Photo regardée (« photo ») partagée par la galerie, le titre et l'achat :
+      la couleur de la photo est annoncée (événement photo-couleur) et choisie pour la commande ;
+      toucher une pastille (événement choisir-couleur) montre la photo de cette couleur.
+    --}}
+    <div class="grid sm:mt-6 sm:grid-cols-2 sm:grid-rows-[auto_1fr] sm:gap-x-8 sm:gap-y-6 lg:grid-cols-12 lg:grid-rows-none lg:gap-x-16 lg:gap-y-0"
+         x-data="{
+             photo: 0,
+             titres: @js($titres),
+             couleursPhotos: @js($couleursPhotos),
+             get titre() { return this.titres[this.photo] || @js($produit->nom) },
+             init() { this.$watch('photo', (i) => this.annoncer(i)); this.$nextTick(() => this.annoncer(0)) },
+             annoncer(i) { const c = this.couleursPhotos[i]; if (c) window.dispatchEvent(new CustomEvent('photo-couleur', { detail: c })) },
+             montrerCouleur(nom) {
+                 const i = this.couleursPhotos.findIndex((c) => c && c.toLowerCase() === String(nom).toLowerCase());
+                 if (i < 0 || i === this.photo) return;
+                 this.photo = i;
+                 const bande = document.getElementById('bande-photos');
+                 if (bande && bande.offsetParent) bande.scrollTo({ left: i * bande.clientWidth, behavior: 'smooth' });
+             },
+         }"
+         @choisir-couleur.window="montrerCouleur($event.detail)">
 
         {{-- GALERIE --}}
         <div class="sm:sticky sm:top-24 sm:col-start-1 sm:row-span-2 sm:row-start-1 sm:self-start lg:static lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:self-auto"
-             x-data="{ active: 0, images: @js($images->map(fn ($c) => asset($c))->values()) }">
+             x-data="{ images: @js($images->map(fn ($c) => asset($c))->values()) }">
 
             {{-- Téléphone : photos qui glissent au doigt, bord à bord, retour et favori posés dessus --}}
             <div class="relative -mx-4 sm:hidden">
                 @if($images->isNotEmpty())
-                    <div class="defilement-discret flex aspect-square snap-x snap-mandatory overflow-x-auto bg-papier-2"
-                         @scroll.passive="active = Math.round($el.scrollLeft / $el.clientWidth)"
+                    <div id="bande-photos" class="defilement-discret flex aspect-square snap-x snap-mandatory overflow-x-auto bg-papier-2"
+                         @scroll.passive="photo = Math.round($el.scrollLeft / $el.clientWidth)"
                          aria-label="Photos de {{ $produit->nom }}" role="region" tabindex="0">
                         @foreach($images as $i => $chemin)
                             <img src="{{ asset($chemin) }}" alt="{{ $i === 0 ? $produit->nom : $produit->nom.', photo '.($i + 1) }}"
@@ -113,7 +149,7 @@
 
                 @if($images->count() > 1)
                     <p class="chiffres absolute bottom-12 right-4 bg-encre px-2 py-0.5 text-[0.8rem] font-medium text-papier" aria-hidden="true">
-                        <span x-text="active + 1">1</span> / {{ $images->count() }}
+                        <span x-text="photo + 1">1</span> / {{ $images->count() }}
                     </p>
                 @endif
             </div>
@@ -124,7 +160,7 @@
                      @mousemove="if (window.matchMedia('(hover: hover)').matches) { const r = $el.getBoundingClientRect(); $refs.photo.style.transformOrigin = `${(($event.clientX - r.left) / r.width) * 100}% ${(($event.clientY - r.top) / r.height) * 100}%`; $refs.photo.style.transform = 'scale(1.8)'; }"
                      @mouseleave="$refs.photo.style.transform = 'scale(1)'">
                     @if($images->isNotEmpty())
-                        <img x-ref="photo" :src="images[active]" src="{{ asset($images->first()) }}" alt="{{ $produit->nom }}" class="h-full w-full object-cover transition-transform duration-500 ease-out-fort">
+                        <img x-ref="photo" :src="images[photo]" src="{{ asset($images->first()) }}" alt="{{ $produit->nom }}" class="h-full w-full object-cover transition-transform duration-500 ease-out-fort">
                     @else
                         <div class="flex h-full w-full items-center justify-center text-brun-trait"><x-icone nom="image" class="size-16" /></div>
                     @endif
@@ -134,9 +170,9 @@
                     <ul class="mt-3 grid grid-cols-5 gap-2 sm:grid-cols-6">
                         @foreach($images as $i => $chemin)
                             <li>
-                                <button type="button" @click="active = {{ $i }}" :aria-pressed="active === {{ $i }}"
+                                <button type="button" @click="photo = {{ $i }}" :aria-pressed="photo === {{ $i }}"
                                         class="relative block aspect-square w-full overflow-hidden bg-papier-2 transition-opacity duration-200"
-                                        :class="active === {{ $i }} ? 'outline outline-2 -outline-offset-2 outline-brun' : 'opacity-70 hover:opacity-100'">
+                                        :class="photo === {{ $i }} ? 'outline outline-2 -outline-offset-2 outline-brun' : 'opacity-70 hover:opacity-100'">
                                     <img src="{{ asset($chemin) }}" alt="" loading="lazy" class="h-full w-full object-cover">
                                     <span class="sr-only">Afficher la photo {{ $i + 1 }}</span>
                                 </button>
@@ -152,7 +188,13 @@
             @if($produit->categorie)
                 <a href="{{ $lienFamille }}" class="intitule inline-block hover:underline">{{ $produit->categorie->nom }}</a>
             @endif
-            <h1 class="titre-display mt-1.5 text-[1.85rem] sm:mt-2 sm:text-[2.3rem] lg:text-[2.6rem]">{{ $produit->nom }}</h1>
+            <h1 class="titre-display mt-1.5 text-[1.85rem] sm:mt-2 sm:text-[2.3rem] lg:text-[2.6rem]"><span x-text="titre">{{ $titres->first() ?? $produit->nom }}</span></h1>
+            {{-- Quand le titre suit la couleur de la photo, le nom du tissu reste rappelé dessous --}}
+            @if($titres->contains(fn ($t) => $t !== $produit->nom))
+                <p class="mt-1 text-[0.95rem] text-encre-2" x-show="titre !== @js($produit->nom)" @if(($titres->first() ?? $produit->nom) === $produit->nom) x-cloak @endif>
+                    {{ $produit->nom }}@if($listeCouleurs->count() > 1) · {{ $listeCouleurs->count() }} couleurs @endif
+                </p>
+            @endif
 
             {{-- Note : seulement quand il y a de vrais avis --}}
             @if($nbAvis > 0)
@@ -178,6 +220,7 @@
                 @else
                     {{-- Choix du format, quantité et total en direct --}}
                     <form action="{{ route('panier.ajouter') }}" method="POST"
+                          @photo-couleur.window="couleur = $event.detail; autre = false"
                           x-data="{
                               formats: @js($formats->map(fn ($f) => (float) $f[1])),
                               unites: @js($formats->map(fn ($f) => $f[2])),
@@ -185,7 +228,11 @@
                               qte: 1,
                               couleur: '',
                               autre: false,
-                              choisirCouleur(nom) { this.couleur = this.couleur === nom ? '' : nom; this.autre = false },
+                              choisirCouleur(nom) {
+                                  this.couleur = this.couleur === nom ? '' : nom;
+                                  this.autre = false;
+                                  if (this.couleur) window.dispatchEvent(new CustomEvent('choisir-couleur', { detail: this.couleur }));
+                              },
                               ouvrirAutre() { this.autre = !this.autre; this.couleur = ''; if (this.autre) this.$nextTick(() => this.$refs.autreCouleur.focus()) },
                               get prix() { return this.formats[this.choix] || 0 },
                               get total() { return this.prix * (parseInt(this.qte) || 0) },
@@ -251,13 +298,13 @@
                         </div>
 
                         {{-- Couleur voulue par le client : enregistrée avec l'article, visible par la boutique dans la commande --}}
-                        @if(!empty($produit->couleurs))
+                        @if($listeCouleurs->isNotEmpty())
                             {{-- Couleurs saisies dans l'admin : une pastille à toucher (re-toucher = annuler), « Autre » pour une demande libre --}}
                             <div class="mt-6" role="group" aria-labelledby="titre-couleurs">
                                 <p id="titre-couleurs" class="etiquette">Couleur <span class="font-normal text-encre-2">(facultatif)</span></p>
                                 <input type="hidden" name="couleur" :value="couleur">
                                 <div class="flex flex-wrap gap-2">
-                                    @foreach((array) $produit->couleurs as $nomCouleur)
+                                    @foreach($listeCouleurs as $nomCouleur)
                                         @php $teinte = teinte_couleur($nomCouleur); @endphp
                                         <button type="button" @click="choisirCouleur(@js($nomCouleur))" :aria-pressed="couleur === @js($nomCouleur)"
                                                 class="flex min-h-11 items-center gap-2 border border-trait-fort bg-carte px-3 text-[0.95rem] transition-colors duration-150 hover:border-brun-trait active:scale-[0.97]"

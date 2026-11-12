@@ -15,19 +15,19 @@
     $indicatifs = ['+225' => 'Côte d\'Ivoire +225', '+221' => 'Sénégal +221', '+223' => 'Mali +223', '+226' => 'Burkina Faso +226', '+228' => 'Togo +228', '+229' => 'Bénin +229', '+224' => 'Guinée +224', '+33' => 'France +33'];
 @endphp
 
-<div class="conteneur pb-20 pt-10 lg:pb-28 lg:pt-14">
+<div class="conteneur pb-20 pt-4 sm:pt-10 lg:pb-28 lg:pt-14">
     @include('partials.etapes-commande', ['etape' => 1])
 
-    <h1 class="titre-display apparition mt-8 text-[2.2rem] sm:text-[2.8rem]">Où livrer votre commande ?</h1>
-    <p class="apparition mt-2 max-w-[60ch] text-encre-2" style="animation-delay: 60ms">Indiquez vos coordonnées et placez le repère sur la carte : le livreur vous trouvera sans détour.</p>
+    <h1 class="titre-display apparition mt-4 text-[1.5rem] leading-tight sm:mt-8 sm:text-[2.8rem]">Où livrer votre commande ?</h1>
+    <p class="apparition mt-2 hidden max-w-[60ch] text-encre-2 sm:block" style="animation-delay: 60ms">Indiquez vos coordonnées et placez le repère sur la carte : le livreur vous trouvera sans détour.</p>
 
-    <form method="POST" action="{{ route('commande.confirmer') }}" id="formCommande" class="mt-10 grid items-start gap-8 lg:grid-cols-[1fr_24rem] lg:gap-12">
+    <form method="POST" action="{{ route('commande.confirmer') }}" id="formCommande" class="mt-4 grid items-start gap-3 sm:mt-10 sm:gap-8 lg:grid-cols-[1fr_24rem] lg:gap-12">
         @csrf
-        <div class="space-y-8">
+        <div class="space-y-3 sm:space-y-8">
             {{-- COORDONNÉES --}}
-            <section class="bg-carte p-6 sm:p-8" aria-labelledby="titre-coordonnees">
-                <h2 id="titre-coordonnees" class="titre-display text-[1.3rem]">Vos coordonnées</h2>
-                <div class="mt-6 grid gap-5 sm:grid-cols-2">
+            <section class="bg-carte p-4 sm:p-8" aria-labelledby="titre-coordonnees">
+                <h2 id="titre-coordonnees" class="titre-display text-[1.1rem] sm:text-[1.3rem]">Vos coordonnées</h2>
+                <div class="mt-3 grid grid-cols-2 gap-3 sm:mt-6 sm:gap-5">
                     <div>
                         <label for="prenom" class="etiquette">Prénom</label>
                         <input id="prenom" type="text" name="prenom" required autocomplete="given-name" placeholder="Kouamé"
@@ -37,7 +37,7 @@
                         <label for="nom_complet" class="etiquette">Nom</label>
                         <input id="nom_complet" type="text" name="nom_complet" required autocomplete="family-name" placeholder="Konan" value="{{ old('nom_complet') }}" class="champ">
                     </div>
-                    <div class="sm:col-span-2">
+                    <div class="col-span-2">
                         <label for="telephone" class="etiquette">Téléphone</label>
                         <div class="flex gap-2">
                             <label for="indicatif" class="sr-only">Indicatif du pays</label>
@@ -53,9 +53,9 @@
             </section>
 
             {{-- ADRESSE --}}
-            <section class="bg-carte p-6 sm:p-8" aria-labelledby="titre-adresse">
-                <h2 id="titre-adresse" class="titre-display text-[1.3rem]">Adresse de livraison</h2>
-                <div class="mt-6 grid gap-5 sm:grid-cols-3">
+            <section class="bg-carte p-4 sm:p-8" aria-labelledby="titre-adresse">
+                <h2 id="titre-adresse" class="titre-display text-[1.1rem] sm:text-[1.3rem]">Adresse de livraison</h2>
+                <div class="mt-3 grid grid-cols-2 gap-3 sm:mt-6 sm:grid-cols-3 sm:gap-5">
                     <div>
                         <label for="villeSelect" class="etiquette">Ville</label>
                         <select name="ville" id="villeSelect" required onchange="updateCommunes()" class="champ">
@@ -68,37 +68,37 @@
                     <div>
                         <label for="communeSelect" class="etiquette">Commune</label>
                         <select name="commune" id="communeSelect" required class="champ">
-                            <option value="">Choisissez d'abord la ville</option>
+                            <option value="">D'abord la ville</option>
                         </select>
                     </div>
-                    <div>
+                    <div class="col-span-2 sm:col-span-1">
                         <label for="quartierInput" class="etiquette">Quartier <span class="font-normal text-encre-2">(facultatif)</span></label>
                         <input type="text" name="quartier" id="quartierInput" placeholder="Riviera 2" class="champ">
                     </div>
                 </div>
 
-                <div class="mt-6">
+                <div class="mt-4 sm:mt-6">
                     <label for="searchInput" class="etiquette">Position exacte sur la carte</label>
                     <div class="relative">
                         <x-icone nom="recherche" class="pointer-events-none absolute left-3.5 top-1/2 size-4 -translate-y-1/2 text-encre-3" />
                         <input type="text" id="searchInput" placeholder="Rechercher une adresse, un repère connu…" class="champ pl-10" oninput="rechercherAdresse()" autocomplete="off" aria-describedby="aide-carte">
                         <div id="suggestions" class="absolute inset-x-0 top-full z-dropdown max-h-60 overflow-y-auto border border-t-0 border-trait-fort bg-carte" style="display:none;"></div>
                     </div>
-                    <p id="aide-carte" class="aide">Votre position est détectée automatiquement. Vous livrez ailleurs ? Cherchez l'adresse ou touchez la carte, puis faites glisser le repère.</p>
-                    <div class="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2">
+                    <p id="aide-carte" class="aide hidden sm:block">Votre position est détectée automatiquement. Vous livrez ailleurs ? Cherchez l'adresse ou touchez la carte, puis faites glisser le repère.</p>
+                    <div class="mt-2 flex flex-wrap items-center gap-x-4 gap-y-1 sm:mt-3 sm:gap-y-2">
                         <button type="button" id="btnLocaliser" onclick="localiser()" class="btn btn-contour btn-sm"><x-icone nom="repere" /> Me localiser</button>
                         <p id="etatLocalisation" class="text-[0.92rem] text-encre-2" role="status" aria-live="polite"></p>
                     </div>
-                    <div id="map" class="carte-livraison relative z-0 mt-3 h-72 w-full border border-trait sm:h-80"></div>
+                    <div id="map" class="carte-livraison relative z-0 mt-2 h-52 w-full border border-trait sm:mt-3 sm:h-80"></div>
                     <p id="adresseDetectee" class="mt-3 flex items-start gap-2 bg-brun-doux p-3.5 text-[0.95rem] text-brun-fonce" style="display:none;">
                         <x-icone nom="repere" class="mt-0.5 size-4 shrink-0" />
                         <span><span class="font-medium">Adresse repérée :</span> <span id="texteAdresse"></span></span>
                     </p>
                 </div>
 
-                <div class="mt-6">
+                <div class="mt-4 sm:mt-6">
                     <label for="note_livreur" class="etiquette">Note pour le livreur <span class="font-normal text-encre-2">(facultatif)</span></label>
-                    <textarea id="note_livreur" name="note_livreur" rows="3" placeholder="Portail bleu, deuxième étage…" class="champ"></textarea>
+                    <textarea id="note_livreur" name="note_livreur" rows="2" placeholder="Portail bleu, deuxième étage…" class="champ min-h-0 sm:min-h-[6rem]"></textarea>
                 </div>
 
                 <input type="hidden" name="adresse_livraison" id="adresseComplete">
@@ -107,10 +107,10 @@
             </section>
 
             {{-- MODE DE LIVRAISON --}}
-            <section class="bg-carte p-6 sm:p-8" aria-labelledby="titre-mode">
-                <h2 id="titre-mode" class="titre-display text-[1.3rem]">Mode de livraison</h2>
-                <div class="mt-6 grid gap-3 sm:grid-cols-2">
-                    <label class="choix" id="label-domicile">
+            <section class="bg-carte p-4 sm:p-8" aria-labelledby="titre-mode">
+                <h2 id="titre-mode" class="titre-display text-[1.1rem] sm:text-[1.3rem]">Mode de livraison</h2>
+                <div class="mt-3 grid gap-2 sm:mt-6 sm:grid-cols-2 sm:gap-3">
+                    <label class="choix !gap-3 !p-3 sm:!gap-4 sm:!p-4" id="label-domicile">
                         <input type="radio" name="mode_livraison" value="domicile" checked onchange="selectLivraison(this)" class="size-5">
                         <span class="flex-1">
                             <span class="block font-medium">Livraison à domicile</span>
@@ -118,7 +118,7 @@
                         </span>
                         <span class="chiffres font-semibold {{ $fraisDomicile ? '' : 'text-succes' }}">{{ $fraisDomicile ? '1 500 F' : 'Offerte' }}</span>
                     </label>
-                    <label class="choix" id="label-boutique">
+                    <label class="choix !gap-3 !p-3 sm:!gap-4 sm:!p-4" id="label-boutique">
                         <input type="radio" name="mode_livraison" value="boutique" onchange="selectLivraison(this)" class="size-5">
                         <span class="flex-1">
                             <span class="block font-medium">Retrait en boutique</span>
@@ -132,8 +132,8 @@
         </div>
 
         {{-- RÉCAPITULATIF --}}
-        <aside class="bg-carte p-6 lg:sticky lg:top-28" aria-labelledby="titre-recap">
-            <h2 id="titre-recap" class="titre-display text-[1.3rem]">Votre commande</h2>
+        <aside class="bg-carte p-4 sm:p-6 lg:sticky lg:top-28" aria-labelledby="titre-recap">
+            <h2 id="titre-recap" class="titre-display text-[1.1rem] sm:text-[1.3rem]">Votre commande</h2>
             <ul class="mt-4 divide-y divide-trait">
                 @foreach($panier as $item)
                     <li class="flex justify-between gap-4 py-3 text-[0.95rem]">
@@ -153,7 +153,7 @@
                     <dd id="totalFinal" class="titre-display chiffres text-[1.8rem] text-brun">{{ number_format($total + $fraisDomicile, 0, ',', ' ') }} F</dd>
                 </div>
             </dl>
-            <button type="submit" onclick="assemblerAdresse()" class="btn btn-brun btn-lg mt-6 w-full">Continuer vers le paiement <x-icone nom="fleche" /></button>
+            <button type="submit" onclick="assemblerAdresse()" class="btn btn-brun btn-lg mt-4 w-full sm:mt-6">Continuer vers le paiement <x-icone nom="fleche" /></button>
             <a href="{{ route('panier') }}" class="btn btn-fantome mt-2 w-full">Modifier mon panier</a>
         </aside>
     </form>

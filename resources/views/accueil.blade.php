@@ -92,7 +92,8 @@
         <ul aria-label="Familles de tissus" class="mt-6 grid grid-cols-2 gap-2 sm:mt-10 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
             @foreach($categories as $cat)
                 <li @class(['col-span-2 w-[calc(50%-0.25rem)] justify-self-center sm:col-span-1 sm:w-auto sm:justify-self-stretch' => $loop->last && $loop->count % 2 === 1])>
-                    <a href="{{ route('catalogue', ['categorie_id' => $cat->id]) }}" class="group filet relative block bg-carte">
+                    {{-- Toute la tuile ouvre la famille (lien étiré) ; le logo WhatsApp, au-dessus, ouvre une discussion sur cette famille --}}
+                    <div class="group filet relative bg-carte">
                         <div class="aspect-square overflow-hidden bg-papier-2">
                             @if(!empty($cat->image) && file_exists(public_path($cat->image)))
                                 <img src="{{ asset($cat->image) }}" alt="" loading="lazy" decoding="async" class="zoom-doux h-full w-full object-cover">
@@ -100,11 +101,20 @@
                                 <span aria-hidden="true" class="titre-display flex h-full w-full items-center justify-center text-[3.5rem] text-brun-trait">{{ mb_substr($cat->nom, 0, 1) }}</span>
                             @endif
                         </div>
-                        <span class="flex min-h-14 items-center justify-between gap-2 px-4 py-3 text-[0.98rem] font-medium transition-colors group-hover:text-brun-fonce">
-                            {{ $cat->nom }}
-                            <x-icone nom="fleche" class="size-4 shrink-0 text-brun opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-x-1 group-hover:opacity-100" />
-                        </span>
-                    </a>
+                        <div class="flex min-h-14 items-center justify-between gap-1 py-1 pl-4 pr-1.5 text-[0.98rem] font-medium">
+                            <a href="{{ route('catalogue', ['categorie_id' => $cat->id]) }}" class="min-w-0 py-2 transition-colors after:absolute after:inset-0 after:content-[''] group-hover:text-brun-fonce">{{ $cat->nom }}</a>
+                            @if($lienWhatsapp)
+                                <a href="{{ $lienWhatsapp }}?text={{ rawurlencode('Bonjour '.boutique('nom').",\n\nJe suis intéressé(e) par vos tissus *".$cat->nom."*.\n\n".route('catalogue', ['categorie_id' => $cat->id])."\n\nQue me proposez-vous ?") }}"
+                                   target="_blank" rel="noopener noreferrer" title="Discuter sur WhatsApp"
+                                   class="relative z-10 flex size-11 shrink-0 items-center justify-center transition-transform duration-150 active:scale-90">
+                                    <x-icone nom="whatsapp" class="size-6" />
+                                    <span class="sr-only">Discuter de {{ $cat->nom }} sur WhatsApp</span>
+                                </a>
+                            @else
+                                <x-icone nom="fleche" class="mr-2.5 size-4 shrink-0 text-brun opacity-0 transition-[opacity,transform] duration-200 group-hover:translate-x-1 group-hover:opacity-100" />
+                            @endif
+                        </div>
+                    </div>
                 </li>
             @endforeach
         </ul>

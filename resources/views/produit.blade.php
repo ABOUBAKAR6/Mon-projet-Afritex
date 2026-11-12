@@ -184,6 +184,9 @@
                               choix: @js($formats->keys()->first()),
                               qte: 1,
                               couleur: '',
+                              autre: false,
+                              choisirCouleur(nom) { this.couleur = this.couleur === nom ? '' : nom; this.autre = false },
+                              ouvrirAutre() { this.autre = !this.autre; this.couleur = ''; if (this.autre) this.$nextTick(() => this.$refs.autreCouleur.focus()) },
                               get prix() { return this.formats[this.choix] || 0 },
                               get total() { return this.prix * (parseInt(this.qte) || 0) },
                               f(n) { return new Intl.NumberFormat('fr-FR').format(n).replace(/\s/g, ' ') + ' F' },
@@ -248,17 +251,46 @@
                         </div>
 
                         {{-- Couleur voulue par le client : enregistrée avec l'article, visible par la boutique dans la commande --}}
-                        <div class="mt-5">
-                            <label for="couleur" class="etiquette">Couleur souhaitée <span class="font-normal text-encre-2">(facultatif)</span></label>
-                            <input id="couleur" type="text" name="couleur" maxlength="100" x-model="couleur" autocomplete="off"
-                                   @if(!empty($produit->couleurs)) list="couleurs-produit" @endif
-                                   class="champ" placeholder="Ex. : bleu nuit, comme sur la photo">
-                            @if(!empty($produit->couleurs))
-                                <datalist id="couleurs-produit">@foreach((array) $produit->couleurs as $c)<option value="{{ $c }}"></option>@endforeach</datalist>
-                            @endif
-                            <p class="aide hidden lg:block">La boutique la reçoit avec votre commande et dans le message WhatsApp.</p>
-                            @error('couleur')<p class="erreur">{{ $message }}</p>@enderror
-                        </div>
+                        @if(!empty($produit->couleurs))
+                            {{-- Couleurs saisies dans l'admin : une pastille à toucher (re-toucher = annuler), « Autre » pour une demande libre --}}
+                            <div class="mt-6" role="group" aria-labelledby="titre-couleurs">
+                                <p id="titre-couleurs" class="etiquette">Couleur <span class="font-normal text-encre-2">(facultatif)</span></p>
+                                <input type="hidden" name="couleur" :value="couleur">
+                                <div class="flex flex-wrap gap-2">
+                                    @foreach((array) $produit->couleurs as $nomCouleur)
+                                        @php $teinte = teinte_couleur($nomCouleur); @endphp
+                                        <button type="button" @click="choisirCouleur(@js($nomCouleur))" :aria-pressed="couleur === @js($nomCouleur)"
+                                                class="flex min-h-11 items-center gap-2 border border-trait-fort bg-carte px-3 text-[0.95rem] transition-colors duration-150 hover:border-brun-trait active:scale-[0.97]"
+                                                :class="couleur === @js($nomCouleur) && '!border-brun !bg-brun-doux font-medium text-brun-fonce shadow-[inset_0_0_0_1px_var(--brun)]'">
+                                            @if($teinte)
+                                                <span aria-hidden="true" class="size-4 shrink-0 border border-black/15" style="background: {{ $teinte }}"></span>
+                                            @endif
+                                            {{ $nomCouleur }}
+                                        </button>
+                                    @endforeach
+                                    <button type="button" @click="ouvrirAutre()" :aria-expanded="autre" aria-controls="autre-couleur"
+                                            class="flex min-h-11 items-center gap-1.5 border border-dashed border-trait-fort px-3 text-[0.95rem] text-encre-2 transition-colors duration-150 hover:border-brun-trait hover:text-encre"
+                                            :class="autre && '!border-solid !border-brun text-brun-fonce'">
+                                        <x-icone nom="plus" class="size-4" /> Autre
+                                    </button>
+                                </div>
+                                <div id="autre-couleur" x-show="autre" x-cloak class="mt-3">
+                                    <label for="couleur-libre" class="sr-only">Autre couleur souhaitée</label>
+                                    <input id="couleur-libre" x-ref="autreCouleur" type="text" maxlength="100" x-model="couleur" autocomplete="off"
+                                           class="champ" placeholder="Décrivez la couleur souhaitée">
+                                </div>
+                                <p class="aide hidden lg:block">La boutique la reçoit avec votre commande et dans le message WhatsApp.</p>
+                                @error('couleur')<p class="erreur">{{ $message }}</p>@enderror
+                            </div>
+                        @else
+                            <div class="mt-5">
+                                <label for="couleur" class="etiquette">Couleur souhaitée <span class="font-normal text-encre-2">(facultatif)</span></label>
+                                <input id="couleur" type="text" name="couleur" maxlength="100" x-model="couleur" autocomplete="off"
+                                       class="champ" placeholder="Ex. : bleu nuit, comme sur la photo">
+                                <p class="aide hidden lg:block">La boutique la reçoit avec votre commande et dans le message WhatsApp.</p>
+                                @error('couleur')<p class="erreur">{{ $message }}</p>@enderror
+                            </div>
+                        @endif
 
                         {{-- Boutons : ordinateur --}}
                         <div class="hidden lg:block">

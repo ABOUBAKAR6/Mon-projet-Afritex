@@ -35,6 +35,12 @@
                 <label for="description" class="etiquette">Description</label>
                 <textarea id="description" name="description" rows="5" class="champ" placeholder="La matière, le tombé, le motif, les usages conseillés…">{{ old('description') }}</textarea>
             </div>
+            <div class="mt-5">
+                <label for="couleurs" class="etiquette">Couleurs disponibles <span class="font-normal text-encre-2">(facultatif)</span></label>
+                <input id="couleurs" type="text" name="couleurs" value="{{ old('couleurs') }}" class="champ" maxlength="1000" placeholder="Bordeaux, Bleu nuit, Noir, Or" aria-describedby="aide-couleurs">
+                <p id="aide-couleurs" class="aide">Séparées par des virgules. Le client les choisit d'un geste sur la page du tissu.</p>
+                @error('couleurs')<p class="erreur">{{ $message }}</p>@enderror
+            </div>
         </section>
 
         <section class="bg-carte p-6 sm:p-8" aria-labelledby="titre-tarifs">

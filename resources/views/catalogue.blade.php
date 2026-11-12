@@ -111,18 +111,19 @@
             <a href="{{ route('catalogue') }}" class="btn btn-brun mt-6">Voir tout le catalogue</a>
         </div>
     @elseif($categorieActive)
-        {{-- Rangée défilante : déborde jusqu'au bord droit de l'écran, la carte suivante dépasse pour inviter à glisser --}}
+        {{-- Téléphone : grille de 2 colonnes. Dès la tablette : rangée défilante qui déborde jusqu'au bord droit
+             de l'écran, la carte suivante dépasse pour inviter à glisser. --}}
         <div x-data="rangeeDefilante" class="mt-6">
-            <div x-ref="piste" @scroll.passive="suivre" tabindex="0" role="region" aria-label="Tissus {{ $categorieActive->nom }}, défilement horizontal"
-                 class="rangee defilement-discret mr-[calc(50%-50vw)] flex snap-x snap-mandatory gap-3 overflow-x-auto pb-2 motion-safe:scroll-smooth pr-4 focus-visible:outline-offset-4 sm:pr-6 lg:gap-4 lg:pr-[calc(50vw-50%)]">
+            <div x-ref="piste" @scroll.passive="suivre" tabindex="0" role="region" aria-label="Tissus {{ $categorieActive->nom }}"
+                 class="rangee defilement-discret grid grid-cols-2 gap-x-3 gap-y-4 focus-visible:outline-offset-4 sm:mr-[calc(50%-50vw)] sm:flex sm:snap-x sm:snap-mandatory sm:gap-3 sm:overflow-x-auto sm:pb-2 sm:pr-6 sm:motion-safe:scroll-smooth lg:gap-4 lg:pr-[calc(50vw-50%)]">
                 @foreach($produits as $produit)
-                    <x-carte-produit :produit="$produit"
-                        class="w-[78%] shrink-0 snap-start sm:w-[44%] lg:w-[calc((100%-2rem)/3.3)] xl:w-[calc((100%-3rem)/3.6)]" />
+                    <x-carte-produit :produit="$produit" compact
+                        class="sm:w-[44%] sm:shrink-0 sm:snap-start lg:w-[calc((100%-2rem)/3.3)] xl:w-[calc((100%-3rem)/3.6)]" />
                 @endforeach
             </div>
 
             @if($produits->count() > 1)
-                <div class="mt-6 flex items-center gap-5">
+                <div class="mt-6 hidden items-center gap-5 sm:flex">
                     {{-- Curseur : sa largeur = la part visible de la rangée, il avance avec le défilement --}}
                     <div class="h-0.5 flex-1 overflow-hidden bg-trait" aria-hidden="true">
                         <div class="h-full bg-brun" :style="`width: ${part * 100}%; transform: translateX(${decalage * 100}%)`"></div>
@@ -139,9 +140,10 @@
             @endif
         </div>
     @else
-        <div class="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4 lg:gap-4">
+        {{-- Deux colonnes dès le téléphone : 4 à 6 tissus visibles par écran --}}
+        <div class="mt-6 grid grid-cols-2 gap-x-3 gap-y-4 sm:gap-3 lg:grid-cols-4 lg:gap-4">
             @foreach($produits as $produit)
-                <x-carte-produit :produit="$produit" class="revele" style="--delai: {{ ($loop->index % 4) * 60 }}ms" />
+                <x-carte-produit :produit="$produit" compact class="revele" style="--delai: {{ ($loop->index % 4) * 60 }}ms" />
             @endforeach
         </div>
 

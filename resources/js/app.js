@@ -70,7 +70,9 @@ Alpine.data('rangeeDefilante', () => ({
     image: null,
 
     init() {
-        this.parallaxe = !window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+        // Pas de parallaxe au téléphone : la rangée y devient une grille de 2 colonnes (catalogue d'une famille)
+        this.parallaxe = !window.matchMedia('(prefers-reduced-motion: reduce)').matches
+            && window.matchMedia('(min-width: 640px)').matches;
         this.$refs.piste.classList.toggle('rangee-parallaxe', this.parallaxe);
         this.suivre();
         window.addEventListener('resize', () => this.suivre(), { passive: true });

@@ -226,6 +226,7 @@ class AdminController extends Controller
             'tarifications.*.prix' => 'nullable|numeric',
             'prix_pro' => 'nullable|array',
             'prix_pro.*' => 'nullable|integer|min:0',
+            'couleurs' => 'nullable|string|max:1000',
             'image' => 'nullable|image|max:' . OptimiseurImage::POIDS_MAX_KO,
         ], ['image.max' => 'La photo dépasse 20 Mo.']);
 
@@ -259,6 +260,8 @@ class AdminController extends Controller
             'stock' => 0,
             'disponible' => 1,
             'prix_pro' => $this->prixPro($request),
+            // Couleurs proposées au client en pastilles sur la page produit
+            'couleurs' => couleurs_saisies($request->input('couleurs')),
         ]);
 
         // Rouleaux de départ : passent par le stock pour figurer dans l'historique
@@ -276,6 +279,7 @@ class AdminController extends Controller
             'nom' => ['required', 'string', 'max:255', $this->nomLibre($produit->id)],
             'prix_pro' => 'nullable|array',
             'prix_pro.*' => 'nullable|integer|min:0',
+            'couleurs' => 'nullable|string|max:1000',
             'image' => 'nullable|image|max:' . OptimiseurImage::POIDS_MAX_KO,
         ], ['image.max' => 'La photo dépasse 20 Mo.']);
 
@@ -299,6 +303,8 @@ class AdminController extends Controller
             'prix_metre' => $tarifs[0]['prix'] ?? $produit->prix_metre, // Legacy
             'image' => $produit->image,
             'prix_pro' => $this->prixPro($request),
+            // Champ absent (ancien formulaire) : on garde les couleurs déjà enregistrées
+            'couleurs' => $request->has('couleurs') ? couleurs_saisies($request->input('couleurs')) : $produit->couleurs,
         ]);
 
         // Rouleaux changés depuis la fiche : enregistré comme un inventaire, dans l'historique

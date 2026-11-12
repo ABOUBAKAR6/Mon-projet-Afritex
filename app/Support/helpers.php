@@ -231,3 +231,53 @@ if (! function_exists('icone_app')) {
         return App\Http\Controllers\IconeAppController::url($variante);
     }
 }
+
+if (! function_exists('couleurs_saisies')) {
+    /**
+     * Couleurs d'un tissu tapées dans l'admin (« Bordeaux, Bleu nuit, Noir » ou une par ligne) :
+     * liste propre, sans doublon, ou null si rien n'est saisi.
+     */
+    function couleurs_saisies(?string $texte): ?array
+    {
+        $couleurs = collect(preg_split('/[,;\n]+/', (string) $texte))
+            ->map(fn ($c) => mb_substr(trim(preg_replace('/\s+/', ' ', $c)), 0, 40))
+            ->filter()
+            ->map(fn ($c) => mb_strtoupper(mb_substr($c, 0, 1)).mb_substr($c, 1))
+            ->unique(fn ($c) => mb_strtolower($c))
+            ->take(30)
+            ->values()
+            ->all();
+
+        return $couleurs ?: null;
+    }
+}
+
+if (! function_exists('teinte_couleur')) {
+    /**
+     * Petit carré indicatif à côté du nom d'une couleur de tissu (page produit).
+     * Seulement pour les noms reconnus ; sinon null et le nom s'affiche seul.
+     */
+    function teinte_couleur(string $nom): ?string
+    {
+        $nom = \Illuminate\Support\Str::of($nom)->ascii()->lower()->squish()->value();
+        // Les noms composés d'abord : « bleu nuit » avant « bleu »
+        $teintes = [
+            'bleu nuit' => '#1f2a44', 'bleu marine' => '#1b2a4a', 'bleu roi' => '#2747a8', 'bleu ciel' => '#8ec5ec',
+            'bleu canard' => '#0e5e6f', 'bleu petrole' => '#1d4e5a', 'vert olive' => '#6b6b3a', 'vert emeraude' => '#0f7a5a',
+            'vert bouteille' => '#1f4d36', 'vert pomme' => '#7cbf3a', 'rose poudre' => '#e8bfc0', 'gris perle' => '#c9cbcf',
+            'bordeaux' => '#6d1a2a', 'rouge' => '#c0262d', 'noir' => '#1c1c1c', 'blanc' => '#f7f7f2', 'ivoire' => '#f4eedb',
+            'creme' => '#f1e6cc', 'beige' => '#d9c6a3', 'dore' => '#c9a24a', 'or' => '#c9a24a', 'argent' => '#c0c3c7',
+            'gris' => '#8a8f96', 'vert' => '#2e7d4f', 'kaki' => '#77703f', 'jaune' => '#e8c22c', 'moutarde' => '#c9a227',
+            'orange' => '#e07a1f', 'corail' => '#f0715a', 'saumon' => '#f4a38c', 'rose' => '#e58fae', 'fuchsia' => '#c2185b',
+            'violet' => '#6a3d9a', 'mauve' => '#b49acb', 'lilas' => '#c4a2cf', 'prune' => '#5b2a4a', 'marron' => '#6b4226',
+            'chocolat' => '#4a2c1d', 'camel' => '#b98a52', 'turquoise' => '#2ab3b0', 'bleu' => '#2f5fb3',
+        ];
+        foreach ($teintes as $mot => $hex) {
+            if (preg_match('/\b'.preg_quote($mot, '/').'\b/', $nom)) {
+                return $hex;
+            }
+        }
+
+        return null;
+    }
+}

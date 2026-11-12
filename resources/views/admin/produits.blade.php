@@ -21,6 +21,7 @@
             'categorie_id' => $p->categorie_id,
             'stock' => $p->stock,
             'description' => $p->description,
+            'couleurs' => implode(', ', (array) ($p->couleurs ?? [])),
             'meta_title' => $p->meta_title,
             'meta_description' => $p->meta_description,
             'image' => $p->image ? asset($p->image) : null,
@@ -185,6 +186,12 @@
             </div>
         </div>
 
+        <div class="mt-6">
+            <label for="edit-couleurs" class="etiquette">Couleurs disponibles <span class="font-normal text-encre-2">(facultatif)</span></label>
+            <input type="text" name="couleurs" id="edit-couleurs" class="champ" maxlength="1000" placeholder="Bordeaux, Bleu nuit, Noir, Or" aria-describedby="aide-edit-couleurs">
+            <p id="aide-edit-couleurs" class="aide">Séparées par des virgules. Le client les choisit d'un geste sur la page du tissu.</p>
+        </div>
+
         <fieldset class="mt-6 grid gap-5">
             <legend class="etiquette">Référencement</legend>
             <div><label for="edit-meta-title" class="etiquette font-normal text-encre-2">Titre pour Google</label><input type="text" name="meta_title" id="edit-meta-title" class="champ"></div>
@@ -267,6 +274,7 @@ function openEditProduit(id) {
     document.getElementById('edit-categorie').value = p.categorie_id ?? '';
     document.getElementById('edit-stock').value = p.stock ?? 0;
     document.getElementById('edit-description').value = p.description ?? '';
+    document.getElementById('edit-couleurs').value = p.couleurs ?? '';
     document.getElementById('edit-meta-title').value = p.meta_title ?? '';
     document.getElementById('edit-meta-description').value = p.meta_description ?? '';
 

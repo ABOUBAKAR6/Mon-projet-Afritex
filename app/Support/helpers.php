@@ -270,7 +270,7 @@ if (! function_exists('teinte_couleur')) {
             'gris' => '#8a8f96', 'vert' => '#2e7d4f', 'kaki' => '#77703f', 'jaune' => '#e8c22c', 'moutarde' => '#c9a227',
             'orange' => '#e07a1f', 'corail' => '#f0715a', 'saumon' => '#f4a38c', 'rose' => '#e58fae', 'fuchsia' => '#c2185b',
             'violet' => '#6a3d9a', 'mauve' => '#b49acb', 'lilas' => '#c4a2cf', 'prune' => '#5b2a4a', 'marron' => '#6b4226',
-            'chocolat' => '#4a2c1d', 'camel' => '#b98a52', 'turquoise' => '#2ab3b0', 'bleu' => '#2f5fb3',
+            'chocolat' => '#4a2c1d', 'camel' => '#b98a52', 'turquoise' => '#2ab3b0', 'champagne' => '#d8bf94', 'bleu' => '#2f5fb3',
         ];
         foreach ($teintes as $mot => $hex) {
             if (preg_match('/\b'.preg_quote($mot, '/').'\b/', $nom)) {

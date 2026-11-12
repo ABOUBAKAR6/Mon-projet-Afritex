@@ -90,6 +90,11 @@
     <div class="grid sm:mt-6 sm:grid-cols-2 sm:grid-rows-[auto_1fr] sm:gap-x-8 sm:gap-y-6 lg:grid-cols-12 lg:grid-rows-none lg:gap-x-16 lg:gap-y-0"
          x-data="{
              photo: 0,
+             couleurActive: '',
+             toucherRond(nom) {
+                 window.dispatchEvent(new CustomEvent('choisir-couleur-rond', { detail: nom }));
+                 this.montrerCouleur(nom);
+             },
              titres: @js($titres),
              couleursPhotos: @js($couleursPhotos),
              get titre() { return this.titres[this.photo] || @js($produit->nom) },
@@ -103,7 +108,8 @@
                  if (bande && bande.offsetParent) bande.scrollTo({ left: i * bande.clientWidth, behavior: 'smooth' });
              },
          }"
-         @choisir-couleur.window="montrerCouleur($event.detail)">
+         @choisir-couleur.window="montrerCouleur($event.detail)"
+         @couleur-choisie.window="couleurActive = $event.detail">
 
         {{-- GALERIE --}}
         <div class="sm:sticky sm:top-24 sm:col-start-1 sm:row-span-2 sm:row-start-1 sm:self-start lg:static lg:col-span-7 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:self-auto"
@@ -185,16 +191,40 @@
 
         {{-- FICHE : au téléphone, elle remonte de 2 rem sur la photo (même fond que la page) --}}
         <div class="relative -mx-2 -mt-8 bg-papier px-2 pt-5 sm:col-start-2 sm:row-start-1 sm:mx-0 sm:mt-0 sm:bg-transparent sm:px-0 sm:pt-0 lg:col-span-5 lg:col-start-8 lg:row-start-1">
-            @if($produit->categorie)
-                <a href="{{ $lienFamille }}" class="intitule inline-block hover:underline">{{ $produit->categorie->nom }}</a>
-            @endif
-            <h1 class="titre-display mt-1.5 text-[1.85rem] sm:mt-2 sm:text-[2.3rem] lg:text-[2.6rem]"><span x-text="titre">{{ $titres->first() ?? $produit->nom }}</span></h1>
-            {{-- Quand le titre suit la couleur de la photo, le nom du tissu reste rappelé dessous --}}
-            @if($titres->contains(fn ($t) => $t !== $produit->nom))
-                <p class="mt-1 text-[0.95rem] text-encre-2" x-show="titre !== @js($produit->nom)" @if(($titres->first() ?? $produit->nom) === $produit->nom) x-cloak @endif>
-                    {{ $produit->nom }}@if($listeCouleurs->count() > 1) · {{ $listeCouleurs->count() }} couleurs @endif
-                </p>
-            @endif
+            <div class="flex items-start justify-between gap-3">
+                <div class="min-w-0">
+                    @if($produit->categorie)
+                        <a href="{{ $lienFamille }}" class="intitule inline-block hover:underline">{{ $produit->categorie->nom }}</a>
+                    @endif
+                    <h1 class="titre-display mt-1.5 text-[1.85rem] sm:mt-2 sm:text-[2.3rem] lg:text-[2.6rem]"><span x-text="titre">{{ $titres->first() ?? $produit->nom }}</span></h1>
+                    {{-- Quand le titre suit la couleur de la photo, le nom du tissu reste rappelé dessous --}}
+                    @if($titres->contains(fn ($t) => $t !== $produit->nom))
+                        <p class="mt-1 text-[0.95rem] text-encre-2" x-show="titre !== @js($produit->nom)" @if(($titres->first() ?? $produit->nom) === $produit->nom) x-cloak @endif>
+                            {{ $produit->nom }}@if($listeCouleurs->count() > 1) · {{ $listeCouleurs->count() }} couleurs @endif
+                        </p>
+                    @endif
+                </div>
+
+                {{-- Couleurs en ronds à côté du titre : toucher = choisir la couleur et voir sa photo (re-toucher = annuler) --}}
+                @if($listeCouleurs->isNotEmpty())
+                    <div class="flex max-w-[44%] shrink-0 flex-wrap justify-end gap-0.5 pt-6 sm:max-w-[40%] sm:pt-8" role="group" aria-label="Couleurs disponibles">
+                        @foreach($listeCouleurs->take(6) as $nomRond)
+                            @php $teinteRond = teinte_couleur($nomRond); @endphp
+                            <button type="button" @click="toucherRond(@js($nomRond))" :aria-pressed="(couleurActive || '').toLowerCase() === @js(mb_strtolower($nomRond))"
+                                    title="{{ $nomRond }}" class="group/rond flex size-10 items-center justify-center rounded-full">
+                                <span aria-hidden="true"
+                                      class="flex size-7 items-center justify-center rounded-full border border-black/15 text-[0.75rem] font-semibold text-encre-2 transition-[box-shadow,transform] duration-150 group-active/rond:scale-90"
+                                      :class="(couleurActive || '').toLowerCase() === @js(mb_strtolower($nomRond)) && 'ring-2 ring-brun ring-offset-2 ring-offset-papier'"
+                                      style="background: {{ $teinteRond ?? 'var(--papier-2)' }}">{{ $teinteRond ? '' : mb_strtoupper(mb_substr($nomRond, 0, 1)) }}</span>
+                                <span class="sr-only">{{ $nomRond }}</span>
+                            </button>
+                        @endforeach
+                        @if($listeCouleurs->count() > 6)
+                            <a href="#titre-couleurs" class="flex size-10 items-center justify-center text-[0.85rem] font-medium text-encre-2">+{{ $listeCouleurs->count() - 6 }}</a>
+                        @endif
+                    </div>
+                @endif
+            </div>
 
             {{-- Note : seulement quand il y a de vrais avis --}}
             @if($nbAvis > 0)
@@ -221,12 +251,14 @@
                     {{-- Choix du format, quantité et total en direct --}}
                     <form action="{{ route('panier.ajouter') }}" method="POST"
                           @photo-couleur.window="couleur = $event.detail; autre = false"
+                          @choisir-couleur-rond.window="choisirCouleur($event.detail)"
                           x-data="{
                               formats: @js($formats->map(fn ($f) => (float) $f[1])),
                               unites: @js($formats->map(fn ($f) => $f[2])),
                               choix: @js($formats->keys()->first()),
                               qte: 1,
                               couleur: '',
+                              init() { this.$watch('couleur', (v) => window.dispatchEvent(new CustomEvent('couleur-choisie', { detail: v }))) },
                               autre: false,
                               choisirCouleur(nom) {
                                   this.couleur = this.couleur === nom ? '' : nom;

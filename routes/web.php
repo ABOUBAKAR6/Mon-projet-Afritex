@@ -32,6 +32,9 @@ Route::get('/track/{tracking_number}', [CommandeController::class, 'track'])->na
 Route::get('/sitemap.xml', [\App\Http\Controllers\SitemapController::class, 'index'])->name('sitemap');
 Route::get('/robots.txt', fn () => response()->view('robots')->header('Content-Type', 'text/plain'))->name('robots');
 Route::get('/manifest.webmanifest', fn () => response()->view('manifest')->header('Content-Type', 'application/manifest+json'))->name('manifest');
+// Application installable (PWA) : icônes aux couleurs de la boutique, page affichée sans connexion
+Route::get('/icones/app-{variante}.png', [\App\Http\Controllers\IconeAppController::class, 'show'])->where('variante', '[a-z0-9-]+')->name('icone-app');
+Route::view('/hors-ligne', 'hors-ligne')->name('hors-ligne');
 Route::get('/privacy', [LegalController::class, 'rgpd'])->name('privacy');
 Route::get('/cgu', [LegalController::class, 'cgu'])->name('cgu');
 Route::get('/a-propos', [PageController::class, 'about'])->name('about');

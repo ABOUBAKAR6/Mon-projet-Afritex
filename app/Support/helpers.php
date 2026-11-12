@@ -221,3 +221,13 @@ if (! function_exists('lien_whatsapp_boutique')) {
         return 'https://wa.me/'.$chiffres;
     }
 }
+
+if (! function_exists('icone_app')) {
+    /**
+     * Adresse versionnée d'une icône de l'application installée (192, 512, maskable-512, apple-180).
+     */
+    function icone_app(string $variante): string
+    {
+        return App\Http\Controllers\IconeAppController::url($variante);
+    }
+}

@@ -214,6 +214,17 @@
                     @endauth
                 </nav>
 
+                {{-- Installer l'appli : seulement quand c'est possible, jamais dans l'appli déjà installée --}}
+                <div x-data="installationAppli" x-show="proposable" x-cloak class="mt-6">
+                    <button type="button" @click="installer()" class="btn btn-contour btn-lg w-full">
+                        <x-icone nom="telecharger" /> Installer l'appli {{ boutique('nom') }}
+                    </button>
+                    <p x-show="aideIos" x-cloak class="mt-3 bg-carte p-3 text-[0.95rem] text-encre-2">
+                        Dans Safari, touchez <x-icone nom="partager" class="inline size-[1.1rem] align-[-0.2em] text-brun" /> <strong class="font-medium text-encre">Partager</strong>
+                        en bas de l'écran, puis <strong class="font-medium text-encre">« Sur l'écran d'accueil »</strong>.
+                    </p>
+                </div>
+
                 <h2 class="mt-8 text-[0.95rem] font-medium text-encre-2">Catégories de tissus</h2>
                 <ul class="mt-3 grid grid-cols-2 gap-2">
                     @foreach($globalCategories as $cat)
@@ -380,8 +391,17 @@
 </div>
 
     @include('components.cookie-consent')
+    @include('components.installer-appli')
 
     <script>
+        // Chrome annonce que l'appli peut être installée : on garde l'invitation pour nos boutons
+        // (resources/js/app.js, installationAppli) au lieu de sa petite barre automatique.
+        window.addEventListener('beforeinstallprompt', (evenement) => {
+            evenement.preventDefault();
+            window.invitationInstallation = evenement;
+            window.dispatchEvent(new Event('installation-possible'));
+        });
+
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', () => {
                 navigator.serviceWorker.register('/sw.js').catch(() => {});

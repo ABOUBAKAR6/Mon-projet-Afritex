@@ -110,6 +110,64 @@ Alpine.data('rangeeDefilante', () => ({
     },
 }));
 
+/*
+  Installer l'application (PWA). Sur Android, Chrome propose l'installation par l'événement
+  beforeinstallprompt, capté tôt dans layouts/app et rangé dans window.invitationInstallation.
+  Sur iPhone, rien ne peut l'ouvrir : on montre le chemin Partager → « Sur l'écran d'accueil ».
+  « bandeau » : la carte du bas de l'écran (refusée = cachée 14 jours) ; sinon, le bouton du menu (toujours là).
+*/
+const CLE_REFUS_INSTALLATION = 'installation-refusee';
+const DUREE_REFUS = 14 * 24 * 3600 * 1000;
+
+const lireStockage = (cle) => { try { return localStorage.getItem(cle); } catch { return null; } };
+
+Alpine.data('installationAppli', (bandeau = false) => ({
+    possible: !!window.invitationInstallation,
+    ios: /iphone|ipad|ipod/i.test(navigator.userAgent),
+    installee: window.matchMedia('(display-mode: standalone)').matches || navigator.standalone === true,
+    visible: false,
+    aideIos: false,
+
+    get proposable() {
+        return !this.installee && (this.possible || this.ios);
+    },
+
+    init() {
+        if (this.installee) return;
+        window.addEventListener('installation-possible', () => { this.possible = true; this.montrerBandeau(); });
+        window.addEventListener('appinstalled', () => { this.installee = true; this.visible = false; });
+        this.montrerBandeau();
+    },
+
+    montrerBandeau() {
+        if (!bandeau || !this.proposable || this.visible) return;
+        const refus = Number(lireStockage(CLE_REFUS_INSTALLATION));
+        if (refus && Date.now() - refus < DUREE_REFUS) return;
+        // Pas par-dessus le bandeau des cookies : on attendra la page suivante
+        if (!lireStockage('cookieConsent')) return;
+        setTimeout(() => { this.visible = true; }, 2500);
+    },
+
+    async installer() {
+        const invitation = window.invitationInstallation;
+        if (invitation) {
+            invitation.prompt();
+            const { outcome } = await invitation.userChoice;
+            window.invitationInstallation = null; // Chrome ne la sert qu'une fois
+            this.possible = false;
+            this.visible = false;
+            if (outcome === 'dismissed') this.refuser();
+        } else if (this.ios) {
+            this.aideIos = !this.aideIos;
+        }
+    },
+
+    refuser() {
+        this.visible = false;
+        try { localStorage.setItem(CLE_REFUS_INSTALLATION, String(Date.now())); } catch { /* navigation privée */ }
+    },
+}));
+
 Alpine.start();
 
 /*

@@ -7,14 +7,17 @@
 @php $logoSite = \App\Models\Parametre::valeur('logo'); @endphp
 @if($logoSite && is_file(public_path($logoSite)))
     <link rel="icon" href="{{ asset($logoSite) }}">
-    <link rel="apple-touch-icon" href="{{ asset($logoSite) }}">
 @endif
+{{-- Application installée (PWA) : icône carrée générée aux couleurs de la boutique (IconeAppController) --}}
+<link rel="apple-touch-icon" href="{{ icone_app('apple-180') }}">
 <script>window.BOUTIQUE = { slug: '{{ boutique_slug() }}' };</script>
 <link rel="manifest" href="/manifest.webmanifest">
 <meta name="theme-color" content="{{ couleur('foncee') }}">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="{{ boutique('nom') }}">
+{{-- Barre d'état pleine : avec « black-translucent », l'en-tête passait sous l'heure de l'iPhone --}}
+<meta name="apple-mobile-web-app-status-bar-style" content="black">
 
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>

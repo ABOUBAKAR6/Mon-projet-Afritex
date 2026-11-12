@@ -154,7 +154,7 @@
                 </div>
 
                 @if($images->count() > 1)
-                    <p class="chiffres absolute bottom-12 right-4 bg-encre px-2 py-0.5 text-[0.8rem] font-medium text-papier" aria-hidden="true">
+                    <p class="chiffres absolute bottom-3 right-4 bg-encre px-2 py-0.5 text-[0.8rem] font-medium text-papier" aria-hidden="true">
                         <span x-text="photo + 1">1</span> / {{ $images->count() }}
                     </p>
                 @endif
@@ -189,17 +189,30 @@
             </div>
         </div>
 
-        {{-- FICHE : au téléphone, elle remonte de 2 rem sur la photo (même fond que la page) --}}
-        <div class="relative -mx-2 -mt-8 bg-papier px-2 pt-5 sm:col-start-2 sm:row-start-1 sm:mx-0 sm:mt-0 sm:bg-transparent sm:px-0 sm:pt-0 lg:col-span-5 lg:col-start-8 lg:row-start-1">
+        {{-- FICHE : sous la photo, serrée au téléphone. Famille à gauche, logo WhatsApp à droite sur la même ligne. --}}
+        <div class="pt-3 sm:col-start-2 sm:row-start-1 sm:pt-0 lg:col-span-5 lg:col-start-8 lg:row-start-1">
+            <div class="flex min-h-9 items-center justify-between gap-3">
+                @if($produit->categorie)
+                    <a href="{{ $lienFamille }}" class="intitule inline-block hover:underline">{{ $produit->categorie->nom }}</a>
+                @else
+                    <span></span>
+                @endif
+                @if($lienWhatsappProduit)
+                    {{-- Le message cite le titre affiché (donc la couleur de la photo regardée) --}}
+                    <a href="{{ $lienWhatsappProduit }}" target="_blank" rel="noopener noreferrer" title="Discuter sur WhatsApp"
+                       :href="'https://wa.me/' + @js((string) $numeroWhatsapp) + '?text=' + encodeURIComponent(@js($debutMessage) + '\n\n*' + titre + '*' + @js($finMessage))"
+                       class="-mr-1 flex size-9 shrink-0 items-center justify-center transition-transform duration-150 active:scale-90">
+                        <x-icone nom="whatsapp" class="size-7" />
+                        <span class="sr-only">Discuter de ce tissu sur WhatsApp</span>
+                    </a>
+                @endif
+            </div>
             <div class="flex items-start justify-between gap-3">
                 <div class="min-w-0">
-                    @if($produit->categorie)
-                        <a href="{{ $lienFamille }}" class="intitule inline-block hover:underline">{{ $produit->categorie->nom }}</a>
-                    @endif
-                    <h1 class="titre-display mt-1.5 text-[1.85rem] sm:mt-2 sm:text-[2.3rem] lg:text-[2.6rem]"><span x-text="titre">{{ $titres->first() ?? $produit->nom }}</span></h1>
+                    <h1 class="titre-display text-[1.6rem] leading-tight sm:mt-1 sm:text-[2.3rem] lg:text-[2.6rem]"><span x-text="titre">{{ $titres->first() ?? $produit->nom }}</span></h1>
                     {{-- Quand le titre suit la couleur de la photo, le nom du tissu reste rappelé dessous --}}
                     @if($titres->contains(fn ($t) => $t !== $produit->nom))
-                        <p class="mt-1 text-[0.95rem] text-encre-2" x-show="titre !== @js($produit->nom)" @if(($titres->first() ?? $produit->nom) === $produit->nom) x-cloak @endif>
+                        <p class="mt-0.5 text-[0.9rem] text-encre-2 sm:mt-1 sm:text-[0.95rem]" x-show="titre !== @js($produit->nom)" @if(($titres->first() ?? $produit->nom) === $produit->nom) x-cloak @endif>
                             {{ $produit->nom }}@if($listeCouleurs->count() > 1) · {{ $listeCouleurs->count() }} couleurs @endif
                         </p>
                     @endif
@@ -207,20 +220,21 @@
 
                 {{-- Couleurs en ronds à côté du titre : toucher = choisir la couleur et voir sa photo (re-toucher = annuler) --}}
                 @if($listeCouleurs->isNotEmpty())
-                    <div class="flex max-w-[44%] shrink-0 flex-wrap justify-end gap-0.5 pt-6 sm:max-w-[40%] sm:pt-8" role="group" aria-label="Couleurs disponibles">
-                        @foreach($listeCouleurs->take(6) as $nomRond)
+                    @php $nbRonds = $listeCouleurs->count() > 6 ? 5 : 6; @endphp
+                    <div class="grid shrink-0 grid-cols-3 justify-items-center" role="group" aria-label="Couleurs disponibles">
+                        @foreach($listeCouleurs->take($nbRonds) as $nomRond)
                             @php $teinteRond = teinte_couleur($nomRond); @endphp
                             <button type="button" @click="toucherRond(@js($nomRond))" :aria-pressed="(couleurActive || '').toLowerCase() === @js(mb_strtolower($nomRond))"
-                                    title="{{ $nomRond }}" class="group/rond flex size-10 items-center justify-center rounded-full">
+                                    title="{{ $nomRond }}" class="group/rond flex size-9 items-center justify-center rounded-full">
                                 <span aria-hidden="true"
-                                      class="flex size-7 items-center justify-center rounded-full border border-black/15 text-[0.75rem] font-semibold text-encre-2 transition-[box-shadow,transform] duration-150 group-active/rond:scale-90"
+                                      class="flex size-6 items-center justify-center rounded-full border border-black/15 text-[0.7rem] font-semibold text-encre-2 transition-[box-shadow,transform] duration-150 group-active/rond:scale-90"
                                       :class="(couleurActive || '').toLowerCase() === @js(mb_strtolower($nomRond)) && 'ring-2 ring-brun ring-offset-2 ring-offset-papier'"
                                       style="background: {{ $teinteRond ?? 'var(--papier-2)' }}">{{ $teinteRond ? '' : mb_strtoupper(mb_substr($nomRond, 0, 1)) }}</span>
                                 <span class="sr-only">{{ $nomRond }}</span>
                             </button>
                         @endforeach
-                        @if($listeCouleurs->count() > 6)
-                            <a href="#titre-couleurs" class="flex size-10 items-center justify-center text-[0.85rem] font-medium text-encre-2">+{{ $listeCouleurs->count() - 6 }}</a>
+                        @if($listeCouleurs->count() > $nbRonds)
+                            <a href="#titre-couleurs" class="flex size-9 items-center justify-center text-[0.85rem] font-medium text-encre-2">+{{ $listeCouleurs->count() - $nbRonds }}<span class="sr-only"> autres couleurs</span></a>
                         @endif
                     </div>
                 @endif
@@ -240,7 +254,7 @@
         </div>
 
         {{-- ACHAT --}}
-        <div class="mt-5 sm:col-start-2 sm:row-start-2 sm:mt-0 lg:col-span-5 lg:col-start-8 lg:row-start-2">
+        <div class="mt-3 sm:col-start-2 sm:row-start-2 sm:mt-0 lg:col-span-5 lg:col-start-8 lg:row-start-2">
             <div class="lg:sticky lg:top-28 lg:pt-8">
                 @if($formats->isEmpty())
                     <p class="bg-alerte-doux p-4 text-alerte">Ce tissu n'a pas encore de prix en ligne. Contactez-nous pour une commande.</p>
@@ -285,12 +299,12 @@
                         {{-- Une seule quantité envoyée, quel que soit le sélecteur utilisé (barre du bas ou bloc ordinateur) --}}
                         <input type="hidden" name="quantite" :value="parseInt(qte) || 1" value="1">
 
-                        <p class="titre-display chiffres text-[2.1rem] leading-none sm:text-[2.4rem]">
+                        <p class="titre-display chiffres text-[1.7rem] leading-none sm:text-[2.4rem]">
                             <span x-text="f(prix)">{{ number_format($formats->first()[1], 0, ',', ' ') }} F</span>
                             <span class="font-sans text-[1rem] font-normal text-encre-2" x-text="unites[choix]">{{ $formats->first()[2] }}</span>
                         </p>
 
-                        <fieldset class="mt-6 sm:mt-7">
+                        <fieldset class="mt-4 sm:mt-7">
                             <legend class="etiquette">Format</legend>
                             <div @class(['grid gap-2', 'grid-cols-2' => $formats->count() > 1])>
                                 @foreach($formats as $cle => [$libelle, $prix, $unite])
@@ -332,7 +346,7 @@
                         {{-- Couleur voulue par le client : enregistrée avec l'article, visible par la boutique dans la commande --}}
                         @if($listeCouleurs->isNotEmpty())
                             {{-- Couleurs saisies dans l'admin : une pastille à toucher (re-toucher = annuler), « Autre » pour une demande libre --}}
-                            <div class="mt-6" role="group" aria-labelledby="titre-couleurs">
+                            <div class="mt-4 sm:mt-6" role="group" aria-labelledby="titre-couleurs">
                                 <p id="titre-couleurs" class="etiquette">Couleur <span class="font-normal text-encre-2">(facultatif)</span></p>
                                 <input type="hidden" name="couleur" :value="couleur">
                                 <div class="flex flex-wrap gap-2">

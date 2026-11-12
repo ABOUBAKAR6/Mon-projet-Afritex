@@ -28,7 +28,21 @@
         <p class="apparition hidden font-display text-[0.85rem] font-semibold uppercase tracking-[0.18em] text-white/85 sm:block">{{ boutique('slogan') }}</p>
         <h1 class="titre-display apparition mx-auto max-w-[16ch] text-[2.1rem] leading-[1.1] sm:mt-5 sm:text-[3.5rem] lg:text-[4.2rem]" style="animation-delay: 80ms">Le meilleur tissu, livré chez vous</h1>
         <p class="apparition mx-auto mt-3 max-w-[46ch] text-[0.95rem] text-white/85 sm:mt-5 sm:text-base lg:text-[1.15rem]" style="animation-delay: 160ms">{{ boutique('accroche') }}</p>
-        <div class="apparition mt-6 flex flex-col justify-center gap-3 sm:mt-9 sm:flex-row" style="animation-delay: 240ms">
+
+        {{-- Recherche visible d'emblée (même recherche que la loupe de l'en-tête : catalogue ?recherche=) --}}
+        <form method="GET" action="{{ route('catalogue') }}" role="search" class="apparition mx-auto mt-6 flex max-w-xl text-left sm:mt-8" style="animation-delay: 200ms">
+            <label for="recherche-accueil" class="sr-only">Rechercher un tissu, une couleur, une famille</label>
+            <div class="relative min-w-0 flex-1">
+                <x-icone nom="recherche" class="pointer-events-none absolute left-4 top-1/2 size-5 -translate-y-1/2 text-encre-2" />
+                <input id="recherche-accueil" type="search" name="recherche" enterkeyhint="search" autocomplete="off"
+                       placeholder="Un tissu, une couleur, une famille…" class="champ h-13 border-0 pl-12 text-encre">
+            </div>
+            <button type="submit" class="btn btn-brun h-13 shrink-0 px-4 sm:px-6">
+                <x-icone nom="fleche" class="sm:hidden" /><span class="sr-only sm:not-sr-only">Rechercher</span>
+            </button>
+        </form>
+
+        <div class="apparition mt-4 flex flex-col justify-center gap-3 sm:mt-6 sm:flex-row" style="animation-delay: 240ms">
             <a href="{{ route('catalogue') }}" class="btn btn-brun btn-lg">Voir le catalogue <x-icone nom="fleche" /></a>
             @guest
                 <a href="{{ route('register') }}" class="btn btn-clair btn-lg hidden sm:inline-flex">Créer un compte</a>

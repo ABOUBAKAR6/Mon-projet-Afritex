@@ -85,6 +85,7 @@ Route::middleware('auth')->group(function () {
     Route::post('/panier/coupon', [CommandeController::class, 'appliquerCoupon'])->name('panier.coupon.appliquer');
     Route::post('/panier/remarques', [CommandeController::class, 'remarques'])->middleware('throttle:30,1')->name('panier.remarques');
     Route::delete('/panier/supprimer/{id}', [CommandeController::class, 'supprimer'])->name('panier.supprimer');
+    Route::patch('/panier/quantite/{id}', [CommandeController::class, 'quantite'])->middleware('throttle:120,1')->name('panier.quantite');
     Route::get('/commande', [CommandeController::class, 'index'])->name('commande');
     Route::post('/commande/confirmer', [CommandeController::class, 'confirmer'])->name('commande.confirmer');
     Route::get('/commandes', [CommandeController::class, 'mesCommandes'])->name('commandes.index');

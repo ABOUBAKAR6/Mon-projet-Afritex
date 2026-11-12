@@ -122,6 +122,41 @@ class CartService
         Session::forget('coupon');
     }
 
+    /**
+     * Nouvelle quantité d'une ligne du panier (boutons – et + du panier).
+     * Client connecté : $itemId = id de la ligne, vérifiée dans SON panier ; invité : index en session.
+     * Retourne le nouveau sous-total de la ligne, ou null si la ligne n'existe pas.
+     */
+    public function updateQuantity(int $itemId, int $quantite): ?float
+    {
+        $quantite = max(1, min(10000, $quantite));
+        $sousTotal = null;
+
+        if (Auth::check()) {
+            $cart = Cart::where('user_id', Auth::id())->first();
+            $item = $cart ? CartItem::where('id', $itemId)->where('cart_id', $cart->id)->first() : null;
+            if ($item) {
+                $item->update(['quantite' => $quantite, 'sous_total' => $item->prix_unitaire * $quantite]);
+                $sousTotal = (float) $item->sous_total;
+            }
+        } else {
+            $panier = Session::get('panier', []);
+            if (isset($panier[$itemId])) {
+                $panier[$itemId]['quantite'] = $quantite;
+                $panier[$itemId]['sous_total'] = $panier[$itemId]['prix_unitaire'] * $quantite;
+                $sousTotal = (float) $panier[$itemId]['sous_total'];
+                Session::put('panier', $panier);
+            }
+        }
+
+        // Comme pour l'ajout et le retrait : un code promo se réapplique sur le nouveau panier
+        if ($sousTotal !== null) {
+            Session::forget('coupon');
+        }
+
+        return $sousTotal;
+    }
+
     public function removeItem(int $itemId): void
     {
         if (Auth::check()) {

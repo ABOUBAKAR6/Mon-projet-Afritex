@@ -30,8 +30,61 @@ class CommandeController extends Controller
         $total = $this->cartService->getTotal($panier);
         $coupon = session('coupon', []);
         $remarques = (string) session('panier_remarques', '');
+        $debutMessage = $this->messageWhatsappPanier($panier, (float) $total);
 
-        return view('panier', compact('panier', 'subtotal', 'discount', 'total', 'coupon', 'remarques'));
+        return view('panier', compact('panier', 'subtotal', 'discount', 'total', 'coupon', 'remarques', 'debutMessage'));
+    }
+
+    // Boutons – et + d'une ligne du panier : enregistré tout de suite, totaux renvoyés pour la page
+    public function quantite(Request $request, $id)
+    {
+        $donnees = $request->validate(['quantite' => ['required', 'integer', 'min:1', 'max:10000']]);
+
+        $ligne = $this->cartService->updateQuantity((int) $id, (int) $donnees['quantite']);
+        abort_if($ligne === null, 404);
+
+        if (! $request->expectsJson()) {
+            return redirect()->route('panier');
+        }
+
+        $panier = $this->cartService->getCart();
+        $total = (float) $this->cartService->getTotal($panier);
+
+        return response()->json([
+            'ligne' => $ligne,
+            'sous_total' => (float) $this->cartService->getSubtotal($panier),
+            'remise' => (float) $this->cartService->getDiscount(),
+            'total' => $total,
+            'message' => $this->messageWhatsappPanier($panier, $total),
+        ]);
+    }
+
+    /**
+     * Début du message WhatsApp du panier pour la boutique (les remarques et « Merci ! » s'ajoutent sur la page).
+     */
+    private function messageWhatsappPanier(array $panier, float $total): string
+    {
+        $formats = [
+            'metre' => 'Au mètre', 'rouleau' => 'Au rouleau', 'pantalon' => 'Pantalon',
+            'chemise_courte' => 'Chemise manches courtes', 'chemise_longue' => 'Chemise manches longues',
+            'tunique_courte' => 'Tunique manches courtes', 'tunique_longue' => 'Tunique manches longues',
+        ];
+        $f = fn ($n) => number_format((float) $n, 0, ',', ' ') . ' F';
+        $lignes = ['Bonjour ' . boutique('nom') . ',', '', 'Voici mon panier :', ''];
+        foreach ($panier as $item) {
+            $q = (float) $item['quantite'];
+            $unite = $item['type_commande'] === 'metre' ? ' m' : ($item['type_commande'] === 'rouleau' ? ($q > 1 ? ' rouleaux' : ' rouleau') : '');
+            $lignes[] = '*' . $item['nom'] . '*';
+            $lignes[] = ($formats[$item['type_commande']] ?? $item['type_commande']) . ' : ' . rtrim(rtrim(number_format($q, 2, ',', ''), '0'), ',') . $unite
+                . ' × ' . $f($item['prix_unitaire'] ?? ($item['sous_total'] / max(1, $q))) . ' = ' . $f($item['sous_total']);
+            if (! empty($item['couleur'])) {
+                $lignes[] = 'Couleur souhaitée : ' . $item['couleur'];
+            }
+            $lignes[] = '';
+        }
+        $lignes[] = '*Total : ' . $f($total) . '*';
+
+        return implode("\n", $lignes);
     }
 
     // Remarques du client pour la boutique, écrites dans le panier : gardées jusqu'à la commande

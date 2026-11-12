@@ -180,7 +180,7 @@
                         <a href="{{ route('yardage.index') }}" class="btn btn-contour btn-lg"><x-icone nom="regle" /> Calculer mon métrage</a>
                     @endif
                 @elseif($lienWhatsapp)
-                    <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour btn-lg"><x-icone nom="message" /> Demander conseil</a>
+                    <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour btn-lg"><x-icone nom="whatsapp" /> Demander conseil</a>
                 @endauth
             </div>
         </div>

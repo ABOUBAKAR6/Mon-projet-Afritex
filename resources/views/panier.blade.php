@@ -183,7 +183,7 @@
                     <p class="aide hidden sm:block" x-text="etat" aria-live="polite">Elles partent avec votre commande.</p>
                     @if($numeroWhatsapp)
                         <a href="https://wa.me/{{ $numeroWhatsapp }}?text={{ rawurlencode($debutMessage) }}" :href="lien(message)" @click="enregistrer()" target="_blank" rel="noopener noreferrer"
-                           class="btn btn-contour w-full sm:mt-3"><x-icone nom="message" /> Envoyer au propriétaire sur WhatsApp</a>
+                           class="btn btn-contour w-full sm:mt-3"><x-icone nom="whatsapp" /> Envoyer au propriétaire sur WhatsApp</a>
                     @endif
                 </div>
 

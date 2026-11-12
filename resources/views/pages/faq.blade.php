@@ -22,7 +22,7 @@
         <x-titre-bloc intitule="Aide" titre="Une question sans réponse ?" />
         <p class="mt-4 text-encre-2">Écrivez-nous : nous répondons aux questions sur les tissus, les métrages et les commandes en gros.</p>
         @if($lienWhatsapp)
-            <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun btn-lg mt-6"><x-icone nom="message" /> Nous écrire sur WhatsApp</a>
+            <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun btn-lg mt-6"><x-icone nom="whatsapp" /> Nous écrire sur WhatsApp</a>
         @endif
         <p class="mt-6 text-[0.95rem] text-encre-2">Voir aussi les <a href="{{ route('cgu') }}" class="lien">conditions générales</a> et la <a href="{{ route('privacy') }}" class="lien">politique de confidentialité</a>.</p>
     </aside>

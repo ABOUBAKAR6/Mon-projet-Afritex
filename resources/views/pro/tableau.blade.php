@@ -105,7 +105,7 @@
                 <section class="bg-carte p-6" aria-labelledby="titre-aide">
                     <h2 id="titre-aide" class="titre-display text-[1.2rem]">Un besoin particulier ?</h2>
                     <p class="mt-2 text-[0.95rem] text-encre-2">Grosse quantité, tissu introuvable, livraison urgente : parlons-en directement.</p>
-                    <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour mt-5 w-full"><x-icone nom="message" /> Écrire sur WhatsApp</a>
+                    <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour mt-5 w-full"><x-icone nom="whatsapp" /> Écrire sur WhatsApp</a>
                 </section>
             @endif
         </aside>

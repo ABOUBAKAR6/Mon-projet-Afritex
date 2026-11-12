@@ -245,7 +245,7 @@
                 @if($formats->isEmpty())
                     <p class="bg-alerte-doux p-4 text-alerte">Ce tissu n'a pas encore de prix en ligne. Contactez-nous pour une commande.</p>
                     @if($lienWhatsappProduit)
-                        <a href="{{ $lienWhatsappProduit }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun btn-lg mt-4 w-full"><x-icone nom="message" /> Discuter sur WhatsApp</a>
+                        <a href="{{ $lienWhatsappProduit }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun btn-lg mt-4 w-full"><x-icone nom="whatsapp" /> Discuter sur WhatsApp</a>
                     @endif
                 @else
                     {{-- Choix du format, quantité et total en direct --}}
@@ -382,7 +382,7 @@
 
                             @if($lienWhatsappProduit)
                                 {{-- Le message reprend le format, la quantité et le total choisis ci-dessus --}}
-                                <a href="{{ $lienWhatsappProduit }}" :href="lienWhatsapp" target="_blank" rel="noopener noreferrer" class="btn btn-contour btn-lg mt-3 w-full"><x-icone nom="message" /> Discuter sur WhatsApp</a>
+                                <a href="{{ $lienWhatsappProduit }}" :href="lienWhatsapp" target="_blank" rel="noopener noreferrer" class="btn btn-contour btn-lg mt-3 w-full"><x-icone nom="whatsapp" /> Discuter sur WhatsApp</a>
                             @endif
                         </div>
 
@@ -390,7 +390,7 @@
                         @if($lienWhatsappProduit)
                             <a href="{{ $lienWhatsappProduit }}" :href="lienWhatsapp" target="_blank" rel="noopener noreferrer"
                                class="mt-4 inline-flex min-h-11 items-center gap-2 font-medium text-brun underline-offset-4 hover:underline lg:hidden">
-                                <x-icone nom="message" class="size-5" /> Une question ? Discuter sur WhatsApp
+                                <x-icone nom="whatsapp" class="size-5" /> Une question ? Discuter sur WhatsApp
                             </a>
                         @endif
 
@@ -425,7 +425,7 @@
                                     @if($lienWhatsappProduit)
                                         <a href="{{ $lienWhatsappProduit }}" :href="lienWhatsapp" target="_blank" rel="noopener noreferrer"
                                            class="btn btn-contour h-12 w-12 shrink-0 !px-0">
-                                            <x-icone nom="message" class="size-5" /><span class="sr-only">Discuter sur WhatsApp</span>
+                                            <x-icone nom="whatsapp" class="size-5" /><span class="sr-only">Discuter sur WhatsApp</span>
                                         </a>
                                     @endif
                                     <a href="{{ route('login') }}" class="btn btn-brun h-12 flex-1 px-4 sm:flex-none sm:px-8">Se connecter pour commander</a>

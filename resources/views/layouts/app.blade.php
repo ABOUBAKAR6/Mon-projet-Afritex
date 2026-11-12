@@ -287,14 +287,14 @@
                 <div>
                     <p class="text-[0.92rem] text-or-doux sm:text-base">Un métrage à calculer, une commande en gros, un conseil sur un tissu ?</p>
                     @if($lienWhatsapp)
-                        <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="titre-display mt-1 inline-block text-[clamp(1.4rem,3.6vw,2.5rem)] leading-tight text-or transition-colors hover:text-or-clair">Écrivez-nous sur WhatsApp</a>
+                        <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="titre-display mt-1 inline-flex items-center gap-3 text-[clamp(1.4rem,3.6vw,2.5rem)] leading-tight text-or transition-colors hover:text-or-clair"><x-icone nom="whatsapp" class="size-[0.9em]" /> Écrivez-nous sur WhatsApp</a>
                     @else
                         <a href="{{ route('faq') }}" class="titre-display mt-1 inline-block text-[clamp(1.4rem,3.6vw,2.5rem)] leading-tight text-or transition-colors hover:text-or-clair">Nous sommes là pour vous aider</a>
                     @endif
                 </div>
                 <div class="flex flex-wrap gap-2 sm:gap-3">
                     @if($lienWhatsapp)
-                        <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-clair sm:btn-lg"><x-icone nom="message" /> WhatsApp</a>
+                        <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-clair sm:btn-lg"><x-icone nom="whatsapp" /> WhatsApp</a>
                     @endif
                     <a href="{{ route('catalogue') }}" class="btn btn-or sm:btn-lg">Voir le catalogue</a>
                 </div>
@@ -344,7 +344,7 @@
                     <li><a href="{{ route('cgu') }}" class="{{ $lienPied }}">Conditions générales</a></li>
                     <li><a href="{{ route('privacy') }}" class="{{ $lienPied }}">Confidentialité</a></li>
                     @if($lienWhatsapp)
-                        <li><a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="{{ $lienPied }}">Assistance WhatsApp</a></li>
+                        <li><a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="{{ $lienPied }} gap-2"><x-icone nom="whatsapp" class="size-4" /> Assistance WhatsApp</a></li>
                     @endif
                 </ul>
             </div>

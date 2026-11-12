@@ -24,8 +24,8 @@
 
     @if(session('demande_whatsapp'))
         <div class="apparition mt-6 flex flex-col gap-4 bg-succes-doux p-5 sm:flex-row sm:items-center sm:justify-between" role="status">
-            <p class="flex items-start gap-3"><x-icone nom="message" class="mt-0.5 size-5 shrink-0 text-succes" /> <span>Demande enregistrée. Ouvrez WhatsApp pour l'envoyer au propriétaire de {{ boutique('nom') }}, tout le détail est déjà écrit.</span></p>
-            <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun shrink-0"><x-icone nom="message" /> Ouvrir WhatsApp</a>
+            <p class="flex items-start gap-3"><x-icone nom="whatsapp" class="mt-0.5 size-5 shrink-0 text-succes" /> <span>Demande enregistrée. Ouvrez WhatsApp pour l'envoyer au propriétaire de {{ boutique('nom') }}, tout le détail est déjà écrit.</span></p>
+            <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun shrink-0"><x-icone nom="whatsapp" /> Ouvrir WhatsApp</a>
         </div>
     @endif
 
@@ -217,7 +217,7 @@
                 <a href="{{ route('track', $commande->tracking_number) }}" class="btn btn-fantome w-full">Page de suivi à partager</a>
             @endif
             {{-- Tout le détail est écrit dans le message : tissus, catégorie, mètres ou rouleaux, prix, total, livraison --}}
-            <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour w-full"><x-icone nom="message" /> Envoyer {{ $commande->estDevis() ? 'ma demande' : 'ma commande' }} sur WhatsApp</a>
+            <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-contour w-full"><x-icone nom="whatsapp" /> Envoyer {{ $commande->estDevis() ? 'ma demande' : 'ma commande' }} sur WhatsApp</a>
         </aside>
     </div>
 </div>

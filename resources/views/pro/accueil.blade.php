@@ -43,7 +43,7 @@
                     Vous recevrez un e-mail à <span class="text-encre">{{ Auth::user()->email }}</span> dès que votre accès pro sera ouvert.
                 </p>
                 @if($lienWhatsapp)
-                    <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="lien-fleche mt-6">Une question sur votre demande ? Écrivez-nous sur WhatsApp <x-icone nom="fleche" /></a>
+                    <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="lien-fleche mt-6"><x-icone nom="whatsapp" /> Une question sur votre demande ? Écrivez-nous sur WhatsApp <x-icone nom="fleche" /></a>
                 @endif
             </div>
             <dl class="space-y-4 border-t border-trait pt-6 text-[0.95rem] lg:border-l lg:border-t-0 lg:pl-10 lg:pt-0">
@@ -65,7 +65,7 @@
             <p class="mt-4 max-w-[60ch] text-encre-2">Vous pouvez toujours acheter sur la boutique au prix public. Si votre situation a changé, écrivez-nous pour en parler.</p>
             <div class="mt-6 flex flex-col gap-3 sm:flex-row">
                 @if($lienWhatsapp)
-                    <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun"><x-icone nom="message" /> Nous écrire sur WhatsApp</a>
+                    <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun"><x-icone nom="whatsapp" /> Nous écrire sur WhatsApp</a>
                 @endif
                 <a href="{{ route('catalogue') }}" class="btn btn-contour">Voir le catalogue</a>
             </div>

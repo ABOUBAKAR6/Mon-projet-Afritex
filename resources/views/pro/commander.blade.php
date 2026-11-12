@@ -25,7 +25,7 @@
         <div class="apparition mt-8 bg-carte p-8 sm:p-12" style="animation-delay: 80ms">
             <p class="titre-display text-[1.5rem]">Les tarifs pro arrivent</p>
             <p class="mt-2 max-w-[56ch] text-encre-2">La boutique n'a pas encore mis en ligne ses prix revendeurs. En attendant, écrivez-nous pour une commande en gros.</p>
-            <a href="{{ $waBoutique }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun mt-6"><x-icone nom="message" /> Écrire sur WhatsApp</a>
+            <a href="{{ $waBoutique }}" target="_blank" rel="noopener noreferrer" class="btn btn-brun mt-6"><x-icone nom="whatsapp" /> Écrire sur WhatsApp</a>
         </div>
     @else
         @if($source)
@@ -222,11 +222,11 @@
                     <div class="mt-5 space-y-2.5">
                         <button type="submit" class="btn btn-brun btn-lg w-full">Demander le devis</button>
                         <button type="submit" name="partager" value="whatsapp" class="btn btn-contour w-full">
-                            <x-icone nom="message" /> Demander + WhatsApp
+                            <x-icone nom="whatsapp" /> Demander + WhatsApp
                         </button>
                         <a x-show="lignes > 0" x-cloak :href="lienWhatsapp()" target="_blank" rel="noopener noreferrer"
                            class="btn btn-fantome w-full text-[0.92rem]">
-                            <x-icone nom="message" /> Envoyer directement sur WhatsApp
+                            <x-icone nom="whatsapp" /> Envoyer directement sur WhatsApp
                         </a>
                         <p class="aide text-center" x-show="lignes === 0">Saisissez au moins une quantité.</p>
                     </div>

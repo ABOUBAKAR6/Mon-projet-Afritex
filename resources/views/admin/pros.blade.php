@@ -60,7 +60,7 @@
                     </div>
 
                     <div class="flex flex-wrap items-center gap-2">
-                        <a href="{{ $compte->lienWhatsapp() }}" target="_blank" rel="noopener noreferrer" class="btn btn-fantome btn-sm"><x-icone nom="message" /> WhatsApp</a>
+                        <a href="{{ $compte->lienWhatsapp() }}" target="_blank" rel="noopener noreferrer" class="btn btn-fantome btn-sm"><x-icone nom="whatsapp" /> WhatsApp</a>
                         <button type="button" @click="details = !details" :aria-expanded="details" aria-controls="details-{{ $compte->id }}" class="btn btn-fantome btn-sm">
                             Détails <x-icone nom="chevron-bas" class="transition-transform duration-200" ::class="details && 'rotate-180'" />
                         </button>

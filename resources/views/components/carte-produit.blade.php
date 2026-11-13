@@ -6,6 +6,11 @@
 --}}
 @php
     $estFavori = $favori ?? (auth()->check() ? auth()->user()->wishlist()->where('produit_id', $produit->id)->exists() : false);
+    // Même message que sur la page du tissu
+    $numeroWhatsapp = config('services.whatsapp.numero');
+    $lienWhatsapp = $numeroWhatsapp
+        ? 'https://wa.me/' . $numeroWhatsapp . '?text=' . rawurlencode('Bonjour ' . boutique('nom') . ",\n\nJe suis intéressé(e) par ce tissu :\n\n*" . $produit->nom . "*\n\n" . route('produit.show', $produit->slug) . "\n\nEst-il disponible ?")
+        : null;
 @endphp
 <article {{ $attributes->merge(['class' => 'group filet relative flex flex-col bg-carte']) }}>
     <div class="relative overflow-hidden bg-papier-2 {{ $grand ? 'aspect-[4/5] lg:aspect-auto lg:min-h-[24rem] lg:flex-1' : ($compact ? 'aspect-square sm:aspect-[4/5]' : 'aspect-[4/5]') }}">
@@ -35,9 +40,17 @@
     </div>
 
     <div class="flex flex-col {{ $compact ? 'p-3 sm:p-5' : 'p-5' }} {{ $grand ? 'lg:p-7' : 'flex-1' }}">
-        @if($produit->categorie)
-            <p class="{{ $compact ? 'truncate text-[0.78rem] sm:text-[0.85rem]' : 'text-[0.85rem]' }} font-medium text-brun">{{ $produit->categorie->nom }}</p>
-        @endif
+        {{-- Famille à gauche, WhatsApp à droite (au-dessus du lien qui couvre la carte) --}}
+        <div class="flex items-center justify-between gap-2">
+            <p class="min-w-0 {{ $compact ? 'truncate text-[0.78rem] sm:text-[0.85rem]' : 'text-[0.85rem]' }} font-medium text-brun">{{ $produit->categorie?->nom }}</p>
+            @if($lienWhatsapp)
+                <a href="{{ $lienWhatsapp }}" target="_blank" rel="noopener noreferrer" title="Discuter sur WhatsApp"
+                   class="relative z-10 -my-2 -mr-2 flex size-10 shrink-0 items-center justify-center transition-transform duration-150 active:scale-90">
+                    <x-icone nom="whatsapp" class="{{ $compact ? 'size-6 sm:size-7' : 'size-7' }}" />
+                    <span class="sr-only">Discuter de {{ $produit->nom }} sur WhatsApp</span>
+                </a>
+            @endif
+        </div>
         <{{ $titre }} class="titre-display mt-1 {{ $grand ? 'text-[1.35rem] lg:text-[1.6rem]' : ($compact ? 'text-[0.98rem] leading-snug sm:text-[1.12rem]' : 'text-[1.12rem]') }}">
             <a href="{{ route('produit.show', $produit->slug) }}" class="after:absolute after:inset-0 after:content-['']">{{ $produit->nom }}</a>
         </{{ $titre }}>

@@ -282,13 +282,31 @@
                           }">
                         @csrf
                         <input type="hidden" name="produit_id" value="{{ $produit->id }}">
-                        {{-- Une seule quantité envoyée, quel que soit le sélecteur utilisé (barre du bas ou bloc ordinateur) --}}
+                        {{-- Une seule quantité envoyée, quel que soit le sélecteur utilisé (à droite du prix ou bloc ordinateur) --}}
                         <input type="hidden" name="quantite" :value="parseInt(qte) || 1" value="1">
 
-                        <p class="titre-display chiffres text-[1.7rem] leading-none sm:text-[2.4rem]">
-                            <span x-text="f(prix)">{{ number_format($formats->first()[1], 0, ',', ' ') }} F</span>
-                            <span class="font-sans text-[1rem] font-normal text-encre-2" x-text="unites[choix]">{{ $formats->first()[2] }}</span>
-                        </p>
+                        <div class="flex items-center justify-between gap-3">
+                            <p class="titre-display chiffres text-[1.7rem] leading-none sm:text-[2.4rem]">
+                                <span x-text="f(prix)">{{ number_format($formats->first()[1], 0, ',', ' ') }} F</span>
+                                <span class="font-sans text-[1rem] font-normal text-encre-2" x-text="unites[choix]">{{ $formats->first()[2] }}</span>
+                            </p>
+
+                            {{-- Téléphone et tablette : sélecteur de quantité à droite du prix --}}
+                            <div class="flex h-11 shrink-0 items-stretch border border-trait-fort bg-carte lg:hidden">
+                                <button type="button" @click="moins()" class="flex w-10 items-center justify-center text-encre-2 active:bg-brun-doux">
+                                    <x-icone nom="moins" class="size-4" /><span class="sr-only">Diminuer</span>
+                                </button>
+                                <label for="quantite-mobile" class="sr-only" x-text="choix === 'metre' ? 'Nombre de mètres' : 'Quantité'">Quantité</label>
+                                <span class="flex items-center">
+                                    <input id="quantite-mobile" type="number" min="1" inputmode="numeric" x-model="qte"
+                                           class="chiffres w-9 border-0 bg-transparent p-0 text-right text-[1.05rem] font-semibold focus:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none">
+                                    <span class="pl-0.5 pr-1 text-[0.85rem] text-encre-2" x-text="choix === 'metre' ? 'm' : ''">m</span>
+                                </span>
+                                <button type="button" @click="plus()" class="flex w-10 items-center justify-center text-encre-2 active:bg-brun-doux">
+                                    <x-icone nom="plus" class="size-4" /><span class="sr-only">Augmenter</span>
+                                </button>
+                            </div>
+                        </div>
 
                         <fieldset class="mt-4 sm:mt-7">
                             <legend class="etiquette">Format</legend>
@@ -308,7 +326,7 @@
                             </div>
                         </fieldset>
 
-                        {{-- Quantité et total : ordinateur seulement (téléphone et tablette : barre fixe en bas) --}}
+                        {{-- Quantité et total : ordinateur seulement (téléphone et tablette : à droite du prix) --}}
                         <div class="mt-6 hidden grid-cols-[auto_1fr] items-end gap-4 lg:grid">
                             <div>
                                 <label for="quantite" class="etiquette" x-text="choix === 'metre' ? 'Nombre de mètres' : 'Quantité'">Quantité</label>
@@ -399,20 +417,6 @@
                                     <p class="chiffres text-[0.92rem] text-encre-2"><span x-text="f(prix)"></span> <span x-text="unites[choix]"></span></p>
                                 </div>
 
-                                    <div class="flex h-12 shrink-0 items-stretch border border-trait-fort bg-carte">
-                                        <button type="button" @click="moins()" class="flex w-10 items-center justify-center text-encre-2 active:bg-brun-doux">
-                                            <x-icone nom="moins" class="size-4" /><span class="sr-only">Diminuer</span>
-                                        </button>
-                                        <label for="quantite-barre" class="sr-only" x-text="choix === 'metre' ? 'Nombre de mètres' : 'Quantité'">Quantité</label>
-                                        <span class="flex items-center">
-                                            <input id="quantite-barre" type="number" min="1" inputmode="numeric" x-model="qte"
-                                                   class="chiffres w-9 border-0 bg-transparent p-0 text-right text-[1.05rem] font-semibold focus:ring-0 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none">
-                                            <span class="pl-0.5 pr-1 text-[0.85rem] text-encre-2" x-text="choix === 'metre' ? 'm' : ''">m</span>
-                                        </span>
-                                        <button type="button" @click="plus()" class="flex w-10 items-center justify-center text-encre-2 active:bg-brun-doux">
-                                            <x-icone nom="plus" class="size-4" /><span class="sr-only">Augmenter</span>
-                                        </button>
-                                    </div>
                                     <button type="submit" class="btn btn-brun h-12 min-w-0 flex-1 px-4 sm:flex-none sm:px-8" aria-live="polite">
                                         <span class="truncate">Ajouter<span class="hidden sm:inline"> au panier</span>&nbsp;·&nbsp;<span class="chiffres" x-text="f(total)">{{ number_format($formats->first()[1], 0, ',', ' ') }} F</span></span>
                                     </button>

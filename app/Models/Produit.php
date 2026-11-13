@@ -173,6 +173,16 @@ class Produit extends Model
     }
 
     // Relation avec ProduitImage
+    /**
+     * Tissus montrés dans les listes publiques (accueil, catalogue, « vous aimerez aussi ») :
+     * un tissu « non disponible » (doublon masqué, retiré de la vente) n'y apparaît plus,
+     * mais sa page reste accessible par son lien.
+     */
+    public function scopeVisibles($query)
+    {
+        return $query->where('disponible', true);
+    }
+
     public function images()
     {
         // Photos supplémentaires dans l'ordre choisi (puis d'envoi) : la page produit les fait glisser dans cet ordre

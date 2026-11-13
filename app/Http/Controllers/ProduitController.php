@@ -15,7 +15,7 @@ class ProduitController extends Controller
         $produit = Produit::with(['categorie', 'reviews.user'])->where('slug', $slug)->firstOrFail();
 
         // Produits similaires : même catégorie, exclu le produit actuel, limité à 4
-        $produitsSimilaires = Produit::where('categorie_id', $produit->categorie_id)
+        $produitsSimilaires = Produit::visibles()->where('categorie_id', $produit->categorie_id)
             ->where('id', '!=', $produit->id)
             ->with('categorie')
             ->take(4)
@@ -42,7 +42,7 @@ class ProduitController extends Controller
     public function index()
     {
         $categories = Categorie::all();
-        $produits = Produit::with('categorie')->take(8)->get();
+        $produits = Produit::visibles()->with('categorie')->take(8)->get();
         return view('accueil', compact('categories', 'produits'));
     }
 
@@ -61,12 +61,12 @@ class ProduitController extends Controller
         // ni with() ni where('>='), et le moteur database cherchait une colonne « categorie » inexistante.)
         if ($request->recherche) {
             $terme = '%' . $request->recherche . '%';
-            $query = Produit::query()->where(fn ($q) => $q
+            $query = Produit::visibles()->where(fn ($q) => $q
                 ->where('nom', 'like', $terme)
                 ->orWhere('description', 'like', $terme)
                 ->orWhereHas('categorie', fn ($c) => $c->where('nom', 'like', $terme)));
         } else {
-            $query = Produit::query();
+            $query = Produit::visibles();
         }
 
         // Apply other filters on top of the search results
@@ -113,7 +113,7 @@ class ProduitController extends Controller
 
         // Sous la rangée d'une catégorie : des tissus des autres familles
         $autresProduits = $request->categorie_id
-            ? Produit::with('categorie')->where('categorie_id', '!=', $request->categorie_id)->latest()->take(8)->get()
+            ? Produit::visibles()->with('categorie')->where('categorie_id', '!=', $request->categorie_id)->latest()->take(8)->get()
             : collect();
 
         return view('catalogue', compact('categories', 'produits', 'allColors', 'autresProduits'));

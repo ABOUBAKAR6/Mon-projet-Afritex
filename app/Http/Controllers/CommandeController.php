@@ -152,6 +152,17 @@ class CommandeController extends Controller
 
     public function confirmer(Request $request)
     {
+        // Visiteur sans compte : on lui crée son compte à partir de ses coordonnées, puis on continue
+        if (! auth()->check()) {
+            if (empty($this->cartService->getCart())) {
+                return redirect()->route('panier')->with('error', 'Panier vide !');
+            }
+            $reponse = $this->creerCompteSansInscription($request);
+            if ($reponse) {
+                return $reponse;
+            }
+        }
+
         $panier = $this->cartService->getCart();
         if (empty($panier)) {
             return redirect()->route('panier')->with('error', 'Panier vide !');
@@ -173,6 +184,50 @@ class CommandeController extends Controller
         } catch (\Exception $e) {
             return redirect()->back()->with('error', 'Erreur lors de la confirmation : ' . $e->getMessage());
         }
+    }
+
+    /**
+     * Compte créé à la commande, sans mot de passe à choisir : nom, téléphone et e-mail facultatif.
+     * Un e-mail qui appartient déjà à un compte n'est jamais repris (sinon on entrerait dans le compte
+     * d'un autre) : le visiteur est invité à se connecter. Retourne une redirection en cas de refus.
+     */
+    private function creerCompteSansInscription(Request $request)
+    {
+        $donnees = $request->validate([
+            'prenom' => ['required', 'string', 'max:100'],
+            'nom_complet' => ['required', 'string', 'max:100'],
+            'indicatif' => ['nullable', 'string', 'max:6'],
+            'telephone' => ['required', 'string', 'min:8', 'max:20'],
+            'email' => ['nullable', 'email', 'max:255'],
+        ], [
+            'prenom.required' => 'Indiquez votre prénom.',
+            'nom_complet.required' => 'Indiquez votre nom.',
+            'telephone.required' => 'Indiquez votre numéro de téléphone : le livreur vous appellera.',
+            'telephone.min' => 'Ce numéro de téléphone semble incomplet.',
+            'email.email' => 'Cette adresse e-mail n\'est pas valide.',
+        ]);
+
+        $email = strtolower(trim((string) ($donnees['email'] ?? '')));
+        if ($email !== '' && \App\Models\User::where('email', $email)->exists()) {
+            return back()->withInput()->withErrors([
+                'email' => 'Un compte existe déjà avec cet e-mail : connectez-vous pour commander, ou laissez ce champ vide.',
+            ]);
+        }
+
+        $chiffres = preg_replace('/\D+/', '', $donnees['telephone']);
+        $utilisateur = \App\Models\User::create([
+            'name' => trim($donnees['prenom'].' '.$donnees['nom_complet']),
+            'email' => $email !== '' ? $email : 'client-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(16)).'@'.\App\Models\User::DOMAINE_SANS_EMAIL,
+            'phone' => ($donnees['indicatif'] ?? '+225').$chiffres,
+            'password' => \Illuminate\Support\Facades\Hash::make(\Illuminate\Support\Str::random(40)),
+        ]);
+
+        // Connexion au nouveau compte, puis son panier (en session) passe dans le compte
+        auth()->login($utilisateur, true);
+        $request->session()->regenerate();
+        $this->cartService->mergeGuestCart();
+
+        return null;
     }
 
     public function mesCommandes()

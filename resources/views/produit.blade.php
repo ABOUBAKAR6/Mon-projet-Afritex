@@ -373,12 +373,8 @@
 
                         {{-- Boutons : ordinateur --}}
                         <div class="hidden lg:block">
-                            @auth
-                                <button type="submit" class="btn btn-brun btn-lg mt-6 w-full"><x-icone nom="panier" /> Ajouter au panier</button>
-                            @else
-                                <a href="{{ route('login') }}" class="btn btn-brun btn-lg mt-6 w-full">Se connecter pour commander</a>
-                                <p class="mt-2 text-center text-[0.92rem] text-encre-2">Pas encore de compte ? <a href="{{ route('register') }}" class="lien">Créez-le en une minute</a>.</p>
-                            @endauth
+                            {{-- Commande possible sans compte : le compte est créé à la confirmation de la livraison --}}
+                            <button type="submit" class="btn btn-brun btn-lg mt-6 w-full"><x-icone nom="panier" /> Ajouter au panier</button>
 
                             @if($lienWhatsappProduit)
                                 {{-- Le message reprend le format, la quantité et le total choisis ci-dessus --}}
@@ -403,7 +399,6 @@
                                     <p class="chiffres text-[0.92rem] text-encre-2"><span x-text="f(prix)"></span> <span x-text="unites[choix]"></span></p>
                                 </div>
 
-                                @auth
                                     <div class="flex h-12 shrink-0 items-stretch border border-trait-fort bg-carte">
                                         <button type="button" @click="moins()" class="flex w-10 items-center justify-center text-encre-2 active:bg-brun-doux">
                                             <x-icone nom="moins" class="size-4" /><span class="sr-only">Diminuer</span>
@@ -421,15 +416,6 @@
                                     <button type="submit" class="btn btn-brun h-12 min-w-0 flex-1 px-4 sm:flex-none sm:px-8" aria-live="polite">
                                         <span class="truncate">Ajouter<span class="hidden sm:inline"> au panier</span>&nbsp;·&nbsp;<span class="chiffres" x-text="f(total)">{{ number_format($formats->first()[1], 0, ',', ' ') }} F</span></span>
                                     </button>
-                                @else
-                                    @if($lienWhatsappProduit)
-                                        <a href="{{ $lienWhatsappProduit }}" :href="lienWhatsapp" target="_blank" rel="noopener noreferrer"
-                                           class="btn btn-contour h-12 w-12 shrink-0 !px-0">
-                                            <x-icone nom="whatsapp" class="size-5" /><span class="sr-only">Discuter sur WhatsApp</span>
-                                        </a>
-                                    @endif
-                                    <a href="{{ route('login') }}" class="btn btn-brun h-12 flex-1 px-4 sm:flex-none sm:px-8">Se connecter pour commander</a>
-                                @endauth
                             </div>
                         </div>
                     </form>

@@ -14,6 +14,7 @@
     $numeroWhatsapp = config('services.whatsapp.numero');
     $lienWhatsapp = $numeroWhatsapp ? 'https://wa.me/' . $numeroWhatsapp : null;
 
+    // Nombre d'articles du panier : compte du client, ou session du visiteur (commande sans compte)
     $nbPanier = 0;
     if (auth()->check()) {
         try {
@@ -21,6 +22,8 @@
         } catch (\Throwable $e) {
             $nbPanier = 0;
         }
+    } else {
+        $nbPanier = count((array) session('panier', []));
     }
 
     $navigation = [
@@ -164,7 +167,14 @@
                     </a>
                 @else
                     <a href="{{ route('login') }}" class="btn btn-fantome hidden sm:inline-flex">Se connecter</a>
-                    <a href="{{ route('register') }}" class="btn btn-brun hidden sm:inline-flex">Créer un compte</a>
+                    @if($nbPanier > 0)
+                        <a href="{{ route('panier') }}" class="btn btn-brun hidden sm:inline-flex" @if(request()->routeIs('panier')) aria-current="page" @endif>
+                            <x-icone nom="panier" /> Panier
+                            <span class="chiffres -mr-1 ml-0.5 flex min-w-6 items-center justify-center bg-or px-1.5 text-[0.8rem] font-semibold leading-6 text-brun-fonce">{{ $nbPanier }}</span>
+                        </a>
+                    @else
+                        <a href="{{ route('register') }}" class="btn btn-brun hidden sm:inline-flex">Créer un compte</a>
+                    @endif
                 @endauth
 
                 <button type="button" @click="menu = !menu" :aria-expanded="menu" aria-controls="menu-mobile"
@@ -244,7 +254,10 @@
                         <button type="submit" class="btn btn-contour btn-lg w-full">Se déconnecter</button>
                     </form>
                 @else
-                    <a href="{{ route('register') }}" class="btn btn-brun btn-lg mt-8">Créer un compte</a>
+                    @if($nbPanier > 0)
+                        <a href="{{ route('panier') }}" class="btn btn-brun btn-lg mt-8"><x-icone nom="panier" /> Voir mon panier ({{ $nbPanier }})</a>
+                    @endif
+                    <a href="{{ route('register') }}" class="btn {{ $nbPanier > 0 ? 'btn-contour mt-3' : 'btn-brun mt-8' }} btn-lg">Créer un compte</a>
                     <a href="{{ route('login') }}" class="btn btn-contour btn-lg mt-3">Se connecter</a>
                 @endauth
             </div>

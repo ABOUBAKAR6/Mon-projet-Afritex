@@ -65,6 +65,18 @@ Route::middleware(['auth', 'pro'])->prefix('pro')->name('pro.')->group(function 
 // ===== PAGES CLIENT =====
 Route::get('/paiement/{commande}/callback', [PaiementController::class, 'callback'])->name('paiement.callback');
 
+// ===== PANIER ET LIVRAISON : ouverts sans compte =====
+// Le panier d'un visiteur vit dans sa session ; à la confirmation, un compte lui est créé
+// automatiquement (CommandeController::confirmer) et il passe au paiement, réservé au compte.
+Route::get('/panier', [CommandeController::class, 'panier'])->name('panier');
+Route::post('/panier/ajouter', [CommandeController::class, 'ajouter'])->name('panier.ajouter');
+Route::post('/panier/coupon', [CommandeController::class, 'appliquerCoupon'])->name('panier.coupon.appliquer');
+Route::post('/panier/remarques', [CommandeController::class, 'remarques'])->middleware('throttle:30,1')->name('panier.remarques');
+Route::delete('/panier/supprimer/{id}', [CommandeController::class, 'supprimer'])->name('panier.supprimer');
+Route::patch('/panier/quantite/{id}', [CommandeController::class, 'quantite'])->middleware('throttle:120,1')->name('panier.quantite');
+Route::get('/commande', [CommandeController::class, 'index'])->name('commande');
+Route::post('/commande/confirmer', [CommandeController::class, 'confirmer'])->name('commande.confirmer');
+
 Route::middleware('auth')->group(function () {
     // Après une connexion sur la boutique, tout le monde reste côté boutique :
     // l'administration ne s'ouvre que depuis /espace-client.
@@ -80,14 +92,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/alertes-stock/{alerte}', [AlerteStockController::class, 'supprimer'])->name('alertes.supprimer');
     Route::post('/alertes-stock/{alerte}/basculer', [AlerteStockController::class, 'basculer'])->name('alertes.basculer');
 
-    Route::get('/panier', [CommandeController::class, 'panier'])->name('panier');
-    Route::post('/panier/ajouter', [CommandeController::class, 'ajouter'])->name('panier.ajouter');
-    Route::post('/panier/coupon', [CommandeController::class, 'appliquerCoupon'])->name('panier.coupon.appliquer');
-    Route::post('/panier/remarques', [CommandeController::class, 'remarques'])->middleware('throttle:30,1')->name('panier.remarques');
-    Route::delete('/panier/supprimer/{id}', [CommandeController::class, 'supprimer'])->name('panier.supprimer');
-    Route::patch('/panier/quantite/{id}', [CommandeController::class, 'quantite'])->middleware('throttle:120,1')->name('panier.quantite');
-    Route::get('/commande', [CommandeController::class, 'index'])->name('commande');
-    Route::post('/commande/confirmer', [CommandeController::class, 'confirmer'])->name('commande.confirmer');
     Route::get('/commandes', [CommandeController::class, 'mesCommandes'])->name('commandes.index');
     Route::get('/commandes/{commande}', [CommandeController::class, 'show'])->name('commandes.show');
     Route::get('/commandes/{commande}/facture', [InvoiceController::class, 'download'])->name('commandes.invoice');

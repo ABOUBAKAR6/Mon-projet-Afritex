@@ -120,7 +120,8 @@ class Commande extends Model
         $reserve = static::whereKey($this->id)->whereNull('confirmation_envoyee_at')
             ->update(['confirmation_envoyee_at' => now()]);
 
-        if (!$reserve || !$this->user) {
+        // Client sans e-mail (commande sans compte) : rien à envoyer, la commande est marquée comme traitée
+        if (!$reserve || !$this->user || $this->user->estSansEmail()) {
             return false;
         }
 

@@ -33,6 +33,21 @@ class User extends Authenticatable
     ];
 
     // Le propriétaire de la boutique : tous les droits, y compris l'équipe
+    /** Domaine des adresses données aux clients qui commandent sans e-mail (.invalid : jamais livrable). */
+    public const DOMAINE_SANS_EMAIL = 'sans-email.invalid';
+
+    /** Client créé automatiquement à la commande, sans e-mail : on ne lui envoie pas d'e-mail. */
+    public function estSansEmail(): bool
+    {
+        return str_ends_with((string) $this->email, '@'.self::DOMAINE_SANS_EMAIL);
+    }
+
+    /** Pas d'adresse = Laravel n'envoie pas les notifications par e-mail (le canal « base » reste). */
+    public function routeNotificationForMail($notification = null): ?string
+    {
+        return $this->estSansEmail() ? null : $this->email;
+    }
+
     public function estProprietaire(): bool
     {
         return $this->role === 'admin';

@@ -259,7 +259,7 @@ class CartService
         $cart = Cart::firstOrCreate(['user_id' => $userId]);
 
         foreach ($panier as $item) {
-            $this->addItem($item['produit_id'], $item['type_commande'], $item['quantite']);
+            $this->addItem($item['produit_id'], $item['type_commande'], (int) $item['quantite'], $item['couleur'] ?? null);
         }
 
         Session::forget('panier');

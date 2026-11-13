@@ -31,11 +31,13 @@
                     <div>
                         <label for="prenom" class="etiquette">Prénom</label>
                         <input id="prenom" type="text" name="prenom" required autocomplete="given-name" placeholder="Kouamé"
-                               value="{{ old('prenom', explode(' ', auth()->user()->name)[0]) }}" class="champ">
+                               value="{{ old('prenom', auth()->check() ? explode(' ', auth()->user()->name)[0] : '') }}" class="champ">
+                        @error('prenom')<p class="erreur">{{ $message }}</p>@enderror
                     </div>
                     <div>
                         <label for="nom_complet" class="etiquette">Nom</label>
                         <input id="nom_complet" type="text" name="nom_complet" required autocomplete="family-name" placeholder="Konan" value="{{ old('nom_complet') }}" class="champ">
+                        @error('nom_complet')<p class="erreur">{{ $message }}</p>@enderror
                     </div>
                     <div class="col-span-2">
                         <label for="telephone" class="etiquette">Téléphone</label>
@@ -46,9 +48,19 @@
                                     <option value="{{ $code }}">{{ $libelle }}</option>
                                 @endforeach
                             </select>
-                            <input id="telephone" type="tel" name="telephone" required autocomplete="tel-national" placeholder="07 12 34 56 78" class="champ chiffres flex-1">
+                            <input id="telephone" type="tel" name="telephone" required autocomplete="tel-national" placeholder="07 12 34 56 78" value="{{ old('telephone') }}" class="champ chiffres min-w-0 flex-1">
                         </div>
+                        @error('telephone')<p class="erreur">{{ $message }}</p>@enderror
                     </div>
+                    @guest
+                        {{-- Commande sans compte : le compte est créé à la confirmation, l'e-mail sert seulement au suivi --}}
+                        <div class="col-span-2">
+                            <label for="email" class="etiquette">E-mail <span class="font-normal text-encre-2">(facultatif, pour recevoir le suivi)</span></label>
+                            <input id="email" type="email" name="email" autocomplete="email" inputmode="email" placeholder="vous@exemple.com" value="{{ old('email') }}" class="champ">
+                            @error('email')<p class="erreur">{{ $message }}</p>@enderror
+                            <p class="aide">Pas besoin de créer un compte. Déjà client ? <a href="{{ route('login') }}" class="lien">Connectez-vous</a>.</p>
+                        </div>
+                    @endguest
                 </div>
             </section>
 

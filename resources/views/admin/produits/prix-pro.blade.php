@@ -5,9 +5,8 @@
 --}}
 @php $valeurs = $valeurs ?? []; @endphp
 <fieldset class="{{ $classe ?? 'mt-6' }}">
-    <legend class="etiquette">Prix pro <span class="font-normal text-encre-2">(revendeurs validés)</span></legend>
-    <p class="aide -mt-1 mb-3">Facultatif. Seuls les formats qui ont un prix pro sont proposés dans l'Espace Pro.</p>
-    <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+    <legend class="etiquette">Prix pro <span class="font-normal text-encre-2">(facultatif, Espace Pro)</span></legend>
+    <div class="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 lg:grid-cols-5">
         @foreach(\App\Models\Produit::FORMATS as $cle => $format)
             <div>
                 <label for="{{ $prefixe }}pro-{{ $cle }}" class="mb-1 block text-[0.85rem] text-encre-2">{{ $format['libelle'] }}</label>

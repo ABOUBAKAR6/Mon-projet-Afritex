@@ -120,13 +120,13 @@
 
 {{-- FENÊTRE : AJOUTER --}}
 <dialog id="modal-ajouter" class="{{ $fenetre }}" aria-labelledby="titre-ajouter">
-    <form method="POST" action="{{ route('admin.produits.ajouter') }}" enctype="multipart/form-data" class="p-6 sm:p-8">
+    <form method="POST" action="{{ route('admin.produits.ajouter') }}" enctype="multipart/form-data" class="p-4 sm:p-6">
         @csrf
         <div class="flex items-start justify-between gap-4">
-            <h2 id="titre-ajouter" class="titre-display text-[1.5rem]">Nouveau produit</h2>
+            <h2 id="titre-ajouter" class="titre-display text-[1.3rem]">Nouveau produit</h2>
             <button type="button" onclick="this.closest('dialog').close()" class="-m-2 flex size-11 items-center justify-center text-encre-2 hover:bg-papier-2"><x-icone nom="fermer" /><span class="sr-only">Fermer</span></button>
         </div>
-        <div class="mt-6 grid gap-5 sm:grid-cols-2">
+        <div class="mt-4 grid gap-3 sm:grid-cols-2">
             <div><label for="a-nom" class="etiquette">Nom du produit</label><input id="a-nom" type="text" name="nom" class="champ" required></div>
             <div>
                 <label for="a-categorie" class="etiquette">Catégorie</label>
@@ -135,18 +135,17 @@
                 </select>
             </div>
         </div>
-        <fieldset class="mt-6">
+        <fieldset class="mt-4">
             <legend class="etiquette">Tarifs</legend>
-            <p class="aide -mt-1 mb-3">Un tarif par format : « Au mètre » et « Au rouleau ». Le premier sert de prix affiché.</p>
             <div id="pricing-container-add" class="space-y-2"></div>
-            <button type="button" class="btn btn-contour btn-sm mt-3" onclick="addPricingRow('pricing-container-add')"><x-icone nom="plus" /> Ajouter un tarif</button>
+            <button type="button" class="btn btn-contour btn-sm mt-2" onclick="addPricingRow('pricing-container-add')"><x-icone nom="plus" /> Ajouter un tarif</button>
         </fieldset>
-        @include('admin.produits.prix-pro', ['prefixe' => 'a-'])
-        <div class="mt-6 grid gap-5 sm:grid-cols-[10rem_1fr]">
+        @include('admin.produits.prix-pro', ['prefixe' => 'a-', 'classe' => 'mt-4'])
+        <div class="mt-4 grid gap-3 sm:grid-cols-[10rem_1fr]">
             <div><label for="a-stock" class="etiquette">Rouleaux en stock</label><input id="a-stock" type="number" min="0" name="stock" class="champ chiffres" value="0"></div>
             <div><label for="a-image" class="etiquette">Photo principale</label><input id="a-image" type="file" name="image" accept="image/*" class="champ py-2"></div>
         </div>
-        <div class="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button type="button" class="btn btn-contour" onclick="this.closest('dialog').close()">Annuler</button>
             <button type="submit" class="btn btn-brun">Enregistrer le produit</button>
         </div>
@@ -155,13 +154,13 @@
 
 {{-- FENÊTRE : MODIFIER --}}
 <dialog id="modal-modifier" class="{{ $fenetre }}" aria-labelledby="titre-modifier">
-    <form method="POST" id="form-modifier-produit" enctype="multipart/form-data" class="p-6 sm:p-8">
+    <form method="POST" id="form-modifier-produit" enctype="multipart/form-data" class="p-4 sm:p-6">
         @csrf
         <div class="flex items-start justify-between gap-4">
-            <h2 id="titre-modifier" class="titre-display text-[1.5rem]">Modifier le produit</h2>
+            <h2 id="titre-modifier" class="titre-display text-[1.3rem]">Modifier le produit</h2>
             <button type="button" onclick="this.closest('dialog').close()" class="-m-2 flex size-11 items-center justify-center text-encre-2 hover:bg-papier-2"><x-icone nom="fermer" /><span class="sr-only">Fermer</span></button>
         </div>
-        <div class="mt-6 grid gap-5 sm:grid-cols-2">
+        <div class="mt-4 grid gap-3 sm:grid-cols-2">
             <div><label for="edit-nom" class="etiquette">Nom du produit</label><input type="text" name="nom" id="edit-nom" class="champ" required></div>
             <div>
                 <label for="edit-categorie" class="etiquette">Catégorie</label>
@@ -170,36 +169,24 @@
                 </select>
             </div>
         </div>
-        <fieldset class="mt-6">
+        <fieldset class="mt-4">
             <legend class="etiquette">Tarifs</legend>
             <div id="pricing-container-edit" class="space-y-2"></div>
-            <button type="button" class="btn btn-contour btn-sm mt-3" onclick="addPricingRow('pricing-container-edit')"><x-icone nom="plus" /> Ajouter un tarif</button>
+            <button type="button" class="btn btn-contour btn-sm mt-2" onclick="addPricingRow('pricing-container-edit')"><x-icone nom="plus" /> Ajouter un tarif</button>
         </fieldset>
-        @include('admin.produits.prix-pro', ['prefixe' => 'edit-'])
+        @include('admin.produits.prix-pro', ['prefixe' => 'edit-', 'classe' => 'mt-4'])
 
-        <div class="mt-6">
+        <div class="mt-4">
             <label for="edit-description" class="etiquette">Description</label>
-            <textarea name="description" id="edit-description" rows="4" class="champ"></textarea>
-            <div class="mt-3 flex flex-col gap-2 bg-papier-2 p-3 sm:flex-row">
-                <label for="ai-keywords" class="sr-only">Mots-clés pour la description automatique</label>
-                <input type="text" id="ai-keywords" class="champ flex-1" placeholder="Mots-clés : luxe, soie, mariage…">
-                <button type="button" class="btn btn-contour btn-ai" onclick="generateAiDescription()"><x-icone nom="etincelle" /> Rédiger la description</button>
-            </div>
+            <textarea name="description" id="edit-description" rows="3" class="champ min-h-0"></textarea>
         </div>
 
-        <div class="mt-6">
-            <label for="edit-couleurs" class="etiquette">Couleurs disponibles <span class="font-normal text-encre-2">(facultatif)</span></label>
-            <input type="text" name="couleurs" id="edit-couleurs" class="champ" maxlength="1000" placeholder="Bordeaux, Bleu nuit, Noir, Or" aria-describedby="aide-edit-couleurs">
-            <p id="aide-edit-couleurs" class="aide">Séparées par des virgules. Le client les choisit d'un geste sur la page du tissu.</p>
+        <div class="mt-4">
+            <label for="edit-couleurs" class="etiquette">Couleurs <span class="font-normal text-encre-2">(séparées par des virgules)</span></label>
+            <input type="text" name="couleurs" id="edit-couleurs" class="champ" maxlength="1000" placeholder="Bordeaux, Bleu nuit, Noir, Or">
         </div>
 
-        <fieldset class="mt-6 grid gap-5">
-            <legend class="etiquette">Référencement</legend>
-            <div><label for="edit-meta-title" class="etiquette font-normal text-encre-2">Titre pour Google</label><input type="text" name="meta_title" id="edit-meta-title" class="champ"></div>
-            <div><label for="edit-meta-description" class="etiquette font-normal text-encre-2">Description pour Google</label><textarea name="meta_description" id="edit-meta-description" rows="2" class="champ min-h-0"></textarea></div>
-        </fieldset>
-
-        <div class="mt-6 grid gap-5 sm:grid-cols-[10rem_1fr]">
+        <div class="mt-4 grid gap-3 sm:grid-cols-[10rem_1fr]">
             <div><label for="edit-stock" class="etiquette">Rouleaux en stock</label><input type="number" min="0" name="stock" id="edit-stock" class="champ chiffres"></div>
             <div>
                 <label for="edit-image" class="etiquette">Remplacer la photo principale</label>
@@ -209,7 +196,7 @@
                 </div>
             </div>
         </div>
-        <div class="mt-8 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
+        <div class="mt-5 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end">
             <button type="button" class="btn btn-contour" onclick="this.closest('dialog').close()">Annuler</button>
             <button type="submit" class="btn btn-brun">Enregistrer les modifications</button>
         </div>
@@ -282,8 +269,6 @@ function openEditProduit(id) {
     document.getElementById('edit-stock').value = p.stock ?? 0;
     document.getElementById('edit-description').value = p.description ?? '';
     document.getElementById('edit-couleurs').value = p.couleurs ?? '';
-    document.getElementById('edit-meta-title').value = p.meta_title ?? '';
-    document.getElementById('edit-meta-description').value = p.meta_description ?? '';
 
     const conteneur = document.getElementById('pricing-container-edit');
     conteneur.innerHTML = '';

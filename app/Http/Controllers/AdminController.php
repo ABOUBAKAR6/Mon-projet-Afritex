@@ -297,8 +297,9 @@ class AdminController extends Controller
             'categorie_id' => $request->categorie_id,
             'nom' => $request->nom,
             'description' => $request->description,
-            'meta_title' => $request->meta_title,
-            'meta_description' => $request->meta_description,
+            // Champs Google retirés de la fenêtre « Modifier » : les valeurs déjà enregistrées restent
+            'meta_title' => $request->has('meta_title') ? $request->meta_title : $produit->meta_title,
+            'meta_description' => $request->has('meta_description') ? $request->meta_description : $produit->meta_description,
             'tarifications' => $tarifs,
             'prix_metre' => $tarifs[0]['prix'] ?? $produit->prix_metre, // Legacy
             'image' => $produit->image,

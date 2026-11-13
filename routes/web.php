@@ -48,10 +48,12 @@ Route::get('/pro', [ProController::class, 'accueil'])->name('pro.accueil');
 Route::get('/pro/inscription', [ProController::class, 'inscription'])->name('pro.inscription');
 Route::post('/pro/inscription', [ProController::class, 'inscrire'])->middleware('throttle:5,1')->name('pro.inscription.envoyer');
 
+// Tous les tissus et la demande de devis : ouverts à tous, le compte pro s'ouvre à la première demande
+Route::get('/pro/commander', [ProController::class, 'commander'])->name('pro.commander');
+Route::post('/pro/commander', [ProController::class, 'envoyerCommande'])->middleware('throttle:10,1')->name('pro.commander.envoyer');
+
 // Revendeurs validés par la boutique seulement
 Route::middleware(['auth', 'pro'])->prefix('pro')->name('pro.')->group(function () {
-    Route::get('/commander', [ProController::class, 'commander'])->name('commander');
-    Route::post('/commander', [ProController::class, 'envoyerCommande'])->middleware('throttle:10,1')->name('commander.envoyer');
     Route::get('/commandes', [ProController::class, 'commandes'])->name('commandes');
     Route::get('/commandes/{commande}', [ProController::class, 'commande'])->name('commande');
     Route::post('/commandes/{commande}/accepter', [ProController::class, 'accepter'])->name('commande.accepter');

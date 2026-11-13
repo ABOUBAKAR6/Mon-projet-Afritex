@@ -14,6 +14,12 @@ class EstProValide
 {
     public function handle(Request $request, Closure $next): Response
     {
+        // Plus de validation par la boutique : une demande restée en attente s'ouvre à la première visite
+        $compte = $request->user()?->comptePro;
+        if ($compte?->estEnAttente()) {
+            $compte->update(['statut' => 'valide', 'valide_le' => now()]);
+        }
+
         if (! $request->user()?->estProValide()) {
             return redirect()->route('pro.accueil');
         }

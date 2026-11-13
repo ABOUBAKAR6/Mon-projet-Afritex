@@ -35,11 +35,14 @@ class EspaceProTest extends TestCase
         $this->proprietaire = User::factory()->create(['role' => 'admin']);
     }
 
-    public function test_un_visiteur_demande_un_compte_pro_et_le_proprietaire_le_valide(): void
+    public function test_un_visiteur_ouvre_son_compte_pro_sans_validation_de_la_boutique(): void
     {
-        $categorie = Categorie::create(['nom' => 'Wax']);
+        $this->produitPro();
+        $categorie = Categorie::where('nom', 'Wax')->firstOrFail();
 
-        $this->get(route('pro.accueil'))->assertOk()->assertViewIs('pro.accueil');
+        // Cliquer sur Espace Pro montre directement tous les tissus
+        $this->get(route('pro.accueil'))->assertRedirect(route('pro.commander'));
+        $this->get(route('pro.commander'))->assertOk()->assertSee('Vos coordonnées');
 
         $this->post(route('pro.inscription.envoyer'), [
             'name' => 'Awa Koné',
@@ -59,31 +62,47 @@ class EspaceProTest extends TestCase
         $this->assertAuthenticatedAs($revendeur);
         $this->assertSame('client', $revendeur->role);
 
+        // Compte ouvert tout de suite, sans passer par la boutique
         $compte = $revendeur->comptePro;
         $this->assertNotNull($compte);
-        $this->assertSame('en_attente', $compte->statut);
-        $this->assertSame('Atelier Awa', $compte->boutique);
-        $this->assertEquals([$categorie->id], $compte->familles);
-        $this->assertFalse($revendeur->estProValide());
-
-        // L'équipe est prévenue de la demande
-        Notification::assertSentTo($this->proprietaire, EspaceProNotification::class);
-
-        // Le propriétaire examine et valide
-        $this->actingAs($this->proprietaire)
-            ->get(route('admin.pros'))
-            ->assertOk()
-            ->assertSee('Atelier Awa');
-
-        $this->actingAs($this->proprietaire)
-            ->post(route('admin.pros.valider', $compte))
-            ->assertRedirect();
-
-        $compte->refresh();
         $this->assertSame('valide', $compte->statut);
         $this->assertNotNull($compte->valide_le);
+        $this->assertSame('Atelier Awa', $compte->boutique);
+        $this->assertEquals([$categorie->id], $compte->familles);
         $this->assertTrue($revendeur->fresh()->estProValide());
-        Notification::assertSentTo($revendeur, EspaceProNotification::class);
+
+        // L'équipe est prévenue, et le nouveau revendeur figure dans l'admin
+        Notification::assertSentTo($this->proprietaire, EspaceProNotification::class);
+        $this->actingAs($this->proprietaire)->get(route('admin.pros'))->assertOk()->assertSee('Atelier Awa');
+    }
+
+    public function test_un_visiteur_demande_un_devis_sans_compte_et_voit_tous_les_tissus(): void
+    {
+        $sansPrixPro = $this->produitPro('Duchesse Ivoire', ['prix_pro' => null]);
+        $avecPrixPro = $this->produitPro('Wax Kente');
+
+        // Tous les tissus, même sans prix pro (prix public à confirmer au devis)
+        $this->get(route('pro.commander'))->assertOk()->assertSee('Duchesse Ivoire')->assertSee('Wax Kente')
+            ->assertSee('Prix public, à confirmer au devis');
+
+        $this->post(route('pro.commander.envoyer'), $this->formulaireCommande(
+            [$sansPrixPro->id => ['metre' => 10], $avecPrixPro->id => ['metre' => 4]],
+        ) + ['name' => 'Moussa Traoré', 'boutique' => '', 'activite' => 'couturier', 'whatsapp' => '0505050505', 'ville' => 'Bouaké', 'email' => ''])
+            ->assertSessionHasNoErrors()->assertRedirect();
+
+        $revendeur = User::where('name', 'Moussa Traoré')->firstOrFail();
+        $this->assertAuthenticatedAs($revendeur);
+        $this->assertTrue($revendeur->estSansEmail());
+        $this->assertTrue($revendeur->estProValide());
+        $this->assertSame('Moussa Traoré', $revendeur->comptePro->boutique);
+
+        $commande = Commande::where('user_id', $revendeur->id)->with('items')->firstOrFail();
+        $this->assertTrue((bool) $commande->est_pro);
+        $this->assertSame('devis_demande', $commande->statut);
+        $this->assertCount(2, $commande->items);
+        // Sans prix pro : prix public ; avec : prix pro
+        $this->assertSame(3000, (int) $commande->items->firstWhere('produit_id', $sansPrixPro->id)->prix_unitaire);
+        Notification::assertSentTo($this->proprietaire, EspaceProNotification::class);
     }
 
     public function test_le_revendeur_valide_accede_a_toutes_ses_pages(): void
@@ -220,16 +239,17 @@ class EspaceProTest extends TestCase
         $revendeur = $this->revendeurValide();
 
         $this->actingAs($revendeur)->post(route('pro.commander.envoyer'), $this->formulaireCommande(
-            // Le mètre n'a pas de prix pro sur ce tissu : la ligne est ignorée
+            // Le mètre n'a pas de prix pro sur ce tissu : il passe au prix public
             [$produit->id => ['chemise' => 4, 'metre' => 5]],
         ))->assertSessionHasNoErrors()->assertRedirect();
 
         $commande = Commande::where('user_id', $revendeur->id)->with('items')->firstOrFail();
         $this->assertSame('devis_demande', $commande->statut);
-        $this->assertCount(1, $commande->items);
-        $this->assertSame('chemise', $commande->items->first()->type_commande);
-        $this->assertSame(9500, (int) $commande->items->first()->prix_unitaire);
-        $this->assertSame(4 * 9500, (int) $commande->total);
+        $this->assertCount(2, $commande->items);
+        $chemise = $commande->items->firstWhere('type_commande', 'chemise');
+        $this->assertSame(9500, (int) $chemise->prix_unitaire);
+        $this->assertSame(3000, (int) $commande->items->firstWhere('type_commande', 'metre')->prix_unitaire);
+        $this->assertSame(4 * 9500 + 5 * 3000, (int) $commande->total);
     }
 
     public function test_une_demande_sans_les_champs_facultatifs_est_acceptee(): void
@@ -249,15 +269,26 @@ class EspaceProTest extends TestCase
         $this->assertNull($commande->note_client);
     }
 
-    public function test_un_compte_non_valide_ne_peut_pas_commander_en_gros(): void
+    public function test_un_compte_en_attente_s_ouvre_et_un_compte_refuse_ne_commande_pas(): void
     {
+        // Ancienne demande restée en attente : elle s'ouvre à la première visite
         $enAttente = User::factory()->create(['role' => 'client']);
         $this->comptePro($enAttente, 'en_attente');
+        $this->actingAs($enAttente)->get(route('pro.commandes'))->assertOk();
+        $this->assertTrue($enAttente->fresh()->estProValide());
 
-        $this->actingAs($enAttente)->get(route('pro.commander'))->assertRedirect(route('pro.accueil'));
+        $produit = $this->produitPro();
 
+        // Client sans compte pro : il voit les tissus et ses coordonnées pro sont demandées
         $sansCompte = User::factory()->create(['role' => 'client']);
-        $this->actingAs($sansCompte)->get(route('pro.commander'))->assertRedirect(route('pro.accueil'));
+        $this->actingAs($sansCompte)->get(route('pro.commander'))->assertOk()->assertSee('Vos coordonnées');
+
+        // Compte refusé par la boutique : pas de commande en gros
+        $refuse = User::factory()->create(['role' => 'client']);
+        $this->comptePro($refuse, 'refuse');
+        $this->actingAs($refuse)->post(route('pro.commander.envoyer'), $this->formulaireCommande([$produit->id => ['metre' => 3]]))
+            ->assertSessionHas('error');
+        $this->assertSame(0, Commande::where('user_id', $refuse->id)->count());
     }
 
     public function test_un_revendeur_ne_voit_pas_la_commande_d_un_autre(): void

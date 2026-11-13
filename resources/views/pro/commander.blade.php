@@ -15,10 +15,10 @@
 
 @include('pro.partials.entete')
 
-<div class="conteneur pb-20 pt-10 lg:pb-28 lg:pt-12">
+<div class="conteneur pb-20 pt-6 sm:pt-10 lg:pb-28 lg:pt-12">
     <div class="apparition">
-        <h1 class="titre-display text-[2.2rem] sm:text-[2.6rem]">Commander en gros</h1>
-        <p class="mt-1 max-w-[68ch] text-encre-2">Saisissez vos quantités aux prix pro. La boutique confirme le stock, la livraison et la date dans un devis : vous ne payez qu'après l'avoir accepté.</p>
+        <h1 class="titre-display text-[1.7rem] sm:text-[2.6rem]">Commander en gros</h1>
+        <p class="mt-1 max-w-[68ch] text-encre-2">Saisissez vos quantités. La boutique confirme les prix, le stock et la livraison dans un devis : vous ne payez qu'après l'avoir accepté.</p>
     </div>
 
     @if($categories->isEmpty())
@@ -104,7 +104,9 @@
                                                 <div>
                                                     <label for="{{ $id }}" class="block text-[0.85rem] font-medium text-encre-2">{{ $format['libelle'] }}</label>
                                                     <p class="chiffres mt-0.5 font-semibold text-brun">{{ $francs($format['pro']) }} <span class="text-[0.8rem] font-normal text-encre-2">{{ $format['unite'] }}</span></p>
-                                                    @if($format['detail'] && $format['detail'] > $format['pro'])
+                                                    @if(! $format['tarif_pro'])
+                                                        <p class="text-[0.8rem] text-encre-2">Prix public, à confirmer au devis</p>
+                                                    @elseif($format['detail'] && $format['detail'] > $format['pro'])
                                                         <p class="chiffres text-[0.8rem] text-encre-2">Prix public {{ $francs($format['detail']) }}</p>
                                                     @endif
                                                 </div>
@@ -124,6 +126,55 @@
                 @endforeach
 
                 <p x-show="aucunResultat()" x-cloak class="bg-carte p-8 text-center text-encre-2">Aucun tissu ne correspond à « <span x-text="recherche"></span> ».</p>
+
+                @if($nouveauPro)
+                    {{-- Pas encore revendeur : le compte pro s'ouvre avec cette première demande, sans validation de la boutique --}}
+                    <section class="bg-carte p-4 sm:p-6" aria-labelledby="titre-coordonnees">
+                        <h2 id="titre-coordonnees" class="titre-display text-[1.25rem]">Vos coordonnées</h2>
+                        <div class="mt-3 grid grid-cols-2 gap-3 sm:gap-4">
+                            @guest
+                                <div class="col-span-2 sm:col-span-1">
+                                    <label for="pro-name" class="etiquette">Votre nom</label>
+                                    <input id="pro-name" type="text" name="name" value="{{ old('name') }}" required autocomplete="name" class="champ" placeholder="Awa Koné">
+                                    @error('name')<p class="erreur">{{ $message }}</p>@enderror
+                                </div>
+                            @endguest
+                            <div class="col-span-2 sm:col-span-1">
+                                <label for="pro-boutique" class="etiquette">Boutique ou atelier <span class="font-normal text-encre-2">(facultatif)</span></label>
+                                <input id="pro-boutique" type="text" name="boutique" value="{{ old('boutique') }}" maxlength="120" class="champ" placeholder="Atelier Koné Couture">
+                                @error('boutique')<p class="erreur">{{ $message }}</p>@enderror
+                            </div>
+                            <div class="col-span-2 sm:col-span-1">
+                                <label for="pro-activite" class="etiquette">Vous êtes</label>
+                                <select id="pro-activite" name="activite" required class="champ">
+                                    <option value="">Choisir</option>
+                                    @foreach($activites as $cle => $libelle)
+                                        <option value="{{ $cle }}" @selected(old('activite') === $cle)>{{ $libelle }}</option>
+                                    @endforeach
+                                </select>
+                                @error('activite')<p class="erreur">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <label for="pro-whatsapp" class="etiquette">WhatsApp</label>
+                                <input id="pro-whatsapp" type="tel" name="whatsapp" value="{{ old('whatsapp', auth()->user()?->phone) }}" required autocomplete="tel" inputmode="tel" class="champ chiffres" placeholder="07 12 34 56 78">
+                                @error('whatsapp')<p class="erreur">{{ $message }}</p>@enderror
+                            </div>
+                            <div>
+                                <label for="pro-ville" class="etiquette">Ville</label>
+                                <input id="pro-ville" type="text" name="ville" value="{{ old('ville') }}" required maxlength="80" class="champ" placeholder="Abidjan">
+                                @error('ville')<p class="erreur">{{ $message }}</p>@enderror
+                            </div>
+                            @guest
+                                <div class="col-span-2">
+                                    <label for="pro-email" class="etiquette">E-mail <span class="font-normal text-encre-2">(facultatif)</span></label>
+                                    <input id="pro-email" type="email" name="email" value="{{ old('email') }}" autocomplete="email" inputmode="email" class="champ" placeholder="vous@exemple.com">
+                                    @error('email')<p class="erreur">{{ $message }}</p>@enderror
+                                </div>
+                            @endguest
+                        </div>
+                        <p class="aide">Votre compte pro s'ouvre avec cette demande : pas d'attente, pas de mot de passe à créer.</p>
+                    </section>
+                @endif
 
                 {{-- Livraison placée sous les tissus : équilibre la page et garde le récapitulatif compact à droite --}}
                 <section class="bg-carte p-6" aria-labelledby="titre-livraison">
@@ -217,7 +268,7 @@
                             <dd class="titre-display chiffres text-[1.6rem] text-brun" x-text="francs(total)">0 F</dd>
                         </div>
                     </dl>
-                    <p class="aide mt-2">Aux prix pro, hors livraison. Le devis de la boutique fait foi.</p>
+                    <p class="aide mt-2">Prix pro, ou prix public à défaut, hors livraison. Le devis de la boutique fait foi.</p>
 
                     <div class="mt-5 space-y-2.5">
                         <button type="submit" class="btn btn-brun btn-lg w-full">Demander le devis</button>

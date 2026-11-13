@@ -47,12 +47,20 @@ class ProController extends Controller
             ]);
         }
 
-        // Après la connexion depuis cette page, retour ici plutôt qu'au panier
-        if (! $user) {
-            redirect()->setIntendedUrl(route('pro.accueil'));
+        // Plus de validation par la boutique : une demande restée en attente s'ouvre tout de suite
+        if ($user?->comptePro?->estEnAttente()) {
+            $user->comptePro->update(['statut' => 'valide', 'valide_le' => now()]);
+
+            return redirect()->route('pro.accueil');
         }
 
-        return view('pro.accueil', ['compte' => $user?->comptePro]);
+        // Compte refusé par la boutique : la page d'accueil explique le refus
+        if ($user?->comptePro?->estRefuse()) {
+            return view('pro.accueil', ['compte' => $user->comptePro]);
+        }
+
+        // Tout le monde voit directement tous les tissus et peut demander un devis
+        return redirect()->route('pro.commander');
     }
 
     public function inscription(Request $request)
@@ -99,7 +107,8 @@ class ProController extends Controller
 
             return ComptePro::create([
                 'user_id' => $user->id,
-                'statut' => 'en_attente',
+                'statut' => 'valide',
+                'valide_le' => now(),
             ] + collect($donnees)->only([
                 'boutique', 'activite', 'ville', 'commune', 'whatsapp', 'volume_mensuel', 'familles', 'rccm', 'presentation',
             ])->all());
@@ -119,18 +128,18 @@ class ProController extends Controller
         }
 
         $this->espacePro->prevenirEquipe('manage-pros', new EspaceProNotification(
-            'Nouvelle demande de compte pro : '.$compte->boutique,
+            'Nouveau compte pro ouvert : '.$compte->boutique,
             [
                 $compte->boutique.' ('.$compte->libelleActivite().', '.$compte->ville.') demande à commander en gros.',
                 'WhatsApp : '.$compte->whatsapp.($compte->libelleVolume() ? '. Achat mensuel estimé : '.$compte->libelleVolume() : '').'.',
             ],
             route('admin.pros'),
-            'Examiner la demande',
+            'Voir les revendeurs',
             'demande_pro',
         ));
 
         return redirect()->route('pro.accueil')
-            ->with('success', 'Demande envoyée. La boutique l\'examine et vous prévient dès que votre compte pro est ouvert.');
+            ->with('success', 'Votre compte pro est ouvert : vous pouvez commander en gros.');
     }
 
     // ===== Revendeur validé =====
@@ -138,7 +147,7 @@ class ProController extends Controller
     public function commander(Request $request)
     {
         $categories = Categorie::orderBy('nom')
-            ->with(['produits' => fn ($q) => $q->where('disponible', true)->whereNotNull('prix_pro')->orderBy('nom')])
+            ->with(['produits' => fn ($q) => $q->where('disponible', true)->orderBy('nom')])
             ->get()
             ->map(function ($categorie) {
                 $categorie->setRelation('produits', $categorie->produits->filter(fn (Produit $p) => $p->formatsPro())->values());
@@ -151,7 +160,7 @@ class ProController extends Controller
         // « Recommander » : quantités reprises d'une commande précédente de ce revendeur
         $quantites = [];
         $source = null;
-        if ($request->filled('depuis')) {
+        if ($request->filled('depuis') && $request->user()) {
             $source = Commande::where('user_id', $request->user()->id)->where('est_pro', true)
                 ->with('items')->find($request->integer('depuis'));
             foreach ($source?->items ?? [] as $item) {
@@ -161,11 +170,14 @@ class ProController extends Controller
         }
 
         return view('pro.commander', [
-            'compte' => $request->user()->comptePro,
+            'compte' => $request->user()?->comptePro,
+            // Pas encore revendeur : ses coordonnées sont demandées sous la commande
+            'nouveauPro' => ! $request->user()?->estProValide(),
+            'activites' => ComptePro::ACTIVITES,
             'categories' => $categories,
             'quantites' => old('quantites', $quantites),
             'source' => $source,
-            'derniereAdresse' => $request->user()->commandes()->where('mode_livraison', 'domicile')->latest()->value('adresse_livraison'),
+            'derniereAdresse' => $request->user()?->commandes()->where('mode_livraison', 'domicile')->latest()->value('adresse_livraison'),
         ]);
     }
 
@@ -184,7 +196,22 @@ class ProController extends Controller
             'livraison_souhaitee_le.after_or_equal' => 'La date souhaitée ne peut pas être passée.',
         ]);
 
-        $commande = $this->espacePro->demanderDevis($request->user(), $infos['quantites'], $infos);
+        $user = $request->user();
+        if (! $user?->estProValide()) {
+            if ($user?->comptePro?->estRefuse()) {
+                return back()->withInput()->with('error', 'Votre compte pro a été refusé par la boutique : écrivez-lui sur WhatsApp.');
+            }
+            // Pas de compte à créer pour rien : au moins une quantité d'abord
+            if (! collect($infos['quantites'])->flatten()->contains(fn ($q) => (int) $q > 0)) {
+                throw \Illuminate\Validation\ValidationException::withMessages(['quantites' => 'Indiquez au moins une quantité pour un tissu.']);
+            }
+            $user = $this->ouvrirCompteProAutomatique($request, $user);
+            if ($user instanceof \Illuminate\Http\RedirectResponse) {
+                return $user;
+            }
+        }
+
+        $commande = $this->espacePro->demanderDevis($user, $infos['quantites'], $infos);
 
         return redirect()->route('pro.commande', $commande)
             ->with('success', 'Demande de devis envoyée. La boutique vérifie le stock et vous envoie le devis.')
@@ -274,7 +301,7 @@ class ProController extends Controller
     public function catalogue(Request $request)
     {
         $categories = Categorie::orderBy('nom')
-            ->with(['produits' => fn ($q) => $q->where('disponible', true)->whereNotNull('prix_pro')->orderBy('nom')])
+            ->with(['produits' => fn ($q) => $q->where('disponible', true)->orderBy('nom')])
             ->get()
             ->map(function ($categorie) {
                 $categorie->setRelation('produits', $categorie->produits->filter(fn (Produit $p) => $p->formatsPro())->values());
@@ -293,6 +320,68 @@ class ProController extends Controller
     }
 
     // ===== Outils =====
+
+    /**
+     * Compte pro ouvert à la première demande de devis, sans validation de la boutique.
+     * Visiteur : un compte client est créé (mot de passe aléatoire, e-mail facultatif) et il est connecté ;
+     * un e-mail déjà utilisé n'est jamais repris (« connectez-vous »). Retourne l'utilisateur, ou une redirection.
+     */
+    private function ouvrirCompteProAutomatique(Request $request, ?User $user)
+    {
+        $regles = [
+            'boutique' => ['nullable', 'string', 'max:120'],
+            'activite' => ['required', Rule::in(array_keys(ComptePro::ACTIVITES))],
+            'whatsapp' => ['required', 'string', 'min:8', 'max:30'],
+            'ville' => ['required', 'string', 'max:80'],
+        ];
+        if (! $user) {
+            $regles += ['name' => ['required', 'string', 'max:120'], 'email' => ['nullable', 'email', 'max:255']];
+        }
+        $donnees = $request->validate($regles, [
+            'name.required' => 'Indiquez votre nom.',
+            'activite.required' => 'Indiquez votre activité.',
+            'whatsapp.required' => 'Indiquez votre numéro WhatsApp : la boutique vous y envoie le devis.',
+            'whatsapp.min' => 'Ce numéro semble incomplet.',
+            'ville.required' => 'Indiquez votre ville.',
+            'email.email' => 'Cette adresse e-mail n\'est pas valide.',
+        ]);
+
+        if (! $user) {
+            $email = strtolower(trim((string) ($donnees['email'] ?? '')));
+            if ($email !== '' && User::where('email', $email)->exists()) {
+                return back()->withInput()->withErrors(['email' => 'Un compte existe déjà avec cet e-mail : connectez-vous, ou laissez ce champ vide.']);
+            }
+            $user = User::create([
+                'name' => $donnees['name'],
+                'email' => $email !== '' ? $email : 'pro-'.\Illuminate\Support\Str::lower(\Illuminate\Support\Str::random(16)).'@'.User::DOMAINE_SANS_EMAIL,
+                'phone' => $donnees['whatsapp'],
+                'password' => Hash::make(\Illuminate\Support\Str::random(40)),
+                'role' => 'client',
+            ]);
+            Auth::login($user, true);
+            $request->session()->regenerate();
+        }
+
+        $compte = ComptePro::updateOrCreate(['user_id' => $user->id], [
+            'boutique' => trim((string) ($donnees['boutique'] ?? '')) ?: $user->name,
+            'activite' => $donnees['activite'],
+            'ville' => $donnees['ville'],
+            'whatsapp' => $donnees['whatsapp'],
+            'statut' => 'valide',
+            'valide_le' => now(),
+        ]);
+        $user->setRelation('comptePro', $compte);
+
+        $this->espacePro->prevenirEquipe('manage-pros', new EspaceProNotification(
+            'Nouveau compte pro ouvert : '.$compte->boutique,
+            [$compte->boutique.' ('.$compte->libelleActivite().', '.$compte->ville.') commande en gros. WhatsApp : '.$compte->whatsapp.'.'],
+            route('admin.pros'),
+            'Voir les revendeurs',
+            'demande_pro',
+        ));
+
+        return $user;
+    }
 
     private function verifierProprietaire(Request $request, Commande $commande): void
     {

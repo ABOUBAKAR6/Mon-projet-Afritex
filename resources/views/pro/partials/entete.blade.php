@@ -3,7 +3,24 @@
   puis les onglets soulignés (défilables sur téléphone). Inclus en haut de chaque page pro.
 --}}
 @php
-    $compte = Auth::user()->comptePro;
+    $compte = Auth::user()?->comptePro;
+    $estPro = (bool) Auth::user()?->estProValide();
+@endphp
+@if(! $estPro)
+    {{-- Pas encore revendeur : l'Espace Pro est ouvert, le compte pro s'ouvre à la première demande de devis --}}
+    <div class="sans-impression bg-brun-fonce text-white">
+        <div class="conteneur flex flex-wrap items-center justify-between gap-x-6 gap-y-2 py-4">
+            <p class="min-w-0 leading-tight">
+                <span class="block text-[0.85rem] font-medium text-or-doux">Espace Pro</span>
+                <span class="titre-display block text-[1.25rem] sm:text-[1.5rem]">Vente en gros</span>
+            </p>
+            @guest
+                <a href="{{ route('login') }}" class="text-[0.92rem] text-white/85 underline underline-offset-4 hover:text-white">Déjà revendeur ? Se connecter</a>
+            @endguest
+        </div>
+    </div>
+@else
+@php
     $onglets = [
         ['pro.accueil', 'Tableau de bord', 'tableau-bord', ['pro.accueil']],
         ['pro.commander', 'Commander', 'panier', ['pro.commander']],
@@ -32,3 +49,4 @@
         @endforeach
     </nav>
 </div>
+@endif

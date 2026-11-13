@@ -121,16 +121,22 @@ class Produit extends Model
         return $prix > 0 ? $prix : null;
     }
 
+    /** Prix appliqué dans l'Espace Pro : le prix pro s'il est fixé, sinon le prix public. */
+    public function prixPourPro(string $format): ?int
+    {
+        return $this->prixPro($format) ?? $this->prixDetail($format);
+    }
+
     /**
-     * Formats proposés aux pros : ceux qui ont un prix pro.
-     * [clé => [libelle, unite, pro, detail]]
+     * Formats proposés dans l'Espace Pro : tous ceux qui ont un prix (pro, ou public à défaut).
+     * [clé => [libelle, unite, pro, detail, tarif_pro]] ; tarif_pro = false quand c'est le prix public.
      */
     public function formatsPro(): array
     {
         $formats = [];
         foreach (self::FORMATS as $cle => $format) {
-            if ($pro = $this->prixPro($cle)) {
-                $formats[$cle] = $format + ['pro' => $pro, 'detail' => $this->prixDetail($cle)];
+            if ($prix = $this->prixPourPro($cle)) {
+                $formats[$cle] = $format + ['pro' => $prix, 'detail' => $this->prixDetail($cle), 'tarif_pro' => (bool) $this->prixPro($cle)];
             }
         }
 

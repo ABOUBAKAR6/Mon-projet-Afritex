@@ -37,7 +37,7 @@ class EspaceProService
             }
             foreach ($parFormat as $format => $quantite) {
                 $quantite = (int) $quantite;
-                $prix = $produit->prixPro((string) $format);
+                $prix = $produit->prixPourPro((string) $format);
                 if ($quantite < 1 || ! $prix) {
                     continue;
                 }
@@ -84,7 +84,7 @@ class EspaceProService
         $this->prevenirEquipe('manage-orders', new EspaceProNotification(
             'Nouveau devis demandé par '.$boutique,
             [
-                $boutique.' demande un devis pour '.count($lignes).' ligne(s), soit '.$this->francs($commande->total).' aux prix pro.',
+                $boutique.' demande un devis pour '.count($lignes).' ligne(s), soit '.$this->francs($commande->total).' (prix indicatifs).',
                 'Vérifiez le stock, ajoutez les frais de livraison et la date, puis envoyez le devis.',
             ],
             route('admin.commande.detail', $commande),

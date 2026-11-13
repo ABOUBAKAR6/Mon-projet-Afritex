@@ -188,9 +188,12 @@
             </form>
         </div>
 
-        {{-- Menu mobile plein écran --}}
-        <div id="menu-mobile" x-show="menu" x-cloak class="absolute inset-x-0 top-full h-[calc(100svh-4rem)] overflow-y-auto border-t border-trait bg-papier lg:hidden">
-            <div class="conteneur flex flex-col py-4">
+        {{-- Menu mobile : de la base de l'en-tête (mesurée à l'ouverture, le bandeau peut être au-dessus)
+             jusqu'au-dessus de la barre fixe du bas (4 rem), pour que « Se déconnecter » reste atteignable --}}
+        <div id="menu-mobile" x-show="menu" x-cloak
+             x-effect="if (menu) $el.style.top = Math.max(0, $el.closest('header').getBoundingClientRect().bottom) + 'px'"
+             class="fixed inset-x-0 bottom-[calc(4rem+env(safe-area-inset-bottom))] top-16 overflow-y-auto overscroll-contain border-t border-trait bg-papier lg:hidden">
+            <div class="conteneur flex flex-col pb-8 pt-4">
                 <nav aria-label="Navigation mobile" class="flex flex-col">
                     @foreach($navigation as $lien)
                         @php $actif = request()->routeIs(...$lien['actif']); @endphp

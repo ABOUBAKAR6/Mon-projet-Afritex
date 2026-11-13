@@ -53,14 +53,6 @@
 
     $estFavori = auth()->check() && auth()->user()->wishlist()->where('produit_id', $produit->id)->exists();
     $lienFamille = $produit->categorie ? route('catalogue', ['categorie_id' => $produit->categorie->id]) : route('catalogue');
-
-    // Rangée d'assurances (téléphone et tablette) : uniquement des engagements déjà affichés sur le site
-    $assurances = [
-        ['bouclier', 'Qualité garantie'],
-        ['regle', $formats->count() > 1 ? 'Au mètre ou au rouleau' : ($formats->keys()->first() === 'rouleau' ? 'Au rouleau' : 'Au mètre')],
-        ['livraison', 'Livré en 24 à 72 h'],
-        ['mobile', 'Mobile Money'],
-    ];
 @endphp
 
 <div class="conteneur pb-8 sm:pb-20 sm:pt-6 lg:pb-28 lg:pt-8">
@@ -454,16 +446,6 @@
                         Bientôt de retour en stock
                     @endif
                 </p>
-
-                {{-- Téléphone et tablette : les engagements de la boutique en une rangée d'icônes --}}
-                <ul class="mt-5 grid grid-cols-4 gap-1 border-y border-trait py-4 text-center text-[0.8rem] leading-tight text-encre-2 lg:hidden">
-                    @foreach($assurances as [$icone, $libelle])
-                        <li class="flex flex-col items-center gap-1.5 px-0.5">
-                            <x-icone :nom="$icone" class="size-5 text-brun" />
-                            <span>{{ $libelle }}</span>
-                        </li>
-                    @endforeach
-                </ul>
 
                 {{-- Ordinateur : livraison, paiement, qualité en détail --}}
                 <dl class="mt-8 hidden divide-y divide-trait border-y border-trait text-[0.95rem] lg:block">
